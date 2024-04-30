@@ -8,9 +8,9 @@ import logging
 import os
 from datetime import datetime
 
-from pymongoimport.command import ImportCommand
-from pymongoimport.fieldfile import FieldFile
-from pymongoimport.logger import Logger
+from pyimport.command import ImportCommand
+from pyimport.fieldfile import FieldFile
+from pyimport.logger import Logger
 
 
 class InputFileException(Exception):
@@ -72,7 +72,7 @@ class FileProcessor(object):
                                                                 "collection": self._collection.full_name,
                                                                 "path": path,
                                                                 "records": lineCount,
-                                                                "timestamp": datetime.utcnow()})
+                                                                "timestamp": datetime.now(datetime.UTC)})
 
                 totalCount = lineCount + totalCount
             except FieldConfigException as e:

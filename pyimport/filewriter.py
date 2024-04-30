@@ -15,10 +15,10 @@ from enum import Enum
 import pymongo
 from pymongo import errors
 
-from pymongoimport.filereader import FileReader
-from pymongoimport.csvlinetodictparser import CSVLineToDictParser
-from pymongoimport.poolwriter import PoolWriter
-from pymongoimport.timer import Timer
+from pyimport.filereader import FileReader
+from pyimport.csvlinetodictparser import CSVLineToDictParser
+from pyimport.poolwriter import PoolWriter
+from pyimport.timer import Timer
 
 
 class WriterType(Enum):
@@ -49,7 +49,7 @@ class FileWriter(object):
 
         if self._audit_collection:
             self._audit_collection.insert_one({"filestamp": self._reader.name,
-                                               "timestamp": datetime.utcnow()})
+                                               "timestamp": datetime.now(datetime.UTC)})
 
     @property
     def batch_size(self):

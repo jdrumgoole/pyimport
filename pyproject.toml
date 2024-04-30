@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "pyimport"
+version = "0.1.0"
+description = "A CSV importer for MongoDB and Postgres (should work on other relational databases too)"
+authors = ["Joe Drumgoole"]
+license = "Apache 2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pymongo = "^4.7.0"
+python-dateutil = "^2.9.0.post0"
+toml = "^0.10.2"
+requests = "^2.31.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

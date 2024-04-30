@@ -83,13 +83,13 @@ Examples
 How to generate a field file
 ::
     
-    $pymongoimport --genfieldfile inventory.csv
+    $pyimport --genfieldfile inventory.csv
     Creating 'inventory.ff' from 'inventory.csv'
 
 An example run:
 ::
 
-    $pymongoimport --delimiter '|' --database demo --collection demo --fieldfile mot_test_set_small.ff mot_test_set_small.csv
+    $pyimport --delimiter '|' --database demo --collection demo --fieldfile mot_test_set_small.ff mot_test_set_small.csv
     Using database: demo, collection: demo
     processing 1 files
     Processing : mot_test_set_small.csv

@@ -7,16 +7,16 @@ Author: joe@joedrumgoole.com
 """
 import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pymongo
 
-from pymongoimport.fieldfile import FieldFile
-from pymongoimport.filewriter import FileWriter, WriterType
-from pymongoimport.csvlinetodictparser import CSVLineToDictParser
-from pymongoimport.csvlinetodictparser import ErrorResponse
-from pymongoimport.filereader import FileReader
-from pymongoimport.doctimestamp import DocTimeStamp
+from pyimport.fieldfile import FieldFile
+from pyimport.filewriter import FileWriter, WriterType
+from pyimport.csvlinetodictparser import CSVLineToDictParser
+from pyimport.csvlinetodictparser import ErrorResponse
+from pyimport.filereader import FileReader
+from pyimport.doctimestamp import DocTimeStamp
 
 
 def seconds_to_duration(seconds):
@@ -128,10 +128,10 @@ class ImportCommand(Command):
         self._timestamp = timestamp
         self._total_written = 0
         self._elapsed_time = 0
-        self._batch_timestamp = datetime.utcnow()
+        self._batch_timestamp = datetime.now(timezone.utc)
     @staticmethod
     def time_stamp(d):
-        d["timestamp"] = datetime.utcnow()
+        d["timestamp"] = datetime.now(timezone.utc)
         return d
 
     def batch_time_stamp(self, d):

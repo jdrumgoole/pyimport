@@ -4,11 +4,11 @@ import os
 import pymongo
 import requests
 
-from pymongoimport.fieldfile import FieldFile
-from pymongoimport.csvlinetodictparser import CSVLineToDictParser
-from pymongoimport.filereader import FileReader
-from pymongoimport.filewriter import FileWriter
-from pymongoimport.fieldfile import FieldFile
+from pyimport.fieldfile import FieldFile
+from pyimport.csvlinetodictparser import CSVLineToDictParser
+from pyimport.filereader import FileReader
+from pyimport.filewriter import FileWriter
+from pyimport.fieldfile import FieldFile
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 

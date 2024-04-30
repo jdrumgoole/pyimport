@@ -1,6 +1,6 @@
 # Representing Latitude and Longtitude in a TFF file
 
-The pymongoimport program uses TOML as a spec for its configuration files. A
+The pyimport program uses TOML as a spec for its configuration files. A
 TFF file (TOML Field File) defines the way that fields in a CSV file get
 mapped to the fields in a document. Each row of a CSV file becomes a single
 document in a collection. The field names are the column titles and the
@@ -20,8 +20,8 @@ Then we can generate a field file from the data using this command:
 
 Can be converted using this field file using the following command:
 ```bash
-$ python pymongoimport_main.py --genfieldfile test/data/dob.csv
-2021-07-29 13:35:59,131: pymongoimport_main.py:pymongoimport_main:184: INFO: Forcing has_header true for --genfieldfile
+$ python pyimport_main.py --genfieldfile test/data/dob.csv
+2021-07-29 13:35:59,131: pyimport_main.py:pyimport_main:184: INFO: Forcing has_header true for --genfieldfile
 2021-07-29 13:35:59,133: command.py:post_execute:95: INFO: Created field filename
 'test/data/dob.tff' from 'test/data/dob.csv'
 ```
@@ -41,7 +41,7 @@ type=int
 We can convert the dob.csv file into a set of MongoDB documents using the command:
 
 ```bash
-python pymongoimport/pymongoimport_main.py test/data/dob.csv --hasheader
+python pyimport/pyimport_main.py test/data/dob.csv --hasheader
 ```
 This will generate the follow documents in the collection `imported` in
 the database `PYIM`:

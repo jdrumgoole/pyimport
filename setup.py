@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 import os
 import glob
 
-VERSIONFILE="pymongoimport/_version.py"
+VERSIONFILE="pyimport/_version.py"
 with open(VERSIONFILE, "rt") as vfile:
     for line in vfile:
         line = line.strip()
@@ -16,12 +16,12 @@ with open(VERSIONFILE, "rt") as vfile:
 pyfiles = [f for f in os.listdir(".") if f.endswith(".py")]
 
 setup(
-    name="pymongoimport",
+    name="pyimport",
     version=version_string,
 
     author="Joe Drumgoole",
     author_email="joe@joedrumgoole.com",
-    description="pymongoimport - a program for reading CSV files into mongodb",
+    description="pyimport - a program for reading CSV files into mongodb",
     long_description=
     '''
 Pymongo_import is a program that can parse a csv file from its header and first line to
@@ -34,7 +34,7 @@ by the parser.
 
     license="AGPL",
     keywords="MongoDB import csv tsv",
-    url="https://github.com/jdrumgoole/pymongoimport",
+    url="https://github.com/jdrumgoole/pyimport",
 
     install_requires=['pymongo',
                       "nose",
@@ -75,10 +75,10 @@ by the parser.
     scripts=[],
     entry_points={
         'console_scripts': [
-            'pymongoimport=pymongoimport.pymongoimport_main:pymongoimport_main',
-            'splitfile=pymongoimport.splitfile:split_file_main',
-            'pymultiimport=pymongoimport.pymongomultiimport_main:multi_import',
-            'pwc=pymongoimport.pwc:pwc',
+            'pyimport=pyimport.pyimport_main:pyimport_main',
+            'splitfile=pyimport.splitfile:split_file_main',
+            'pymultiimport=pyimport.pymongomultiimport_main:multi_import',
+            'pwc=pyimport.pwc:pwc',
         ]
     },
 

@@ -1,4 +1,4 @@
-from pymongoimport.logger import Logger
+from pyimport.logger import Logger
 
 if __name__ == "__main__":
     log = Logger(Logger.LOGGER_NAME).log()

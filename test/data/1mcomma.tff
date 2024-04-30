@@ -1,6 +1,6 @@
 #
 # Created '1mcomma.tff'
-# at UTC: 2022-05-30 17:24:50.291150 by class pymongoimport.fieldfile
+# at UTC: 2022-05-30 17:24:50.291150 by class pyimport.fieldfile
 # Parameters:
 #    csv        : '1mcomma.txt'
 #    delimiter  : ','

@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from pymongoimport.fieldfile import FieldFile, dict_to_fields
+from pyimport.fieldfile import FieldFile, dict_to_fields
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 

@@ -34,8 +34,8 @@ import argparse
 import os
 import sys
 
-from pymongoimport.filesplitter import File_Splitter
-from pymongoimport.version import __VERSION__
+from pyimport.filesplitter import File_Splitter
+from pyimport.version import __VERSION__
 
 
 def split_file_main(*argv):

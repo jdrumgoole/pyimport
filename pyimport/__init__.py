@@ -1,12 +1,12 @@
 """
 ===============================
-pymongoimport
+pyimport
 ===============================
 
-``pymongoimport`` is a python program that will import data into a MongoDB
+``pyimport`` is a python program that will import data into a MongoDB
 database (default ``PYIM`` ) and a MongoDB collection (default ``imported`` ).
 
-Why do we have ``pymongoimport``?
+Why do we have ``pyimport``?
 
 MongoDB already has a perfectly good (and much faster)
 `mongoimport <https://docs.mongodb.com/manual/reference/program/mongoimport/>`_ program
@@ -14,18 +14,18 @@ that is available for free in the standard MongoDB `community download <https://
 
 Well ``pymonogoimport`` does a few things that ``mongoimport`` doesn't do (yet). For people
 with new CSV files there is the ``--genfieldfile`` option which will automatically
-generate a typed field file for the specified input file. Even with a field file pymongoimport
+generate a typed field file for the specified input file. Even with a field file pyimport
 will fall back to the string type if type conversion fails on any
 input column.
 
-pymongoimport also has the ability to restart  an upload from the
+pyimport also has the ability to restart  an upload from the
 point where is finished. This restart capability is recorded in an
 ``audit`` collection in the current database. And audit record is
 stored for each upload in progress and each completed upload. Thus the
 audit collection gives you a record of all uploads by filename and
 date time.
 
-Finally pymongoimport is more forgiving of *dirty* data. So if your
+Finally pyimport is more forgiving of *dirty* data. So if your
 actual data doesn't match your field type definitions then the type
 converter will fall back to using a string type.
 
@@ -116,13 +116,13 @@ Examples
 How to generate a field file
 ::
 
-    $pymongoimport --genfieldfile inventory.csv
+    $pyimport --genfieldfile inventory.csv
     Creating 'inventory.ff' from 'inventory.csv'
 
 An example run:
 ::
 
-    $pymongoimport --delimiter '|' --database demo --collection demo --fieldfile mot_test_set_small.ff mot_test_set_small.csv
+    $pyimport --delimiter '|' --database demo --collection demo --fieldfile mot_test_set_small.ff mot_test_set_small.csv
     Using database: demo, collection: demo
     processing 1 files
     Processing : mot_test_set_small.csv

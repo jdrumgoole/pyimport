@@ -5,9 +5,9 @@ from logging import getLogger
 
 import pymongo
 
-from pymongoimport.audit import Audit
-from pymongoimport.command import Drop_Command, GenerateFieldfileCommand, ImportCommand
-from pymongoimport.filesplitter import LineCounter
+from pyimport.audit import Audit
+from pyimport.command import Drop_Command, GenerateFieldfileCommand, ImportCommand
+from pyimport.filesplitter import LineCounter
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 

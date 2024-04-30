@@ -3,16 +3,16 @@ Created on 12 Aug 2017
 
 @author: jdrumgoole
 """
-from pymongoimport.logger import Logger
-from pymongoimport.version import __VERSION__
-from pymongoimport.csvlinetodictparser import ErrorResponse
-from pymongoimport.doctimestamp import DocTimeStamp
+from pyimport.logger import Logger
+from pyimport.version import __VERSION__
+from pyimport.csvlinetodictparser import ErrorResponse
+from pyimport.doctimestamp import DocTimeStamp
 from configargparse import ArgumentParser
 
 
 def add_standard_args(parser):
     """
-    Construct parser for pymongoimport return it as a list suitable for passing to the parents
+    Construct parser for pyimport return it as a list suitable for passing to the parents
     argument of the next parser
     """
 

@@ -16,7 +16,7 @@ in universal mode.
 import argparse
 import sys
 
-from pymongoimport.filesplitter import LineCounter
+from pyimport.filesplitter import LineCounter
 
 
 def pwc(*argv):

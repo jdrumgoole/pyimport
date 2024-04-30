@@ -11,10 +11,10 @@ from multiprocessing import Process
 
 import pymongo
 
-from pymongoimport.argparser import add_standard_args
-from pymongoimport.audit import Audit
-from pymongoimport.logger import Logger
-from pymongoimport.pymongoimport_main import Importer
+from pyimport.argparser import add_standard_args
+from pyimport.audit import Audit
+from pyimport.logger import Logger
+from pyimport.pyimport_main import Importer
 
 
 def strip_arg(arg_list, remove_arg, has_trailing=False):
@@ -60,7 +60,7 @@ def multi_import(*argv):
     A master script to manage uploading of a single data file as multiple input files. Multi-import
     will optionally split a single file (specified by the --single argument) or optionally upload an
     already split list of files passed in on the command line.
-    Each file is uplaoded by a separate pymongoimport subprocess. 
+    Each file is uplaoded by a separate pyimport subprocess. 
     '''
 
     parser = argparse.ArgumentParser(usage=usage_message)

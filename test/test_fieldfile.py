@@ -11,13 +11,13 @@ from datetime import datetime
 import pymongo
 import dateutil
 
-from pymongoimport.fieldfile import FieldFile
-from pymongoimport.filewriter import FileWriter
-from pymongoimport.filereader import FileReader
-from pymongoimport.filesplitter import LineCounter
-from pymongoimport.logger import Logger
-from pymongoimport.type_converter import Converter
-from pymongoimport.csvlinetodictparser import CSVLineToDictParser
+from pyimport.fieldfile import FieldFile
+from pyimport.filewriter import FileWriter
+from pyimport.filereader import FileReader
+from pyimport.filesplitter import LineCounter
+from pyimport.logger import Logger
+from pyimport.type_converter import Converter
+from pyimport.csvlinetodictparser import CSVLineToDictParser
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 

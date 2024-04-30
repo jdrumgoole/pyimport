@@ -1,5 +1,5 @@
 #
-# Created 'test/data/dob.tff' at UTC:2021-07-29 12:35:59.132648 by class pymongoimport.fieldfile
+# Created 'test/data/dob.tff' at UTC:2021-07-29 12:35:59.132648 by class pyimport.fieldfile
 #
 ["Date Of Birth"]
 type = "datetime"

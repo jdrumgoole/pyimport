@@ -30,7 +30,7 @@ There is an index on batchID.
 import getpass
 import os
 import socket
-from datetime import datetime
+from datetime import datetime, timezone
 from threading import Lock
 
 import pymongo
@@ -85,7 +85,7 @@ class Audit(object):
         self._open_batch_count = self._open_batch_count + 1
         self._auditCollection.insert_one({"batchID": updated_doc["currentID"],
                                           "username": getpass.getuser(),
-                                          "start": datetime.utcnow(),
+                                          "start": datetime.now(timezone.utc),
                                           "host": socket.getfqdn(),
                                           "pid": os.getpid(),
                                           "info": doc})
@@ -94,7 +94,7 @@ class Audit(object):
 
     def add_batch_info(self, batchID, field_name, doc):
         self._auditCollection.insert_one({"batchID": batchID,
-                                          "timestamp": datetime.utcnow(),
+                                          "timestamp": datetime.now(timezone.utc),
                                           field_name: doc})
 
     def add_command(self, batchID, cmd_name, args):
@@ -113,7 +113,7 @@ class Audit(object):
         assert (start)
         self._auditCollection.insert_one({"batchID": batchID,
                                           "start": start["start"],
-                                          "end": datetime.utcnow()})
+                                          "end": datetime.now(timezone.utc)})
 
         self._open_batch_count = self._open_batch_count - 1
         return batchID

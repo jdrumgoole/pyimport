@@ -8,7 +8,7 @@ File_Splitter
 =====================================
 
 File Splitter is a class that takes a file and splits it into separate pieces. Its purpose built for
-use with pymongoimport and is expected to be used to split CSV files (which may or may not have
+use with pyimport and is expected to be used to split CSV files (which may or may not have
 a header, hence the **has_header** argument). When splitting a file the output files are produced without
 a header file.
 

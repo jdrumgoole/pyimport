@@ -10,7 +10,7 @@ from enum import Enum
 
 import pymongo
 
-from pymongoimport.canonical_path import Canonical_Path
+from pyimport.canonical_path import Canonical_Path
 
 
 class Restart_State(Enum):
@@ -30,7 +30,7 @@ class Restarter(object):
 
     These class assumes the object ID is defined by default as per the MongoDB docs
     (https://docs.mongodb.com/manual/reference/method/ObjectId/). In this case in a single run
-    of the pymongoimport the IDs will contain identical host and process components. We can use
+    of the pyimport the IDs will contain identical host and process components. We can use
     these fields to identify inserts that happened in the previous run. So we search for all inserts
     with an ID greater than the ID in the restartlog.
 
@@ -76,7 +76,7 @@ class Restarter(object):
 
     def start(self):
         self._audit.insert_one({"filename": self._name(),
-                                "ts": datetime.utcnow(),
+                                "ts": datetime.now(datetime.UTC),
                                 "batch_size": self._batch_size,
                                 "command": self._cmd,
                                 "state": Restart_State.start})
@@ -85,7 +85,7 @@ class Restarter(object):
 
         self._audit.insert_one({"filename": self._name(),
                                 "thread_id": count,
-                                "ts": datetime.utcnow(),
+                                "ts": datetime.now(datetime.UTC),
                                 "doc_id": doc_id,
                                 "state": Restart_State.inprogress})
 
@@ -123,7 +123,7 @@ class Restarter(object):
     def finish(self):
 
         self._restartDoc = self._audit.insert_one({"filename": self._name(),
-                                                   "ts": datetime.utcnow(),
+                                                   "ts": datetime.now(datetime.UTC),
                                                    "state": Restart_State.finish})
 
     def _find_last(self, col, doc):
@@ -156,7 +156,7 @@ class Restarter(object):
     def reset(self):
 
         self._restartDoc = self._audit.find_one_and_update({"filename": self._name()},
-                                                           {"$set": {"timestamp": datetime.utcnow(),
+                                                           {"$set": {"timestamp": datetime.now(datetime.UTC),
                                                                      "batch_size": self._batch_size,
                                                                      "thread_id": 0,
                                                                      "last_doc_id": 0,

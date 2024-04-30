@@ -1,8 +1,8 @@
 import os
 import unittest
 
-from pymongoimport.filesplitter import LineCounter
-from pymongoimport.liner import make_line_file
+from pyimport.filesplitter import LineCounter
+from pyimport.liner import make_line_file
 
 
 class MyTestCase(unittest.TestCase):

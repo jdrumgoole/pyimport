@@ -15,7 +15,7 @@ class Root(object):
         """
         Constructor
         """
-        self._root = os.path.join(os.getenv("HOME"), "GIT", "pymongoimport")
+        self._root = os.path.join(os.getenv("HOME"), "GIT", "pyimport")
 
     def root(self):
         return self._root

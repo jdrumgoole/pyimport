@@ -1,7 +1,7 @@
 import unittest
 from time import sleep
 
-from pymongoimport.timer import Timer
+from pyimport.timer import Timer
 
 
 class TestTimer(unittest.TestCase):

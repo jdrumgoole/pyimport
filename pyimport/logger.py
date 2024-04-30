@@ -8,7 +8,7 @@ import logging
 
 
 class Logger(object):
-    LOGGER_NAME = "pymongoimport"
+    LOGGER_NAME = "pyimport"
     '''
     Logging class that encapsulates logging interface
     '''

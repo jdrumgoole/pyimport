@@ -8,7 +8,7 @@ import unittest
 import pymongo
 from dateutil.parser import parse
 
-from pymongoimport.audit import Audit
+from pyimport.audit import Audit
 
 
 class Test_Audit(unittest.TestCase):

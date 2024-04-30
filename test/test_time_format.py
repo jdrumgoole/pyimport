@@ -4,7 +4,7 @@ from csv import DictReader
 
 import pymongo
 
-from pymongoimport.command import ImportCommand
+from pyimport.command import ImportCommand
 
 
 class Test(unittest.TestCase):

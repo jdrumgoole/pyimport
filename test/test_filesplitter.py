@@ -6,7 +6,7 @@ Created on 13 Aug 2017
 import os
 import unittest
 
-from pymongoimport.filesplitter import LineCounter, File_Splitter, FileType
+from pyimport.filesplitter import LineCounter, File_Splitter, FileType
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 

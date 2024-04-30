@@ -1,19 +1,19 @@
-# PyMongoImport
+# pyimport
 
-`pymongoimport` is a python program that will import data into a MongoDB database.
+`pyimport` is a python program that will import data into a MongoDB database.
 
 Warning - This documentation is incomplete, give it time :-).
 
 For questions please email joe.drumgoole@mongodb.com
 
 
-## Why PyMongoImport?
+## Why pyimport?
  
-Why do we have `pymongoimport`? MongoDB already has a perfectly good (and much faster)
+Why do we have `pyimport`? MongoDB already has a perfectly good (and much faster)
 [mongoimport](https://docs.mongodb.com/manual/reference/program/mongoimport/) program 
 that is available for free in the standard MongoDB [community download](https://www.mongodb.com/download-center#community).
 
-Well `pymongoimport` does a few things that mongoimport doesn't do (yet).
+Well `pyimport` does a few things that mongoimport doesn't do (yet).
 
 - Automatic `fieldfile` generation with the option **--genfieldfile**.
 - Ability to stop and restart an import.
@@ -29,13 +29,13 @@ product and because it is written in Go it can use threads more effectively and 
 How to generate a field file
 
 ```
-$pymongoimport --genfieldfile inventory.csv
+$pyimport --genfieldfile inventory.csv
 Creating 'inventory.ff' from 'inventory.csv'
 ```
 An example run:
 
 ```
-$pymongoimport --delimiter '|' --database demo --collection demo --fieldfile mot_test_set_small.ff mot_test_set_small.csv
+$pyimport --delimiter '|' --database demo --collection demo --fieldfile mot_test_set_small.ff mot_test_set_small.csv
 Using database: demo, collection: demo
 processing 1 files
 Processing : mot_test_set_small.csv
@@ -84,7 +84,7 @@ For larger documents you may find a smaller *batchsize* is more efficient.
 
 **--restart**
 
-`pymongoimport` also has the ability to restart an upload from the
+`pyimport` also has the ability to restart an upload from the
 point where it stopped previously. Import metadata are recorded in a collection `restartlog` in the current database. And audit record is
 stored for each upload in progress and each completed upload. Thus the
 audit collection gives you a record of all uploads by filename and

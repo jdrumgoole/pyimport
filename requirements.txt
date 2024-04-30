@@ -32,7 +32,7 @@ pkginfo==1.5.0.1
 prompt-toolkit==3.0.4
 Pygments==2.6.1
 pymongo==3.10.1
-pymongoimport==1.5.8b3
+pyimport==1.5.8b3
 pyparsing==2.4.6
 python-dateutil==2.8.1
 pytz==2019.3

@@ -19,11 +19,11 @@ import logging
 import pymongo
 from requests import exceptions
 
-from pymongoimport.argparser import add_standard_args
-from pymongoimport.audit import Audit
-from pymongoimport.command import Drop_Command, GenerateFieldfileCommand, ImportCommand
-from pymongoimport.logger import Logger
-from pymongoimport.fieldfile import FieldFile
+from pyimport.argparser import add_standard_args
+from pyimport.audit import Audit
+from pyimport.command import Drop_Command, GenerateFieldfileCommand, ImportCommand
+from pyimport.logger import Logger
+from pyimport.fieldfile import FieldFile
 
 
 class Importer(object):
@@ -64,7 +64,7 @@ class Importer(object):
         if not self._log:
             self._log = Logger(self._args.logname, self._args.loglevel).log()
 
-        self._log.info("Started pymongoimport")
+        self._log.info("Started pyimport")
 
         if self._field_filename is None:
             self._field_filename = FieldFile.make_default_tff_name(filename)
@@ -113,14 +113,14 @@ class Importer(object):
         return files[pool_size:]
 
 
-def pymongoimport_main(input_args=None):
+def pyimport_main(input_args=None):
     """
     Expect to recieve an array of args
     
     1.3 : Added lots of support for the NHS Public Data sets project. --addfilename and --addtimestamp.
     Also we now fail back to string when type conversions fail.
     
-    >>> pymongoimport_main( [ 'test_set_small.txt' ] )
+    >>> pyimport_main( [ 'test_set_small.txt' ] )
     database: test, collection: test
     files ['test_set_small.txt']
     Processing : test_set_small.txt
@@ -130,7 +130,7 @@ def pymongoimport_main(input_args=None):
 
     usage_message = """
     
-    pymongoimport is a python program that will import data into a mongodb
+    pyimport is a python program that will import data into a mongodb
     database (default 'test' ) and a mongodb collection (default 'test' ).
     
     Each file in the input list must correspond to a fieldfile format that is
@@ -139,7 +139,7 @@ def pymongoimport_main(input_args=None):
     
     An example run:
     
-    python pymongoimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
+    python pyimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
     """
 
     # if input_args:
@@ -253,4 +253,4 @@ def pymongoimport_main(input_args=None):
 
 
 if __name__ == '__main__':
-    pymongoimport_main()
+    pyimport_main()

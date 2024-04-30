@@ -31,13 +31,13 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    start = datetime.datetime.utcnow()
+    start = datetime.datetime.now(datetime.UTC)
 
     if args.test == "blocks":
         count_lines_block(args.file)
     elif args.test == "enumerate":
         count_lines_enumerate(args.file)
 
-    end = datetime.datetime.utcnow()
+    end = datetime.datetime.now(datetime.UTC)
 
     print("Duration: %s" % (end - start))

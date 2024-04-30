@@ -3,7 +3,7 @@ import os
 
 import pymongo
 
-from pymongoimport.pymongoimport_main import pymongoimport_main
+from pyimport.pyimport_main import pyimport_main
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -20,11 +20,11 @@ class MyTestCase(unittest.TestCase):
     def test_main(self):
         collection = self._db["inventory"]
         self._db.drop_collection("inventory")
-        pymongoimport_main(["--genfieldfile",
+        pyimport_main(["--genfieldfile",
                             "--loglevel", "CRITICAL", # suppress output for test
                             f("data/inventory.csv")])
 
-        pymongoimport_main(["--database", "test",
+        pyimport_main(["--database", "test",
                             "--loglevel", "CRITICAL", # suppress output for test
                             "--hasheader",
                             "--collection", "inventory",
@@ -35,12 +35,12 @@ class MyTestCase(unittest.TestCase):
         results = list(collection.find())
         self.assertEqual(len(results), 4)
 
-        pymongoimport_main(["--genfieldfile",
+        pyimport_main(["--genfieldfile",
                             "--loglevel", "CRITICAL", # suppress output for test
                             "--fieldfile", f("data/Demographic_Statistics_By_Zip_Code.tff"),
                             "https://data.cityofnewyork.us/api/views/kku6-nxdu/rows.csv?accessType=DOWNLOAD"])
 
-        pymongoimport_main(["--database", "test",
+        pyimport_main(["--database", "test",
                             "--collection", "nyc_demographics",
                             "--hasheader",
                             "--limit", "150",

@@ -2,7 +2,7 @@ import datetime
 import unittest
 from datetime import timezone
 
-from pymongoimport.type_converter import Converter
+from pyimport.type_converter import Converter
 
 
 class Test(unittest.TestCase):

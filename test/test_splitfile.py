@@ -10,8 +10,8 @@ import unittest
 from contextlib import contextmanager
 from io import StringIO
 
-from pymongoimport.filesplitter import File_Splitter
-from pymongoimport.splitfile import split_file_main
+from pyimport.filesplitter import File_Splitter
+from pyimport.splitfile import split_file_main
 
 
 @contextmanager

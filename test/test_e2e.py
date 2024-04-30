@@ -6,9 +6,9 @@ from datetime import datetime
 import pymongo
 import dateutil
 
-from pymongoimport.fieldfile import FieldFile, FieldNames
-from pymongoimport.filereader import FileReader
-from pymongoimport.csvlinetodictparser import CSVLineToDictParser
+from pyimport.fieldfile import FieldFile, FieldNames
+from pyimport.filereader import FileReader
+from pyimport.csvlinetodictparser import CSVLineToDictParser
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 

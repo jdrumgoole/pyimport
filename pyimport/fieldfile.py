@@ -7,10 +7,10 @@ Created on 2 Mar 2016
 import os
 import toml
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 
-from pymongoimport.type_converter import Converter
-from pymongoimport.filereader import FileReader
+from pyimport.type_converter import Converter
+from pyimport.filereader import FileReader
 
 
 class FieldFileException(Exception):
@@ -153,7 +153,7 @@ class FieldFile(object):
             #print(toml_dict)
             ff_file.write("#\n")
             ff_file.write(f"# Created '{ff_filename}'\n")
-            ff_file.write(f"# at UTC: {datetime.utcnow()} by class {__name__}\n")
+            ff_file.write(f"# at UTC: {datetime.now(timezone.utc)} by class {__name__}\n")
             ff_file.write(f"# Parameters:\n")
             ff_file.write(f"#    csv        : '{csv_filename}'\n")
             ff_file.write(f"#    delimiter  : '{delimiter}'\n")

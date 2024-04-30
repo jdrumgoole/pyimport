@@ -5,9 +5,9 @@ from enum import Enum
 import logging
 from typing import List, Callable
 
-from pymongoimport.fieldfile import FieldFile
-from pymongoimport.type_converter import Converter
-from pymongoimport.doctimestamp import DocTimeStamp
+from pyimport.fieldfile import FieldFile
+from pyimport.type_converter import Converter
+from pyimport.doctimestamp import DocTimeStamp
 
 
 class ErrorResponse(Enum):

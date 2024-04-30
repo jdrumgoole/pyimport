@@ -2,7 +2,7 @@ import unittest
 
 import pymongo
 
-from pymongoimport.threadwriter import ThreadWriter
+from pyimport.threadwriter import ThreadWriter
 
 
 class TestThreadWriter(unittest.TestCase):
