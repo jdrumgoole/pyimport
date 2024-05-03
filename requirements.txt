@@ -53,7 +53,7 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.4
 toml==0.10.0
-tqdm==4.43.0
+tqdm==4.66.3
 traitlets==4.3.3
 twine==3.1.1
 urllib3==1.25.8
