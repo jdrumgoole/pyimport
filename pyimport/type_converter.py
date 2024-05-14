@@ -18,7 +18,7 @@ class Converter(object):
             "str": Converter.to_str,
             "datetime": self.to_datetime,
             "date": self.to_datetime,
-            "isodate" : self.iso_to_datetime,
+            "isodate": self.iso_to_datetime,
             "timestamp": Converter.to_timestamp
         }
 

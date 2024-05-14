@@ -29,7 +29,7 @@ class FileProcessor(object):
         self._files = []
         self._limit = limit
 
-    def processOneFile(self, input_filename, field_filename=None, hasheader=False, restart=False, batchID=None):
+    def process_one_file(self, input_filename, field_filename=None, hasheader=False, restart=False, batchID=None):
 
         if not field_filename:
             field_filename = FieldFile.make_default_tff_name(input_filename)
@@ -47,7 +47,7 @@ class FileProcessor(object):
     def get_files(self):
         return self._files
 
-    def processFiles(self, filenames, field_filename=None, hasheader=False, restart=False, audit=None, batchID=None):
+    def process_files(self, filenames, field_filename=None, hasheader=False, restart=False, audit=None, batchID=None):
 
         totalCount = 0
         lineCount = 0
@@ -64,7 +64,7 @@ class FileProcessor(object):
                 #                     cls._logger.info( "using field file: '%s'", new_name )
                 #                 else:
                 #                     new_name = os.path.splitext(os.path.basename( i ))[0] + ".ff"
-                lineCount = self.processOneFile(i, field_filename, hasheader, restart)
+                lineCount = self.process_one_file(i, field_filename, hasheader, restart)
                 size = os.path.getsize(i)
                 path = os.path.abspath(i)
                 if audit and batchID:
