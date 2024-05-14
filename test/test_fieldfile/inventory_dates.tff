@@ -1,0 +1,6 @@
+["Inventory Item"]
+type="str"
+["Amount"]
+type="int"
+["Last Order"]
+type="date"

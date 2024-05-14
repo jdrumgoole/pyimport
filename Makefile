@@ -7,17 +7,26 @@
 
 PYPIUSERNAME="jdrumgoole"
 ROOT=${HOME}/GIT/pyimport
-
+PYTHONPATH=${ROOT}
 #
 # Hack the right PYTHONPATH into make subshells.
-#
+
+
 SHELL:=PYTHONPATH=${ROOT} ${SHELL}
 
 all: test_all build test_build
 	-@echo "Ace King, Check it out! A full build"
 
+
 build: clean
-	python3 -m build
+	python -m build
+
+path:
+	@echo PATH=${PATH}
+
+
+pythonpath:
+	@echo "PYTHONPATH=${PYTHONPATH}"
 
 root:
 	@echo "The project ROOT is '${ROOT}'"
@@ -37,18 +46,21 @@ test_build:build test
 # Just test that these scripts run
 #
 test_scripts:
-	(export PYTHONPATH=`pwd` && python pyimport/pyimport_main.py -h > /dev/null)
-	(export PYTHONPATH=`pwd` && cd test && python ../pyimport/pyimport_main.py --delimiter '|' data/10k.txt > /dev/null)
-	(export PYTHONPATH=`pwd` && python pyimport/pymongomultiimport_main.py -h > /dev/null )
-	(export PYTHONPATH=`pwd` && python pyimport/pwc.py -h > /dev/null )
-	(export PYTHONPATH=`pwd` && python pyimport/splitfile.py -h > /dev/null )
+	poetry run python pyimport/pyimport_main.py -h > /dev/null
+	poetry run python pyimport/pyimport_main.py --delimiter '|' test/data/10k.txt > /dev/null
+	poetry run python pyimport/pymultiimport_main.py -h > /dev/null
+	poetry run python pyimport/pwc.py -h > /dev/null
+	poetry run python pyimport/splitfile.py -h > /dev/null
 
 test_data:
-	(export PYTHONPATH=`pwd` && cd test && python ../pyimport/pymongomultiimport_main.py --fieldfile data/yellow_tripdata.tff --poolsize 2  data/yellow_tripdata_2015-01-06-200k.csv.1 data/yellow_tripdata_2015-01-06-200k.csv.2  ) #> /dev/null 2>&1)
+	poetry run python pyimport/splitfile.py --autosplit 4 test/data/100k.txt > /dev/null
+	poetry run python pyimport/pymultiimport_main.py --fieldfile test/data/100k.tff --delimiter "|" --poolsize 2 100k.txt.[12] > /dev/null
+	rm 100k.txt.* > /dev/null 2>&1
+
+test_multi:
+	(export PYTHONPATH=`pwd` && cd test/data && python ../../pyimport/splitfile.py yellow_tripdata_2015-01-06-200k.csv)
+	(export PYTHONPATH=`pwd` && cd test && python ../pyimport/pymultiimport_main.py --fieldfile data/yellow_tripdata.tff --poolsize 2  data/yellow_tripdata_2015-01-06-200k.csv.1 data/yellow_tripdata_2015-01-06-200k.csv.2  ) #> /dev/null 2>&1)
 	(rm yellow_tripdata_2015-01-06-200k.csv.*)
-	(export PYTHONPATH=`pwd` && cd test && python ../pyimport/splitfile.py --autosplit 4 data/100k.txt > /dev/null )
-	(export PYTHONPATH=`pwd` && cd test && python ../pyimport/pymongomultiimport_main.py --delimiter "|" --poolsize 2 100k.txt.[12] > /dev/null )
-	(rm 100k.txt.* > /dev/null 2>&1)
 
 test_all: nose test_scripts
 

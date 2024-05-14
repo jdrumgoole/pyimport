@@ -1,0 +1,10 @@
+,,SHA,Code,Name,Type 1 Departments - Major A&E | A&E attendances,Type 2 Departments - Single Specialty,Type 3 Departments - Other A&E/Minor Injury Unit,Total attendances,Type 1 Departments - Major A&E | A&E attendances > 4 hours from arrival to admission transfer or discharge,Type 2 Departments  2 - Single Specialty,Type 3 Departments  2 - Other A&E/Minor Injury Unit,Percentage in 4 hours or less (type 1),Percentage in 4 hours or less (all),Emergency Admissions via Type 1 A&E | Emergency Admissions,Emergency Admissions via Type 2 A&E,Emergency Admissions via Type 3 and 4 A&E,Other Emergency admissions (i.e not via A&E),Number of patients spending >4 hours but <12 hours from decision to admit to admission,Number of patients spending >12 hours from decision to admit to admission
+0,,Q30,RLN,City Hospitals Sunderland NHS Foundation Trust,1423,669,297,2389,202,0,18,0.858046381,0.90791126,501,2,0,218,0,0
+1,,Q30,RXP,County Durham And Darlington NHS Foundation Trust,2473,0,2088,4561,89,0,0,0.964011322,0.980486735,732,0,0,449,0,0
+2,,Q30,5J9,Darlington PCT,0,0,0,0,0,0,0,N/A,N/A,0,0,0,0,0,0
+3,,Q30,RR7,Gateshead Health NHS Foundation Trust,1251,0,0,1251,24,0,0,0.980815348,0.980815348,298,0,0,181,0,0
+4,,Q30,5KF,Gateshead PCT,0,0,1041,1041,0,0,0,N/A,1,0,0,0,0,0,0
+5,,Q30,NTP01,Newcastle City Centre NHS Walk In Centre,0,0,358,358,0,0,0,N/A,1,0,0,0,0,0,0
+6,,Q30,RVW,North Tees And Hartlepool NHS Foundation Trust,2158,0,0,2158,37,0,0,0.982854495,0.982854495,408,0,0,413,1,0
+7,,Q30,RTF,Northumbria Healthcare NHS Foundation Trust,2902,0,550,3452,218,0,0,0.924879394,0.936848204,940,0,1,120,0,0
+8,,Q30,RTR,South Tees Hospitals NHS Foundation Trust,2787,0,694,3481,43,0,0,0.984571224,0.987647228,590,0,0,485,0,0
