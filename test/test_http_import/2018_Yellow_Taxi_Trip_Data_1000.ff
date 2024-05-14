@@ -1,0 +1,71 @@
+#
+# Created at UTC:2019-08-04 22:05:33.791358 by pyimport.fieldfile
+#
+[VendorID]
+type = "int"
+name = "VendorID"
+
+[tpep_pickup_datetime]
+type = "datetime"
+name = "tpep_pickup_datetime"
+
+[tpep_dropoff_datetime]
+type = "datetime"
+name = "tpep_dropoff_datetime"
+
+[passenger_count]
+type = "int"
+name = "passenger_count"
+
+[trip_distance]
+type = "float"
+name = "trip_distance"
+
+[RatecodeID]
+type = "int"
+name = "RatecodeID"
+
+[store_and_fwd_flag]
+type = "str"
+name = "store_and_fwd_flag"
+
+[PULocationID]
+type = "int"
+name = "PULocationID"
+
+[DOLocationID]
+type = "int"
+name = "DOLocationID"
+
+[payment_type]
+type = "int"
+name = "payment_type"
+
+[fare_amount]
+type = "int"
+name = "fare_amount"
+
+[extra]
+type = "float"
+name = "extra"
+
+[mta_tax]
+type = "float"
+name = "mta_tax"
+
+[tip_amount]
+type = "float"
+name = "tip_amount"
+
+[tolls_amount]
+type = "int"
+name = "tolls_amount"
+
+[improvement_surcharge]
+type = "float"
+name = "improvement_surcharge"
+
+[total_amount]
+type = "float"
+name = "total_amount"
+#end

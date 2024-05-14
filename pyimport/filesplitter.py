@@ -287,10 +287,10 @@ class File_Splitter(object):
     # def data_lines_count(cls):
     #     return cls._data_lines_count
 
-    def splitfile(self, split_size:int =0)-> (str, int) :
+    def splitfile(self, split_size: int = 0) -> (str, int):
         """
-        Split file in a number of discrete parts size split_size
-        The last split may be less than split_size in os_size.
+        Split file in a number of discrete parts of size split_size
+        The last split may be less than split_size in size.
         This is a generator function that yields each split as it is
         created.
 

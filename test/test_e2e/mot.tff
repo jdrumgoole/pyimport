@@ -1,0 +1,64 @@
+#
+# Created '/Users/jdrumgoole/GIT/pyimport/test/e2edata/mot.tff'
+# at UTC: 2024-05-08 10:42:51.020217+00:00 by class pyimport.fieldfile
+# Parameters:
+#    csv        : '/Users/jdrumgoole/GIT/pyimport/test/e2edata/mot.txt'
+#    delimiter  : '|'
+#    has_header : False
+#
+["No Header 1"]
+type = "int"
+name = "No Header 1"
+
+["No Header 2"]
+type = "int"
+name = "No Header 2"
+
+["No Header 3"]
+type = "datetime"
+name = "No Header 3"
+
+["No Header 4"]
+type = "int"
+name = "No Header 4"
+
+["No Header 5"]
+type = "str"
+name = "No Header 5"
+
+["No Header 6"]
+type = "str"
+name = "No Header 6"
+
+["No Header 7"]
+type = "int"
+name = "No Header 7"
+
+["No Header 8"]
+type = "str"
+name = "No Header 8"
+
+["No Header 9"]
+type = "str"
+name = "No Header 9"
+
+["No Header 10"]
+type = "str"
+name = "No Header 10"
+
+["No Header 11"]
+type = "str"
+name = "No Header 11"
+
+["No Header 12"]
+type = "str"
+name = "No Header 12"
+
+["No Header 13"]
+type = "int"
+name = "No Header 13"
+
+["No Header 14"]
+type = "datetime"
+name = "No Header 14"
+#end

@@ -12,6 +12,8 @@ pymongo = "^4.7.0"
 python-dateutil = "^2.9.0.post0"
 toml = "^0.10.2"
 requests = "^2.31.0"
+configargparse = "^1.7"
+coverage = "^7.5.1"
 
 
 [build-system]

@@ -54,11 +54,11 @@ using **--splitsize** chunks until it is consumed.
 
     parser.add_argument('-v", ''--version', action='version', version='%(prog)s ' + __VERSION__)
     parser.add_argument("--autosplit", default=2, type=int,
-                        help="split file based on loooking at the first ten lines and overall file os_size [default : %(default)s]")
+                        help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
     parser.add_argument('--hasheader', default=False, action="store_true",
                         help="Ignore header when calculating splits, don't include header in output")
     parser.add_argument('--delimiter', default=",", help="Delimiter for fields[default : %(default)s] ")
-    parser.add_argument("--splitsize", default=0, type=int, help="Split file into chunks of this os_size")
+    parser.add_argument("--splitsize", default=0, type=int, help="Split file into chunks of this size")
     parser.add_argument('--verbose', default=False, action="store_true",
                         help="Print out what is happening")
     parser.add_argument('--input', default=False, action="store_true",

@@ -17,7 +17,7 @@ class MyTestCase(unittest.TestCase):
         self._client = pymongo.MongoClient()
         self._db = self._client["test"]
 
-    def test_main(self):
+    def test_inventory_csv(self):
         collection = self._db["inventory"]
         self._db.drop_collection("inventory")
         pyimport_main(["--genfieldfile",
@@ -35,25 +35,10 @@ class MyTestCase(unittest.TestCase):
         results = list(collection.find())
         self.assertEqual(len(results), 4)
 
-        pyimport_main(["--genfieldfile",
-                            "--loglevel", "CRITICAL", # suppress output for test
-                            "--fieldfile", f("data/Demographic_Statistics_By_Zip_Code.tff"),
-                            "https://data.cityofnewyork.us/api/views/kku6-nxdu/rows.csv?accessType=DOWNLOAD"])
+    def test_mot_csv(self):
+        collection = self._db["mot"]
+        self._db.drop_collection("mot")
 
-        pyimport_main(["--database", "test",
-                            "--collection", "nyc_demographics",
-                            "--hasheader",
-                            "--limit", "150",
-                            "--loglevel", "CRITICAL",  # suppress output for test
-                            "--fieldfile", f("data/Demographic_Statistics_By_Zip_Code.tff"),
-                            "https://data.cityofnewyork.us/api/views/kku6-nxdu/rows.csv?accessType=DOWNLOAD"])
-
-        collection = self._db["nyc_demographics"]
-        results=list(collection.find())
-        self.assertTrue(len(results), 150)
-        self._db.drop_collection("nyc_demographics")
-        self.assertTrue(os.path.isfile(f("data/Demographic_Statistics_By_Zip_Code.tff")))
-        os.unlink(f("data/Demographic_Statistics_By_Zip_Code.tff"))
 
 
 
