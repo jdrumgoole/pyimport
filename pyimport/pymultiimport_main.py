@@ -141,7 +141,7 @@ def multi_import(*argv):
     except KeyboardInterrupt:
         log.info("Keyboard interrupt...")
         for i in proc_list:
-            log.info("terminating process: '%s'", proc_list[i].name)
+            log.info("terminating process: '%s'", proc_list[i].filename)
             proc_list[i].terminate()
 
     finish = time.time()

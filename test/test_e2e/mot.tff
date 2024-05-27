@@ -1,64 +1,43 @@
-#
-# Created '/Users/jdrumgoole/GIT/pyimport/test/e2edata/mot.tff'
-# at UTC: 2024-05-08 10:42:51.020217+00:00 by class pyimport.fieldfile
-# Parameters:
-#    csv        : '/Users/jdrumgoole/GIT/pyimport/test/e2edata/mot.txt'
-#    delimiter  : '|'
-#    has_header : False
-#
-["No Header 1"]
-type = "int"
-name = "No Header 1"
+["TestID"]
+type="int"
 
-["No Header 2"]
-type = "int"
-name = "No Header 2"
+["VehicleID"]
+type="int"
 
-["No Header 3"]
-type = "datetime"
-name = "No Header 3"
+["TestDate"]
+type="date"
+format="%Y-%m-%d"
 
-["No Header 4"]
-type = "int"
-name = "No Header 4"
+["TestClassID"]
+type="str"
 
-["No Header 5"]
-type = "str"
-name = "No Header 5"
+["TestType"]
+type="str"
 
-["No Header 6"]
-type = "str"
-name = "No Header 6"
+["TestResult"]
+type="str"
 
-["No Header 7"]
-type = "int"
-name = "No Header 7"
+["TestMileage"]
+type="int"
 
-["No Header 8"]
-type = "str"
-name = "No Header 8"
+["Postcode"]
+type="str"
 
-["No Header 9"]
-type = "str"
-name = "No Header 9"
+["Make"]
+type="str"
 
-["No Header 10"]
-type = "str"
-name = "No Header 10"
+["Model"]
+type="str"
 
-["No Header 11"]
-type = "str"
-name = "No Header 11"
+["Colour"]
+type="str"
 
-["No Header 12"]
-type = "str"
-name = "No Header 12"
+["FuelType"]
+type="str"
 
-["No Header 13"]
-type = "int"
-name = "No Header 13"
+["CylinderCapacity"]
+type="int"
 
-["No Header 14"]
-type = "datetime"
-name = "No Header 14"
-#end
+["FirstUseDate"]
+type="date"
+format="%Y-%m-%d"

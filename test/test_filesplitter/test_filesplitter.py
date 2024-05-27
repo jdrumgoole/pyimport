@@ -6,7 +6,7 @@ Created on 13 Aug 2017
 import os
 import unittest
 
-from pyimport.filesplitter import LineCounter, File_Splitter, FileType
+from pyimport.filesplitter import LineCounter, FileSplitter, FileType
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -24,21 +24,21 @@ class Test(unittest.TestCase):
         return os.path.join(self._dir, path)
 
     def test_count_lines(self):
-        self.assertEqual(3, File_Splitter("threelines.txt").line_count)
-        self.assertEqual(0, File_Splitter("emptyfile.txt").line_count)
-        self.assertEqual(4, File_Splitter("fourlines.txt").line_count)
-        self.assertEqual(5, File_Splitter("inventory.csv").line_count)
+        self.assertEqual(3, FileSplitter("threelines.txt").line_count)
+        self.assertEqual(0, FileSplitter("emptyfile.txt").line_count)
+        self.assertEqual(4, FileSplitter("fourlines.txt").line_count)
+        self.assertEqual(5, FileSplitter("inventory.csv").line_count)
 
     def _split_helper(self, filename, split_size, has_header=False, dos_adjust=False):
 
-        splitter = File_Splitter(filename, has_header)
+        splitter = FileSplitter(filename, has_header)
 
         count = 0
         part_total_size = 0
         part_total_count = 0
 
         for (part_name, line_count) in splitter.splitfile(split_size):
-            splitter_part = File_Splitter(part_name)
+            splitter_part = FileSplitter(part_name)
             part_count = LineCounter(part_name).line_count
             self.assertEqual(part_count, line_count)
             part_total_count = part_total_count + part_count
@@ -59,7 +59,7 @@ class Test(unittest.TestCase):
 
     def _auto_split_helper(self, filename, lines, split_count, has_header=False, dos_adjust=False):
 
-        splitter = File_Splitter(filename, has_header=has_header)
+        splitter = FileSplitter(filename, has_header=has_header)
         part_total_count = 0
         total_line_count = splitter.line_count
         self.assertEqual(total_line_count, lines)
@@ -76,13 +76,13 @@ class Test(unittest.TestCase):
             self.assertEqual(part_total_count, lines)
 
     def test_copy_file(self):
-        splitter = File_Splitter("AandE_Data_2011-04-10.csv", has_header=True)
+        splitter = FileSplitter("AandE_Data_2011-04-10.csv", has_header=True)
         self.assertEqual(splitter.file_type(), FileType.DOS)
         (_, total_lines) = splitter.copy_file("AandE_Data_2011-04-10.csv" + ".1", ignore_header=True)
 
 
     def test_autosplit_file(self):
-        self.assertEqual(File_Splitter("AandE_Data_2011-04-10.csv").file_type(), FileType.DOS)
+        self.assertEqual(FileSplitter("AandE_Data_2011-04-10.csv").file_type(), FileType.DOS)
         self._auto_split_helper("fourlines.txt", 4, 2, has_header=False)
         self._auto_split_helper("ninelines.txt", 9, 3, has_header=True)
         self._auto_split_helper("inventory.csv", 5, 2, has_header=True)
@@ -94,7 +94,7 @@ class Test(unittest.TestCase):
         self._auto_split_helper("yellow_tripdata_2015-01-06-1999.csv", 1999, 4, has_header=False)
 
     def test_get_average_line_size(self):
-        self.assertEqual(10, File_Splitter("tenlines.txt").get_average_line_size())
+        self.assertEqual(10, FileSplitter("tenlines.txt").get_average_line_size())
 
 
 if __name__ == "__main__":

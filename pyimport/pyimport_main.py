@@ -3,10 +3,6 @@
 """
 Created on 19 Feb 2016
 
-====================
- Mongoimport
-====================
-
 @author: jdrumgoole
 """
 
@@ -21,9 +17,12 @@ from requests import exceptions
 
 from pyimport.argparser import add_standard_args
 from pyimport.audit import Audit
-from pyimport.command import Drop_Command, GenerateFieldfileCommand, ImportCommand
+from pyimport.command import GenerateFieldfileCommand
+from pyimport.dropcollectioncommand import DropCollectionCommand
+from pyimport.importcommand import ImportCommand
+from pyimport.fileprocessor import AbortException
 from pyimport.logger import Logger
-from pyimport.fieldfile import FieldFile
+from pyimport.fieldfile import FieldFile, FieldFileException
 
 
 class Importer(object):
@@ -212,7 +211,7 @@ def pyimport_main(input_args=None):
         if args.restart:
             log.info("Warning --restart overrides --drop ignoring drop commmand")
         else:
-            cmd = Drop_Command(audit=audit, id=batch_ID, database=database)
+            cmd = DropCollectionCommand(audit=audit, id=batch_ID, database=database)
             cmd.run(collection_name)
 
     if args.fieldinfo:
@@ -223,7 +222,7 @@ def pyimport_main(input_args=None):
         print(f"Total fields: {len(cfg.fields())}")
 
     if not args.genfieldfile:
-        if args.filenames :
+        if args.filenames:
 
             if args.audit:
                 audit = Audit(client=client)
@@ -240,6 +239,10 @@ def pyimport_main(input_args=None):
                 except OSError as e:
                     log.error(f"{e}")
                 except exceptions.HTTPError as e:
+                    log.error(f"{e}")
+                except FieldFileException as e:
+                    log.error(f"{e}")
+                except AbortException as e:
                     log.error(f"{e}")
 
 

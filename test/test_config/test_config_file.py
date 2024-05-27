@@ -3,17 +3,11 @@ import unittest
 
 from pyimport.fieldfile import FieldFile, dict_to_fields
 
-path_dir = os.path.dirname(os.path.realpath(__file__))
-
-
-def f(path):
-    return os.path.join(path_dir, path)
-
 
 class Test(unittest.TestCase):
 
     def test_Config_File(self):
-        ff= FieldFile(f("10k.tff"))
+        ff= FieldFile.load("10k.tff")
         self.assertTrue("test_id" in ff.fields())
         self.assertTrue("cylinder_capacity" in ff.fields())
 
@@ -21,7 +15,7 @@ class Test(unittest.TestCase):
         self.assertEqual(ff.type_value("test_date"), "datetime")
 
     def test_property_prices(self):
-        ff = FieldFile(f("uk_property_prices.tff"))
+        ff = FieldFile.load("uk_property_prices.tff")
         self.assertTrue(ff.has_new_name("txn"))
         self.assertFalse(ff.name_value("txn") is None)
 

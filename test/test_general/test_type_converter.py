@@ -11,6 +11,7 @@ class Test(unittest.TestCase):
         c = Converter(utctime=True)
 
         self.assertEqual(10, c.convert("int", "10"))
+        self.assertEqual(40.724250793457000, c.convert("float", "40.724250793457000"))
         self.assertEqual(10.0, c.convert("int", "10.0"))
         self.assertEqual(10.0, c.convert("float", "10.0"))
         self.assertEqual(datetime.datetime(2018, 5, 7, 2, 1, 54, tzinfo=timezone.utc),

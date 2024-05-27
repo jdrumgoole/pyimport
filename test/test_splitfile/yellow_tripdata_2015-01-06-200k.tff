@@ -1,0 +1,80 @@
+#
+# Created './test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff'
+# at UTC: 2024-05-16 00:27:42.595102+00:00 by class pyimport.fieldfile
+# Parameters:
+#    csv        : './test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv'
+#    delimiter  : ','
+#    has_header : True
+#
+[VendorID]
+type = "str"
+name = "VendorID"
+
+[tpep_pickup_datetime]
+type = "str"
+name = "tpep_pickup_datetime"
+
+[tpep_dropoff_datetime]
+type = "str"
+name = "tpep_dropoff_datetime"
+
+[passenger_count]
+type = "str"
+name = "passenger_count"
+
+[trip_distance]
+type = "str"
+name = "trip_distance"
+
+[pickup_longitude]
+type = "str"
+name = "pickup_longitude"
+
+[pickup_latitude]
+type = "str"
+name = "pickup_latitude"
+
+[RateCodeID]
+type = "str"
+name = "RateCodeID"
+
+[store_and_fwd_flag]
+type = "str"
+name = "store_and_fwd_flag"
+
+[dropoff_longitude]
+type = "str"
+name = "dropoff_longitude"
+
+[dropoff_latitude]
+type = "str"
+name = "dropoff_latitude"
+
+[payment_type]
+type = "str"
+name = "payment_type"
+
+[fare_amount]
+type = "str"
+name = "fare_amount"
+
+[extra]
+type = "str"
+name = "extra"
+
+[mta_tax]
+type = "str"
+name = "mta_tax"
+
+[tip_amount]
+type = "str"
+name = "tip_amount"
+
+[tolls_amount]
+type = "str"
+name = "tolls_amount"
+
+[total_amount]
+type = "str"
+name = "total_amount"
+#end

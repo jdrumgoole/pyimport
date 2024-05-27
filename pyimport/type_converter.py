@@ -26,7 +26,7 @@ class Converter(object):
             self._converter["timestamp"] = Converter.to_timestamp_utc
 
     @staticmethod
-    def to_int(v):
+    def to_int(v:str, line_number=0, line="") -> int:
         try:
             # print( "converting : '%s' to int" % v )
             v = int(v)
@@ -35,14 +35,14 @@ class Converter(object):
         return v
 
     @staticmethod
-    def to_float(v):
+    def to_float(v:str, line_number=0, line="") -> float:
         return float(v)
 
     @staticmethod
-    def to_str(v):
+    def to_str(v, line_number=0, line="")->str:
         return str(v)
 
-    def iso_to_datetime(self, v, format=None, line_number=0, line=""):
+    def iso_to_datetime(self, v, format=None, line_number=0, line="") -> datetime.datetime:
         #print("isodate")
         if v == "NULL":
             return None
@@ -55,7 +55,7 @@ class Converter(object):
                 self._log.warning(f"Using isoformat() for value '{v}' has failed at line: {line_number}. '{line}'")
             return date_parse(v)
 
-    def to_datetime(self, v, format=None, line_number=0, line=""):
+    def to_datetime(self, v, format=None, line_number=0, line="") -> datetime.datetime:
         if v == "NULL":
             return None
         if v == "":
@@ -73,25 +73,30 @@ class Converter(object):
                 return date_parse(v)
 
     @staticmethod
-    def to_timestamp(v, line_number, line):
+    def to_timestamp(v, f=None, line_number=0, line="") -> datetime.datetime:
         return datetime.datetime.fromtimestamp(int(v))
 
     @staticmethod
-    def to_timestamp_utc(v):
+    def to_timestamp_utc(v, f=None, line_number=0, line="") -> datetime.datetime:
         return datetime.datetime.fromtimestamp(int(v), tz=timezone.utc)
 
-    def convert_time(self, t, v, f=None, line_number=0, line=""):
+    def convert_time(self, t, v, f=None, line_number=0, line="") -> datetime.datetime:
         return self._converter[t](v, f, line_number, line)
 
-    def convert(self, t, v):
+    def convert(self, t, v, fmt=None, line_number=0, line="") -> str | int | float | datetime.datetime:
         """
         Use type entry for the field in the fieldConfig file (.ff) to determine what type
         conversion to use.
         """
+
         try:
-            return self._converter[t](v)
+            if t in ["date", "datetime", "timestamp"]:
+                return self.convert_time(t, v, fmt, line_number, line)
+            elif t == "isodate":
+                return self.convert_time(t, v, None, line_number, line)
+            return self._converter[t](v, line_number, line)
         except ValueError:
-            v = str(v)
+            return v
 
         return v
 

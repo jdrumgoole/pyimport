@@ -1,18 +1,17 @@
 #
-# Created '/Users/jdrumgoole/GIT/pyimport/test/e2edata/AandEData.tff'
-# at UTC: 2024-05-08 10:42:51.017822+00:00 by class pyimport.fieldfile
+# Created 'AandEData.tff'
+# at UTC: 2024-05-27 14:30:32.170512+00:00 by class pyimport.fieldfile
 # Parameters:
-#    csv        : '/Users/jdrumgoole/GIT/pyimport/test/e2edata/AandEData.csv'
+#    csv        : 'AandEData.csv'
 #    delimiter  : ','
-#    has_header : True
 #
-["No Header 1"]
+[Blank-1]
 type = "int"
-name = "No Header 1"
+name = "Blank-1"
 
-["No Header 2"]
+[Blank-2]
 type = "str"
-name = "No Header 2"
+name = "Blank-2"
 
 [SHA]
 type = "str"

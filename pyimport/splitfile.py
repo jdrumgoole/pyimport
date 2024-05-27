@@ -1,6 +1,6 @@
 """
 ==================================================
-splitfile : Split a file into seperate pieces
+splitfile : Split a file into separate pieces
 ==================================================
 Files can be split on
 preset line boundaries using **--splitsize** or split automatically
@@ -34,7 +34,7 @@ import argparse
 import os
 import sys
 
-from pyimport.filesplitter import File_Splitter
+from pyimport.filesplitter import FileSplitter
 from pyimport.version import __VERSION__
 
 
@@ -78,7 +78,7 @@ using **--splitsize** chunks until it is consumed.
             print(f"No such input file:'{source}'")
             continue
 
-        splitter = File_Splitter(source, args.hasheader)
+        splitter = FileSplitter(source, args.hasheader)
         # if splitter.has_header:
         #     print(f"{source} has a header line")
 

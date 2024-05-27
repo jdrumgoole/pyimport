@@ -11,6 +11,7 @@ import pymongo
 import pymongo.errors
 
 from pyimport.fileprocessor import FileProcessor
+from pyimport.filereader import FileReader
 from pyimport.filesplitter import LineCounter
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
@@ -33,16 +34,22 @@ class Test(unittest.TestCase):
     def test_fileprocessor(self):
         fp = FileProcessor(self._col, ",")
 
+    def test_sniff(self):
+        self.assertFalse(FileReader.sniff_header("uk_property_prices.csv"))
+        self.assertFalse(FileReader.sniff_header("10k.txt"))
+        self.assertTrue(FileReader.sniff_header("AandE_Data_2011-04-10.csv"))
+        self.assertFalse(FileReader.sniff_header("gdelt.tsv"))
+
     def test_property_prices(self):
 
         start_count = self._col.count_documents({})
         fp = FileProcessor(self._col, ',')
         try:
-            fp.process_one_file("uk_property_prices.csv")
+            fp.process_one_file("uk_property_prices.csv", has_header=True)
         except pymongo.errors.BulkWriteError as e:
             print(e)
             raise;
-        lines = LineCounter("uk_property_prices.csv").line_count
+        lines = LineCounter("uk_property_prices.csv").line_count - 1
         self.assertEqual(lines, self._col.count_documents({}) - start_count)
 
         self.assertTrue(self._col.find_one({"Postcode": "NG10 5NN"}))
@@ -52,8 +59,8 @@ class Test(unittest.TestCase):
         col = self._database["mot"]
         start_count = col.count_documents({})
         fp = FileProcessor(col, '|')
-        fp.process_one_file("10k.txt")
-        lines = LineCounter("10k.txt").line_count
+        fp.process_one_file("10k.txt", has_header=True)
+        lines = LineCounter("10k.txt").line_count - 1
         self.assertEqual(lines, col.count_documents({}) - start_count)
         self.assertTrue(col.find_one({"test_id": 114624}))
 
@@ -62,8 +69,8 @@ class Test(unittest.TestCase):
         col = self._database["mot"]
         start_count = col.count_documents({})
         fp = FileProcessor(col, delimiter='|')
-        fp.process_one_file("mot_time_format_test.txt")
-        lines = LineCounter("mot_time_format_test.txt").line_count
+        fp.process_one_file("mot_time_format_test.txt", has_header=True)
+        lines = LineCounter("mot_time_format_test.txt").line_count - 1
         self.assertEqual(lines, col.count_documents({}) - start_count)
         self.assertTrue(col.find_one({"test_id": 1077}))
 
@@ -72,9 +79,9 @@ class Test(unittest.TestCase):
         col = self._database["AandE"]
         start_count = col.count_documents({})
         fp = FileProcessor(col, ',', onerror="ignore")
-        fp.process_one_file(input_filename="AandE_Data_2011-04-10.csv", hasheader=True)
-        lines = LineCounter("AandE_Data_2011-04-10.csv").line_count
-        self.assertEqual(lines, col.count_documents({}) - start_count + 1)
+        fp.process_one_file(input_filename="AandE_Data_2011-04-10.csv", has_header=True)
+        lines = LineCounter("AandE_Data_2011-04-10.csv").line_count - 1
+        self.assertEqual(lines, col.count_documents({}) - start_count)
         self.assertTrue(col.find_one({"Code": "RA4"}))
 
     def test_gdelt_data(self):
@@ -82,7 +89,7 @@ class Test(unittest.TestCase):
         start_count = col.count_documents({})
         fp = FileProcessor(col, onerror="ignore", delimiter="tab")
         fp.process_one_file(input_filename="gdelt.tsv",
-                            hasheader=False,
+                            has_header=False,
                             field_filename="GDELT_columns.tff")
         lines = LineCounter("gdelt.tsv").line_count
         self.assertEqual(lines, col.count_documents({}) - start_count)

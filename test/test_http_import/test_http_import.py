@@ -6,8 +6,9 @@ import requests
 
 from pyimport.fieldfile import FieldFile
 from pyimport.csvlinetodictparser import CSVLineToDictParser
+from pyimport.fileprocessor import FileProcessor
 from pyimport.filereader import FileReader
-from pyimport.filewriter import FileWriter
+from pyimport.databasewriter import DatabaseWriter
 from pyimport.fieldfile import FieldFile
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
@@ -30,7 +31,7 @@ class TestHTTPImport(unittest.TestCase):
         self._client = pymongo.MongoClient()
         self._db = self._client[ "PYIM_HTTP_TEST"]
         self._collection = self._db["PYIM_HTTP_TEST"]
-        self._ff = FieldFile("2018_Yellow_Taxi_Trip_Data_1000.ff")
+        self._ff = FieldFile.load("2018_Yellow_Taxi_Trip_Data_1000.tff")
         self._parser = CSVLineToDictParser(self._ff)
 
     def tearDown(self):
@@ -57,9 +58,8 @@ class TestHTTPImport(unittest.TestCase):
                             delimiter=";")
 
         before_doc_count = self._collection.count_documents({})
-
-        writer = FileWriter(self._collection, reader=reader,parser=self._parser)
-        writer.write(10)
+        fp = FileProcessor(self._collection, delimiter=";")
+        fp.process_one_file("2018_Yellow_Taxi_Trip_Data_1000.csv", has_header=True, limit=10)
 
         after_doc_count = self._collection.count_documents({})
 
@@ -86,18 +86,16 @@ class TestHTTPImport(unittest.TestCase):
     def test_http_import(self):
         if check_internet():
             url = "https://jdrumgoole.s3.eu-west-1.amazonaws.com/2018_Yellow_Taxi_Trip_Data_1000.csv"
-
-            csv_parser = CSVLineToDictParser(self._ff)
-            reader = FileReader("https://jdrumgoole.s3.eu-west-1.amazonaws.com/2018_Yellow_Taxi_Trip_Data_1000.csv",
-                                has_header=True,
-                                delimiter=';')
-
-            writer = FileWriter(self._collection, reader, csv_parser)
+            ff_file = FieldFile.generate_field_file(url,
+                                                    delimiter=";",
+                                                    ff_filename="yellow-trip-data.tff")
+            fp = FileProcessor(self._collection, delimiter=";")
             before_doc_count = self._collection.count_documents({})
-            after_doc_count, elapsed = writer.write(999)
+            after_doc_count = fp.process_one_file(url, field_filename="yellow-trip-data.tff",has_header=True, limit=999)
             self.assertEqual(after_doc_count - before_doc_count, 999)
         else:
             print("Warning:No internet: test_http_import() skipped")
+        os.unlink("yellow-trip-data.tff")
 
 
 

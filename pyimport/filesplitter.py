@@ -26,17 +26,17 @@ import os
 from enum import Enum
 
 
-class Block_Reader(object):
+class BlockReader(object):
     BLOCK_SIZE = 64 * 1024
 
-    def __init__(self, filename, blocksize=None):
+    def __init__(self, filename, block_size=None):
 
         self._filename = filename
 
-        if blocksize:
-            self._blocksize = blocksize
+        if block_size:
+            self._block_size = block_size
         else:
-            self._blocksize = Block_Reader.BLOCK_SIZE
+            self._block_size = BlockReader.BLOCK_SIZE
 
     def __enter__(self):
         self._file = open(self.filename, "rb")
@@ -46,15 +46,15 @@ class Block_Reader(object):
         self._file.close()
 
     @staticmethod
-    def read_blocks(file, blocksize=None):
+    def read_blocks(file, block_size=None):
 
-        if not blocksize:
-            blocksize = Block_Reader.BLOCK_SIZE
+        if not block_size:
+            block_size = BlockReader.BLOCK_SIZE
 
         while True:
             # disable universal newlines so that sizes are correct when
             # reading DOS and Linux files.
-            b = file.read(blocksize)
+            b = file.read(block_size)
             if not b:
                 break
             yield b
@@ -64,7 +64,7 @@ class Block_Reader(object):
         return file.readline()
 
     def read_fd(self, fd):
-        for block in self.read_blocks(fd, self._blocksize):
+        for block in self.read_blocks(fd, self._block_size):
             yield block
 
     def read_file(self, filename):
@@ -76,8 +76,10 @@ class FileType(Enum):
     DOS = 1
     UNIX = 2
 
+
 class CounterException(Exception):
     pass
+
 
 class LineCounter(object):
     """
@@ -145,27 +147,27 @@ class LineCounter(object):
     #     return (cls._file_size, cls._line_count)
 
     @staticmethod
-    def skipLines(f, skipCount):
+    def skip_lines(f, skip_count):
         """
         >>> f = open( "test_set_small.txt", "r" )
         >>> skipLines( f , 20 )
         20
         """
 
-        lineCount = 0
-        if (skipCount > 0):
+        line_count = 0
+        if skip_count > 0:
             # print( "Skipping")
             dummy = f.readline()  # skipCount may be bigger than the number of lines i  the file
             while dummy:
-                lineCount = lineCount + 1
-                if (lineCount == skipCount):
+                line_count = line_count + 1
+                if line_count == skip_count:
                     break
                 dummy = f.readline()
 
-        return lineCount
+        return line_count
 
 
-class File_Splitter(object):
+class FileSplitter(object):
     """
     Split a file into a number of segments. You can autosplit a file into a specific
     number of pieces (autosplit) or divide in segments of a specific os_size (splitfile)

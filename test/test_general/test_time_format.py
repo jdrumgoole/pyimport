@@ -4,7 +4,7 @@ from csv import DictReader
 
 import pymongo
 
-from pyimport.command import ImportCommand
+from pyimport.importcommand import ImportCommand
 
 
 class Test(unittest.TestCase):
@@ -22,7 +22,7 @@ class Test(unittest.TestCase):
 
         # MOT delimiter=|
         cmd = ImportCommand(collection=self._collection, delimiter="|")
-        cmd.run(os.path.join(self._dir, "data", "mot_time_format_test.txt"))
+        cmd.run("mot_time_format_test.txt")
 
         fc = cmd.fieldinfo
         format = fc.format_value("test_date")
@@ -30,7 +30,7 @@ class Test(unittest.TestCase):
         self.assertTrue(fc)
 
         data = {}
-        with open(os.path.join(self._dir, "data", "mot_time_format_test.txt")) as csvfile:
+        with open("mot_time_format_test.txt") as csvfile:
             reader = DictReader(csvfile, fieldnames=fc.fields())
             count = 0
             for i in reader:

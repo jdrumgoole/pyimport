@@ -95,7 +95,7 @@ class ExcelSheet:
             self._sheet = self._workbook.active
 
     def sheet_name(self):
-        return self._sheet.name
+        return self._sheet.filename
 
     @property
     def sheet(self):

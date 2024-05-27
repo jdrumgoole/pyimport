@@ -4,6 +4,7 @@ from typing import Iterator, List
 import _csv
 import requests
 
+
 class FileReader:
     """
     Read CSV lines from a local file or a URL. Provide a generator that returns dicts of the
@@ -15,27 +16,66 @@ class FileReader:
 
     def __init__(self,
                  filename: str,
+                 fields: List[str] = None,
                  has_header: bool = False,
                  delimiter: str = ",",
                  limit: int = 0):
 
-        self._name: str = filename
+        self._filename: str = filename
         self._limit = limit
         self._has_header = has_header
         self._header_line = None
+        self._fields = fields
 
         if delimiter == "tab":
             self._delimiter = "\t"
         else:
             self._delimiter = delimiter
 
+    @staticmethod
+    def skip_lines(f, skip_count: int):
+        """
+        >>> f = open( "test_set_small.txt", "r" )
+        >>> skipLines( f , 20 )
+        20
+        """
+
+        line_count = 0
+        if skip_count > 0:
+            # print( "Skipping")
+            dummy = f.readline()  # skipcount may be bigger than the number of lines i  the file
+            while dummy:
+                line_count = line_count + 1
+                if line_count == skip_count:
+                    break
+                dummy = f.readline()
+        return line_count
+
     @property
-    def name(self) -> str:
-        return self._name
+    def filename(self) -> str:
+        return self._filename
 
     @property
     def header_line(self) -> List[str]:
         return self._header_line
+
+    @staticmethod
+    def read_first_lines(filename: str, limit: int= 10) -> str:
+        lines = []
+        with open(filename, mode='r') as file:
+            for i in range(limit):
+                line = file.readline()
+                if not line:  # Break if there are fewer than 10 lines in the file
+                    break
+                lines.append(line)
+        return ''.join(lines)
+
+    @staticmethod
+    def sniff_header(filename: str) -> bool:
+        sample = FileReader.read_first_lines(filename)
+        sniffer = csv.Sniffer()  # Create a Sniffer object
+        has_header = sniffer.has_header(sample)  # Use Sniffer to detect header
+        return has_header
 
     @property
     def delimiter(self):
@@ -43,7 +83,7 @@ class FileReader:
 
     def iterate_rows(self,
                      iterator: Iterator[List[str]],
-                     limit: int = 0) -> Iterator[List[str]]:
+                     limit: int = 0) -> Iterator[dict]:
         """
         Iterate rows in a presumed CSV file.
 
@@ -54,15 +94,15 @@ class FileReader:
 
         # size = 0
 
-        reader = csv.reader(iterator, delimiter=self._delimiter)
-
+        reader = csv.DictReader(iterator, fieldnames=self._fields, delimiter=self._delimiter)
+        # TODO: Handle the situation where the wrong delimiter is passed
         if self._has_header and self._header_line is None:
             self._header_line = next(reader)
 
         try:
             for i, row in enumerate(reader, 1):
                 if (limit > 0) and (i > limit):
-                        break
+                    break
                 else:
                     yield row
         except _csv.Error as e:
@@ -76,7 +116,7 @@ class FileReader:
         yield from self.readline(limit=0)
 
     def readline(self, limit:int = 0) -> Iterator[List[str]]:
-        if self._name.startswith("http"):
+        if self._filename.startswith("http"):
             yield from self.read_url_file(limit=limit)
         else:
             yield from self.read_local_file(limit=limit)
@@ -99,10 +139,10 @@ class FileReader:
             assert residue is None
 
     def read_url_file(self, limit: int = 0) -> Iterator[List[str]]:
-        yield from self.iterate_rows(FileReader.read_remote_by_line(self._name),
+        yield from self.iterate_rows(FileReader.read_remote_by_line(self._filename),
                                      limit=limit)
 
     def read_local_file(self, limit: int = 0) -> Iterator[List[str]]:
 
-        with open(self._name, newline="") as csv_file:
+        with open(self._filename, newline="") as csv_file:
             yield from self.iterate_rows(csv_file, limit=limit)

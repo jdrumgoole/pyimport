@@ -123,7 +123,7 @@ class CensusSheet:
             raise ValueError(f"Bad filename for sheet {name}, must begin with 'Q'")
 
     def sheet_name(self):
-        return self._sheet.name
+        return self._sheet.filename
 
     @property
     def responses(self):

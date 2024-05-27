@@ -4,6 +4,7 @@ Created on 8 Aug 2017
 @author: jdrumgoole
 """
 import os
+import shutil
 import unittest
 from typing import Dict
 from datetime import datetime
@@ -11,20 +12,18 @@ from datetime import datetime
 import pymongo
 import dateutil
 
-from pyimport.fieldfile import FieldFile
-from pyimport.filewriter import FileWriter
+from pyimport.fieldfile import FieldFile, FieldFileException
+from pyimport.databasewriter import DatabaseWriter
+from pyimport.fileprocessor import FileProcessor
 from pyimport.filereader import FileReader
 from pyimport.filesplitter import LineCounter
 from pyimport.logger import Logger
-from pyimport.type_converter import Converter
-from pyimport.csvlinetodictparser import CSVLineToDictParser
-#
-# path_dir = os.path.dirname(os.path.realpath(__file__))
 
-class Test(unittest.TestCase):
+
+class TestFieldFile(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
-        super(Test, self).__init__(*args, **kwargs)
+        super(TestFieldFile, self).__init__(*args, **kwargs)
         Logger.add_null_hander()
 
     def setUp(self):
@@ -33,16 +32,20 @@ class Test(unittest.TestCase):
         self._col = self._db["FC_TEST"]
 
     def tearDown(self):
-        self._db.drop_collection("FC_TEST")
+        self._client.drop_database("FC_TEST")
+
+    def test_error(self):
+        with self.assertRaises(FieldFileException):
+            _ = FieldFile.load("error.tff")
 
     def test_FieldConfig(self):
-        fc = FieldFile("test_fieldconfig.tff")
+        fc = FieldFile.load("test_fieldconfig.tff")
         self.assertEqual(len(fc.fields()), 4)
 
         self.assertEqual(fc.fields()[0], "Test 1")
         self.assertEqual(fc.fields()[3], "Test 4")
 
-        fc = FieldFile("uk_property_prices.tff")
+        fc = FieldFile.load("uk_property_prices.tff")
         self.assertEqual(len(fc.fields()), 16)
 
         self.assertEqual(fc.fields()[0], "txn")
@@ -51,120 +54,123 @@ class Test(unittest.TestCase):
 
     def test_delimiter_no_header(self):
         start_count = self._col.count_documents({})
-        fc = FieldFile("10k.tff")
-        parser = CSVLineToDictParser(fc)
-        reader = FileReader("10k.txt", has_header=False, delimiter="|")
-        bw = FileWriter(self._col, reader=reader, parser=parser)
-        bw.write()
+        fp = FileProcessor(self._col, delimiter="|")
+        fp.process_one_file("10k.txt", field_filename="10k.tff", has_header=False)
         self.assertEqual(self._col.count_documents({}) - start_count, 10000)
 
     def test_fieldfile_nomatch(self):
-        fc = FieldFile("AandE_Data_2011-04-10.tff")
-        parser = CSVLineToDictParser(fc)
-        reader = FileReader('inventory.csv', has_header=True)
-        bw = FileWriter(self._col, reader=reader, parser=parser)
-        with self.assertRaises(ValueError):
-            bw.write()
+        fc = FieldFile.load("AandE_Data_2011-04-10.tff")
+        fp = FileProcessor(self._col, delimiter=",")
+        with self.assertRaises(TypeError):
+            fp.process_one_file("inventory.csv", field_filename="AandE_Data_2011-04-10.tff")
 
     def test_new_delimiter_and_timeformat_header(self):
         start_count = self._col.count_documents({})
-        fc = FieldFile("mot.tff")
-        parser = CSVLineToDictParser(fc)
-        reader = FileReader('mot_test_set_small.csv', has_header=False, delimiter="|")
-        self.assertTrue(type(reader.name) == str)
-        bw = FileWriter(self._col, reader=reader, parser=parser)
-        total, elapsed = bw.write()
+        fp = FileProcessor(self._col, delimiter="|")
+        total_written = fp.process_one_file("mot_test_set_small.csv", field_filename="mot.tff", has_header=False)
         lines = LineCounter('mot_test_set_small.csv').line_count
         inserted_count = self._col.count_documents({}) - start_count
-        self.assertEqual(inserted_count, total)
+        self.assertEqual(inserted_count, total_written)
         self.assertEqual(inserted_count, lines)
 
     def test_delimiter_header(self):
         start_count = self._col.count_documents({})
-        fc = FieldFile("AandE_Data_2011-04-10.tff")
-        parser = CSVLineToDictParser(fc)
-        reader = FileReader('AandE_Data_2011-04-10.csv', has_header=True)
-        bw = FileWriter(self._col, reader=reader, parser=parser)
-        bw.write()
+        fp = FileProcessor(self._col)
+        total_written = fp.process_one_file('AandE_Data_2011-04-10.csv',
+                                            field_filename="AandE_Data_2011-04-10.tff",
+                                            has_header=True)
         self.assertEqual(self._col.count_documents({}) - start_count, 300)
+        self.assertEqual(self._col.count_documents({}) - start_count, total_written)
 
-    def test_generate_field_filename(self):
+    def test_simple_generate(self):
         gfc = FieldFile.generate_field_file('inventory.csv', ext="xx")
-        self.assertEqual(gfc.field_filename, "inventory.xx")
-        rfc = FieldFile(gfc.field_filename)
+        rfc = FieldFile.load("inventory.xx")
         self.assertTrue("Inventory Item" in rfc.fields())
         self.assertTrue("Amount" in rfc.fields())
         self.assertTrue("Last Order", rfc.fields())
         self.assertEqual(len(rfc.fields()), 3)
-        os.unlink(gfc.field_filename)
+        os.unlink("inventory.xx")
+
+    def test_generate_field_filename(self):
 
         fc = FieldFile.generate_field_file('inventory.csv')
-        self.assertEqual(fc.field_filename, "inventory.tff")
-        os.unlink(fc.field_filename)
+        self.assertTrue(os.path.exists("inventory.tff"))
+        os.unlink("inventory.tff")
 
         fc = FieldFile.generate_field_file('inventory.csv.1')
-        self.assertEqual(fc.field_filename, "inventory.csv.tff", fc.field_filename)
-        os.unlink(fc.field_filename)
+        self.assertTrue(os.path.exists("inventory.csv.tff"))
+        os.unlink("inventory.csv.tff")
 
         fc = FieldFile.generate_field_file('yellow_tripdata_2015-01-06-200k.csv.1')
-        self.assertEqual(fc.field_filename, "yellow_tripdata_2015-01-06-200k.csv.tff", fc.field_filename)
-        os.unlink(fc.field_filename)
+        self.assertTrue(os.path.exists("yellow_tripdata_2015-01-06-200k.csv.tff"))
+        os.unlink("yellow_tripdata_2015-01-06-200k.csv.tff")
 
         fc = FieldFile.generate_field_file('yellow_tripdata_2015-01-06-200k.csv.10')
-        self.assertEqual(fc.field_filename, "yellow_tripdata_2015-01-06-200k.csv.tff", fc.field_filename)
-        os.unlink(fc.field_filename)
+        self.assertTrue(os.path.exists("yellow_tripdata_2015-01-06-200k.csv.tff"))
+        os.unlink("yellow_tripdata_2015-01-06-200k.csv.tff")
 
         fc = FieldFile.generate_field_file('test_results_2016_10.txt.1')
-        self.assertEqual(fc.field_filename, "test_results_2016_10.txt.tff", fc.field_filename)
-        os.unlink(fc.field_filename)
+        self.assertTrue(os.path.exists("test_results_2016_10.txt.tff"))
+        os.unlink("test_results_2016_10.txt.tff")
 
     def test_nyc_2018_genfieldfile(self):
 
         fc = FieldFile.generate_field_file('2018_Yellow_Taxi_Trip_Data_1000.csv', delimiter=";")
-        fc_new = FieldFile(fc.field_filename)
-
+        fc_new = FieldFile.load('2018_Yellow_Taxi_Trip_Data_1000.tff')
         self.assertEqual(fc.fields(), fc_new.fields())
-
-        os.unlink(fc.field_filename)
+        self.assertEqual(list(fc.field_dict.values()), list(fc_new.field_dict.values()))
+        os.unlink("2018_Yellow_Taxi_Trip_Data_1000.tff")
 
     def test_generate_fieldfile(self):
-        fc = FieldFile.generate_field_file("inventory.csv", ext="testff")
-        self.assertEqual(fc.field_filename, "inventory.testff", fc.field_filename)
-        self.assertTrue(os.path.isfile("inventory.testff"), "inventory.testff")
-        parser = CSVLineToDictParser(fc)
-        reader = FileReader("inventory.csv", has_header=True)
+        FieldFile.generate_field_file("inventory.csv", ext="testff")
+        self.assertTrue(os.path.exists("inventory.testff"))
+        fp = FileProcessor(self._col)
         start_count = self._col.count_documents({})
-        writer = FileWriter(self._col, reader=reader, parser=parser)
-        write_count, elapsed = writer.write()
+        total_written = fp.process_one_file("inventory.csv", field_filename="inventory.testff", has_header=True)
         line_count = LineCounter("inventory.csv").line_count
         new_inserted_count = self._col.count_documents({}) - start_count
-        self.assertEqual(new_inserted_count, write_count)  # header must be subtracted
+        self.assertEqual(new_inserted_count, total_written)  # header must be subtracted
         self.assertEqual(new_inserted_count, line_count - 1)  # header must be subtracted
         os.unlink("inventory.testff")
 
     def test_date(self):
-        config = FieldFile("inventory_dates.tff")
-        parser = CSVLineToDictParser(config, locator=False)  # screws up comparison later if locator is true
-        reader = FileReader("inventory.csv", has_header=True)
+        fp = FileProcessor(self._col)
         start_count = self._col.count_documents({})
-        writer = FileWriter(self._col, reader=reader, parser=parser)
-        docs_written, elapsed = writer.write()
-        line_count = LineCounter("inventory.csv").line_count
-        self.assertEqual(self._col.count_documents({}) - start_count, line_count - 1)  # header must be subtracted
-        self.assertEqual(self._col.count_documents({}), docs_written)
+        total_written = fp.process_one_file("inventory.csv", field_filename="inventory_dates.tff", has_header=True)
+        lines_count = LineCounter("inventory.csv").line_count - 1  # header
+        end_count = self._col.count_documents({})
+
+        self.assertEqual(end_count - start_count, lines_count)
+        self.assertEqual(lines_count, total_written)
 
         nuts_doc = self._col.find_one({"Last Order": dateutil.parser.parse("29-Feb-2016")})
         self.assertTrue(nuts_doc)
 
     def testFieldDict(self):
-        d = FieldFile("testresults.tff").field_dict
+        d = FieldFile.load("testresults.tff").field_dict
         self.assertTrue("TestID" in d)
         self.assertTrue("FirstUseDate" in d)
         self.assertTrue("Colour" in d)
         self.assertTrue(d["TestID"]["type"] == "int")
 
     def test_duplicate_id(self):
-        self.assertRaises(ValueError, FieldFile, "duplicate_id.tff")
+        self.assertRaises(ValueError, FieldFile.load, "duplicate_id.tff")
+
+    def test_process_blank_fields(self):
+        if os.path.exists("AandE_Data_Blank_Test.tff"):
+            os.unlink("AandE_Data_Blank_Test.tff")
+
+        shutil.copy("AandE_Data_2011-04-10.csv", "AandE_Data_Blank_Test.csv")
+        fc1 = FieldFile.generate_field_file("AandE_Data_Blank_Test.csv")
+        self.assertTrue(os.path.isfile("AandE_Data_Blank_Test.tff"))
+        fc2 = FieldFile.load( "AandE_Data_Blank_Test.tff")
+        self.assertEqual(len(fc2.fields()), 20)
+        self.assertEqual(len(fc1.fields()), len(fc2.fields()))
+        self.assertEqual(fc2.fields()[0], "Blank-1")
+        self.assertEqual(fc2.fields()[1], "Blank-2")
+        self.assertEqual(fc2.fields()[19], "Number of patients spending >12 hours from decision to admit to admission")
+        os.unlink("AandE_Data_Blank_Test.tff")
+        os.unlink("AandE_Data_Blank_Test.csv")
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ import unittest
 from contextlib import contextmanager
 from io import StringIO
 
-from pyimport.filesplitter import File_Splitter
+from pyimport.filesplitter import FileSplitter
 from pyimport.splitfile import split_file_main
 
 
@@ -39,7 +39,7 @@ class TestSplitFile(unittest.TestCase):
         with open(input_filename, "r") as original_file:
             if has_header:
                 _ = original_file.readline()
-            for filename in File_Splitter.shim_names(output_filenames):
+            for filename in FileSplitter.shim_names(output_filenames):
                 with open(filename, "r") as file_piece:
                     for line in file_piece:
                         left = original_file.readline()
