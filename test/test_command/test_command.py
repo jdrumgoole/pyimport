@@ -2,7 +2,7 @@ import argparse
 import os
 import shutil
 import unittest
-from logging import getLogger
+
 
 import pymongo
 

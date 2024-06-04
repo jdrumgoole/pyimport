@@ -19,6 +19,9 @@ class ErrorResponse(Enum):
         return self.value
 
 
+
+
+
 class EnrichTypes:
 
     def __init__(self,

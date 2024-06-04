@@ -1,6 +1,6 @@
 #
 # Created 'AandEData.tff'
-# at UTC: 2024-06-04 12:50:37.877451+00:00 by class pyimport.fieldfile
+# at UTC: 2024-06-04 22:58:48.994547+00:00 by class pyimport.fieldfile
 # Parameters:
 #    csv        : 'AandEData.csv'
 #    delimiter  : ','
@@ -8,80 +8,100 @@
 [Blank-1]
 type = "int"
 name = "Blank-1"
+format = ""
 
 [Blank-2]
 type = "str"
 name = "Blank-2"
+format = ""
 
 [SHA]
 type = "str"
 name = "SHA"
+format = ""
 
 [Code]
 type = "str"
 name = "Code"
+format = ""
 
 [Name]
 type = "str"
 name = "Name"
+format = ""
 
 ["Type 1 Departments - Major A&E | A&E attendances"]
 type = "int"
 name = "Type 1 Departments - Major A&E | A&E attendances"
+format = ""
 
 ["Type 2 Departments - Single Specialty"]
 type = "int"
 name = "Type 2 Departments - Single Specialty"
+format = ""
 
 ["Type 3 Departments - Other A&E/Minor Injury Unit"]
 type = "int"
 name = "Type 3 Departments - Other A&E/Minor Injury Unit"
+format = ""
 
 ["Total attendances"]
 type = "int"
 name = "Total attendances"
+format = ""
 
 ["Type 1 Departments - Major A&E | A&E attendances > 4 hours from arrival to admission transfer or discharge"]
 type = "int"
 name = "Type 1 Departments - Major A&E | A&E attendances > 4 hours from arrival to admission transfer or discharge"
+format = ""
 
 ["Type 2 Departments  2 - Single Specialty"]
 type = "int"
 name = "Type 2 Departments  2 - Single Specialty"
+format = ""
 
 ["Type 3 Departments  2 - Other A&E/Minor Injury Unit"]
 type = "int"
 name = "Type 3 Departments  2 - Other A&E/Minor Injury Unit"
+format = ""
 
 ["Percentage in 4 hours or less (type 1)"]
 type = "float"
 name = "Percentage in 4 hours or less (type 1)"
+format = ""
 
 ["Percentage in 4 hours or less (all)"]
 type = "float"
 name = "Percentage in 4 hours or less (all)"
+format = ""
 
 ["Emergency Admissions via Type 1 A&E | Emergency Admissions"]
 type = "int"
 name = "Emergency Admissions via Type 1 A&E | Emergency Admissions"
+format = ""
 
 ["Emergency Admissions via Type 2 A&E"]
 type = "int"
 name = "Emergency Admissions via Type 2 A&E"
+format = ""
 
 ["Emergency Admissions via Type 3 and 4 A&E"]
 type = "int"
 name = "Emergency Admissions via Type 3 and 4 A&E"
+format = ""
 
 ["Other Emergency admissions (i_e not via A&E)"]
 type = "int"
 name = "Other Emergency admissions (i_e not via A&E)"
+format = ""
 
 ["Number of patients spending >4 hours but <12 hours from decision to admit to admission"]
 type = "int"
 name = "Number of patients spending >4 hours but <12 hours from decision to admit to admission"
+format = ""
 
 ["Number of patients spending >12 hours from decision to admit to admission"]
 type = "int"
 name = "Number of patients spending >12 hours from decision to admit to admission"
+format = ""
 #end

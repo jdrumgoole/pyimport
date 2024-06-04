@@ -1,41 +1,40 @@
 #
 # Created './test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff'
-# at UTC: 2024-05-16 00:27:42.595102+00:00 by class pyimport.fieldfile
+# at UTC: 2024-06-04 12:56:45.529479+00:00 by class pyimport.fieldfile
 # Parameters:
 #    csv        : './test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv'
 #    delimiter  : ','
-#    has_header : True
 #
 [VendorID]
-type = "str"
+type = "int"
 name = "VendorID"
 
 [tpep_pickup_datetime]
-type = "str"
+type = "datetime"
 name = "tpep_pickup_datetime"
 
 [tpep_dropoff_datetime]
-type = "str"
+type = "datetime"
 name = "tpep_dropoff_datetime"
 
 [passenger_count]
-type = "str"
+type = "int"
 name = "passenger_count"
 
 [trip_distance]
-type = "str"
+type = "float"
 name = "trip_distance"
 
 [pickup_longitude]
-type = "str"
+type = "float"
 name = "pickup_longitude"
 
 [pickup_latitude]
-type = "str"
+type = "float"
 name = "pickup_latitude"
 
 [RateCodeID]
-type = "str"
+type = "int"
 name = "RateCodeID"
 
 [store_and_fwd_flag]
@@ -43,38 +42,38 @@ type = "str"
 name = "store_and_fwd_flag"
 
 [dropoff_longitude]
-type = "str"
+type = "float"
 name = "dropoff_longitude"
 
 [dropoff_latitude]
-type = "str"
+type = "float"
 name = "dropoff_latitude"
 
 [payment_type]
-type = "str"
+type = "int"
 name = "payment_type"
 
 [fare_amount]
-type = "str"
+type = "float"
 name = "fare_amount"
 
 [extra]
-type = "str"
+type = "float"
 name = "extra"
 
 [mta_tax]
-type = "str"
+type = "float"
 name = "mta_tax"
 
 [tip_amount]
-type = "str"
+type = "int"
 name = "tip_amount"
 
 [tolls_amount]
-type = "str"
+type = "int"
 name = "tolls_amount"
 
 [total_amount]
-type = "str"
+type = "float"
 name = "total_amount"
 #end

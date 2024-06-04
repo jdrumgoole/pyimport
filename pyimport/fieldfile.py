@@ -9,7 +9,7 @@ import pprint
 
 import toml
 from enum import Enum
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 
 from pyimport.linereader import RemoteLineReader,LocalLineReader, is_url
 from pyimport.type_converter import Converter
@@ -175,8 +175,9 @@ class FieldFile(object):
                 # TODO: write a test for multiple ID fields
                 field_names = FieldFile.clean_field_names(field_names)
                 data_fields = [FieldFile.clean_data_fields(f) for f in data_fields]
-                data_field_types = [Converter.guess_type(v) for v in data_fields]
-                toml_dict = {v: {"type": k, "name": v} for k, v in zip(data_field_types, field_names)}
+                data_field_types = [Converter.guess_type(v) for v in data_fields]  # generates a list of tuples
+                toml_dict = {k: {"type": v, "name": k, "format": f} for k, (v, f) in zip(field_names, data_field_types)}
+
 
         return toml_dict
 
@@ -220,7 +221,7 @@ class FieldFile(object):
         return FieldFile.write_toml_dict(csv_filename, toml_dict, ff_filename, delimiter, ext)
 
     @staticmethod
-    def load(filename:str) -> "FieldFile":
+    def load(filename: str) -> "FieldFile":
 
         toml_dict = {}
 

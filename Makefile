@@ -62,7 +62,6 @@ split_file:
 	rm 100k.txt.* > /dev/null 2>&1
 
 test_yellowtrip:
-	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
 	poetry run python pyimport/pyimport_main.py --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
 
 test_multi:

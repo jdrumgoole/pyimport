@@ -7,6 +7,7 @@ import argparse
 import os
 import shutil
 import unittest
+from csv import DictReader
 from typing import Dict
 from datetime import datetime
 
@@ -90,7 +91,7 @@ class TestFieldFile(unittest.TestCase):
         self.assertTrue("Amount" in rfc.fields())
         self.assertTrue("Last Order", rfc.fields())
         self.assertEqual(len(rfc.fields()), 3)
-        os.unlink("inventory.xx")
+        #os.unlink("inventory.xx")
 
     def test_generate_field_filename(self):
 

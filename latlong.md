@@ -72,7 +72,7 @@ pickup_longitude,pickup_latitude
 -73.981918334960938,40.783443450927734
 ```
 
-We could convert the file but MongoDB would not be able to intepret it as a GeoSpatial data because
+We could convert the file but MongoDB would not be able to interpret it as a GeoSpatial data because
 MongoDB expects a [GeoJSON](https://docs.mongodb.com/manual/reference/geojson/) coordinate format.
 The format of a GeoJSON point is:
 
