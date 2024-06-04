@@ -54,7 +54,7 @@ test_scripts:
 
 test_data:
 	poetry run python pyimport/splitfile.py --autosplit 4 test/data/100k.txt > /dev/null
-	poetry run python pyimport/pymultiimport_main.py --fieldfile test/data/100k.tff --delimiter "|" --poolsize 2 100k.txt.[12] > /dev/null
+	poetry run python pyimport/pymultiimport_main.py --fieldfile test/data/100k.tff --delimiter "|" --poolsize 2 100k.txt.[1234] > /dev/null
 	rm 100k.txt.* > /dev/null 2>&1
 
 split_file:
