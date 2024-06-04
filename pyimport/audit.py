@@ -68,10 +68,6 @@ class Audit(object):
             yield i['batchID']
 
     def start_batch(self, doc):
-        '''
-        The hack at the start is just a way to handle the old an new way of counting batches
-        once all the audit collections are past 100 we can remove this code.
-        '''
 
         updated_doc = self._auditCollection.find_one_and_update({"batchID": 0,
                                                                  "filename": "Current Batch"},
@@ -79,9 +75,8 @@ class Audit(object):
                                                                 upsert=True,
                                                                 return_document=pymongo.ReturnDocument.AFTER)
 
-        assert (updated_doc)
-        #         if doc[ "currentID"] < 100 :
-        #             raise ValueError( "BatchIDs must be greated than 100: (current value: %i" % doc[ "currentID"])
+        assert updated_doc
+
         self._open_batch_count = self._open_batch_count + 1
         self._auditCollection.insert_one({"batchID": updated_doc["currentID"],
                                           "username": getpass.getuser(),

@@ -1,50 +1,76 @@
 import requests
+from typing import TextIO
 
 
-class LineReader:
-    def __init__(self, filename_or_url):
-        self._filename_or_url = filename_or_url
-        self._file = None
-        self._is_remote = self._filename_or_url.startswith('http://') or self._filename_or_url.startswith('https://')
+class BlockReader:
 
-    def __enter__(self):
-        if self._is_remote:
-            self._file = self._read_remote_file()
-        else:
-            self._file = open(self._filename_or_url, 'r')
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._file and not self._is_remote:
-            self._file.close()
+    def __init__(self, file: TextIO, block_size:int = 1024*1024):
+        self._block_size = block_size
+        self._file = file
 
     def __iter__(self):
-        return self._line_generator()
+        while True:
+            block = self._file.read(self._block_size)
+            if block:
+                yield block
+            else:
+                break
 
-    def _read_remote_file(self):
-        response = requests.get(self._filename_or_url, stream=True)
-        response.raise_for_status()
-        return response.iter_lines(decode_unicode=True)
-
-    def _line_generator(self):
-        if self._file is None:
-            raise StopIteration
-
-        if self._is_remote:
-            for line in self._file:
-                yield line.strip()
-        else:
-            for line in self._file:
-                yield line.strip()
-
-    # Usage example for local file:
+    @staticmethod
+    def diff(lhs:str, rhs: str) -> bool:
+        with open(lhs, 'r') as f1:
+            with open(rhs, 'r') as f2:
+                for line1, line2 in zip(f1, f2):
+                    if line1 != line2:
+                        return False
+        return True
 
 
-# with LineReader('example.txt') as file_iter:
-#     for line in file_iter:
-#         print(line)
-#
-#     # Usage example for remote file:
-# with LineReader('http://example.com/remotefile.txt') as file_iter:
-#     for line in file_iter:
-#         print(line)
+def is_url(url: str) -> bool:
+    return url.startswith("http") or url.startswith("https")
+
+
+class LocalLineReader:
+
+    def __init__(self, file: TextIO, skip_lines=0):
+        self._file = file
+        self._skip_lines = skip_lines
+
+    def __iter__(self):
+        for i, line in enumerate(self._file, 1):
+            if i <= self._skip_lines:
+                continue
+            yield line.strip()
+
+    @staticmethod
+    def read_first_lines(filename: str, limit: int = 10) -> str:
+        lines = []
+        with open(filename, mode='r') as file:
+            for i in range(limit):
+                line = file.readline()
+                if not line:  # Break if there are fewer than 10 lines in the file
+                    break
+                lines.append(line)
+        return ''.join(lines)
+
+
+class RemoteLineReader:
+
+    def __init__(self, url: str, skip_lines=0, block_size=1024*1024):
+        self.url = url
+        self._skip_lines = skip_lines
+        self._block_size = block_size
+
+    def __iter__(self):
+        with requests.get(self.url, stream=True) as r:
+            r.raise_for_status()
+            residue = None
+            for chunk in r.iter_content(self._block_size, decode_unicode=True):
+                if chunk:
+                    for i, line in enumerate(chunk.splitlines(keepends=True), 1):
+                        if i <= self._skip_lines:
+                            continue
+                        yield line.strip()
+            assert residue is None
+
+

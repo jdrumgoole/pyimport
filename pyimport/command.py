@@ -20,6 +20,7 @@ def seconds_to_duration(seconds):
     result = result + "%02d:%02d:%02d.%02d" % (d.hour, d.minute, d.second, d.microsecond)
     return result
 
+
 class Command:
 
     def __init__(self, audit=None, id=None):
@@ -27,45 +28,52 @@ class Command:
         self._log = logging.getLogger(__name__)
         self._audit = audit
         self._id = id
+        self._pre_result = None
+        self._execute_result = None
+        self._post_result = None
 
     def name(self):
         return self._name
 
-    def pre_execute(self, arg):
+    def pre_execute(self, args):
         pass
 
-    def execute(self, arg):
+    def execute(self, args):
         pass
 
-    def post_execute(self, arg):
+    def post_execute(self, args):
         pass
 
-    def run(self, *args):
-        for i in args:
-            self.pre_execute(i)
-            retVal = self.execute(i)
-            self.post_execute(i)
-        return retVal
+    def run(self, args):
+        self._pre_result = self.pre_execute(args)
+        self._execute_result = self.execute(args)
+        self._post_result = self.post_execute(args)
+        return self._execute_result
 
 
 class GenerateFieldfileCommand(Command):
 
-    def __init__(self, audit=None, field_filename=None, id=None,delimiter=","):
+    def __init__(self, audit=None, id=None):
         super().__init__(audit, id)
         self._name = "generate"
         self._log = logging.getLogger(__name__)
-        self._field_filename = field_filename
-        self._delimiter = delimiter
+        self._field_files: list[str] = []
 
     def field_filename(self):
         return self._field_filename
 
-    def execute(self, arg):
-        ff = FieldFile.generate_field_file(csv_filename=arg, ff_filename=self._field_filename)
-        self._field_filename = ff.field_filename
-        return self._field_filename
+    def execute(self, args):
+        for i in args.filenames:
+            if args.fieldfile is None:
+                field_filename = FieldFile.make_default_tff_name(i)
+            else:
+                field_filename = args.fieldfile
+            FieldFile.generate_field_file(csv_filename=i, ff_filename=field_filename, delimiter=args.delimiter)
+            self._field_files.append(field_filename)
+        return self._field_files
 
-    def post_execute(self, arg):
-        self._log.info(f"Created field filename \n'{self._field_filename}' from '{arg}'")
+    def post_execute(self, args):
+        field_list = ",".join([f"'{i}'" for i in self._field_files])
+        self._log.info(f"Created field filename(s) {field_list} from '{args.filenames}'")
 
 

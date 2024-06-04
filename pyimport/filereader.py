@@ -26,11 +26,28 @@ class FileReader:
         self._has_header = has_header
         self._header_line = None
         self._fields = fields
-
+        self._dict_reader = None
+        self._file = None
         if delimiter == "tab":
             self._delimiter = "\t"
         else:
             self._delimiter = delimiter
+
+    def _open_reader(self):
+        self._file = open(self._filename, 'r')
+        self._dict_reader = csv.DictReader(self._file, fieldnames=self._fields, delimiter=self._delimiter)
+        return self._dict_reader
+
+    def _close_reader(self):
+        self._file.close()
+        self._dict_reader = None
+        self._file = None
+    def __enter__(self):
+        self._open_reader()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._close_reader()
 
     @staticmethod
     def skip_lines(f, skip_count: int):
@@ -58,6 +75,12 @@ class FileReader:
     @property
     def header_line(self) -> List[str]:
         return self._header_line
+
+    def __iter__(self):
+        self._open_reader()
+
+    def __next__(self):
+        return self.readline(limit=0)
 
     @staticmethod
     def read_first_lines(filename: str, limit: int= 10) -> str:

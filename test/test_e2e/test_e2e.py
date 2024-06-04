@@ -8,11 +8,11 @@ from datetime import datetime
 import pymongo
 import dateutil
 
+from pyimport.argparser import ArgMgr
 from pyimport.fieldfile import FieldFile, FieldNames
 from pyimport.fileprocessor import FileProcessor
-from pyimport.filereader import FileReader
-from pyimport.csvlinetodictparser import CSVLineToDictParser
 from pyimport.filesplitter import LineCounter
+from pyimport.importcommand import ImportCommand
 
 
 class TestEndToEnd(unittest.TestCase):
@@ -20,6 +20,8 @@ class TestEndToEnd(unittest.TestCase):
         self._client = pymongo.MongoClient(host="mongodb://localhost:27017")
         self._db = self._client["E2E_TEST"]
         self._col = self._db["TEST"]
+        self._args = ArgMgr.default_args()
+        self._args.add_arguments(host="mongodb://localhost:27017", database="E2E_TEST", collection="TEST")
 
     def tearDown(self):
         self._client.drop_database("E2E_TEST")
@@ -36,9 +38,11 @@ class TestEndToEnd(unittest.TestCase):
         self.assertEqual(len(fc.fields()), 14)
         self.assertEqual(fc.fields()[0], "TestID")
         self.assertEqual(fc.fields()[13], "FirstUseDate")
+
         fp = FileProcessor(self._col, delimiter="|")
         start_count = self._col.count_documents({})
-        fp.process_one_file("mot.txt", field_filename="mot.tff", has_header=False)
+        args = self._args.add_arguments(filenames=["mot.txt"], delimiter="|", fieldfile="mot.tff", has_header=False)
+        ImportCommand(args=args.ns).run(args.ns)
         file_size = LineCounter("mot.txt").line_count
         end_count = self._col.count_documents({})
 
@@ -62,19 +66,12 @@ class TestEndToEnd(unittest.TestCase):
         self.assertEqual(fc.fields()[1], "Blank-2")
         self.assertEqual(fc.fields()[2], "SHA")
         self.assertEqual(fc.fields()[19], "Number of patients spending >12 hours from decision to admit to admission")
-        fp = FileProcessor(self._col, delimiter=",")
         start_count = self._col.count_documents({})
-        fp.process_one_file("AandEData.csv", field_filename="AandEData.tff", has_header=True)
+        args = self._args.add_arguments(filenames=["AandEData.csv"], delimiter=",", fieldfile="AandEData.tff", hasheader=True)
+        ImportCommand(args=args.ns).run(args.ns)
         file_size = LineCounter("AandEData.csv").line_count - 1
         end_count = self._col.count_documents({})
         self.assertEqual(end_count - start_count, file_size)
-
-        # reader = FileReader("AandEData.csv", delimiter=",", has_header=True)
-        # parser = CSVLineToDictParser(fc)
-        # for i, line in enumerate(reader.readline(), 1):
-        #     doc = parser.parse_line(line, i)
-        #     for field in fc.fields():
-        #         self.assertTrue(field in doc, f"'{field}'")
 
     def test_plants(self):
         FieldFile.generate_field_file('plants.txt', delimiter="tab")

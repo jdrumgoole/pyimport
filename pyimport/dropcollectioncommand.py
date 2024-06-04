@@ -11,12 +11,12 @@ class DropCollectionCommand(Command):
         self._log = logging.getLogger(__name__)
         self._database = database
 
-    def post_execute(self, arg):
+    def execute(self,  args):
+        # print( "arg:'{}'".format(arg))
+        self._database.drop_collection(args.collection)
+
+    def post_execute(self, args):
         if self._audit:
             self._audit.add_command(self._id, self.name(), {"database": self._database.name,
-                                                            "collection_name": arg})
-        self._log.info(f"dropped collection: {self._database.name}.{arg}")
-
-    def execute(self, arg):
-        # print( "arg:'{}'".format(arg))
-        self._database.drop_collection(arg)
+                                                            "collection_name": args.collection})
+        self._log.info(f"dropped collection: {self._database.name}.{args.collection}")

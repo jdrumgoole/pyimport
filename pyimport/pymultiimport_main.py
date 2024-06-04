@@ -13,8 +13,9 @@ import pymongo
 
 from pyimport.argparser import add_standard_args
 from pyimport.audit import Audit
+from pyimport.fieldfile import FieldFile
+from pyimport.importcommand import ImportCommand
 from pyimport.logger import Logger
-from pyimport.pyimport_main import Importer
 
 
 def strip_arg(arg_list, remove_arg, has_trailing=False):
@@ -102,10 +103,10 @@ def multi_import(*argv):
 
     if args.audit:
         audit = Audit(client)
-        batch_ID = audit.start_batch({"command": sys.argv})
+        batch_id = audit.start_batch({"command": sys.argv})
     else:
         audit = None
-        batch_ID = None
+        batch_id = None
 
     start = time.time()
 
@@ -113,8 +114,11 @@ def multi_import(*argv):
     log.info("Poolsize:{}".format(poolsize))
 
     log.info("Fork using:'%s'", args.forkmethod)
-    subprocess = Importer(audit=audit, batch_ID=batch_ID, args=args)
-    subprocess.setup_log_handlers()
+
+    ####
+    log.info("Started multi-import...")
+
+    subprocess = ImportCommand(audit, batch_id, args)
 
     try:
 
@@ -129,7 +133,8 @@ def multi_import(*argv):
             for i in arg_list:
                 if os.path.isfile(i):
                     log.info(f"Processing:'{i}'")
-                    proc = Process(target=subprocess.run, args=(i,), name=i)
+                    args.filenames = [i]
+                    proc = Process(target=subprocess.run, args=(args,))
                     proc.start()
                     proc_list.append(proc)
                 else:

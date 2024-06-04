@@ -31,24 +31,16 @@ class DatabaseWriterException(Exception):
 class DatabaseWriter:
 
     def __init__(self,
-                 doc_collection: pymongo.collection,
-                 audit_collection: pymongo.collection = None,
-                 filename: str | None = None):
+                 doc_collection: pymongo.collection.Collection):
 
         self._logger = logging.getLogger(__name__)
         self._collection = doc_collection
-        self._audit_collection = audit_collection
         self._totalWritten = 0
         self._buffer: list[dict] = []
         #
         # Need to work out stat manipulation for mongodb insertion
         #
 
-        if filename is None:
-            filename = 'Unknown file'
-        if self._audit_collection:
-            self._audit_collection.insert_one({"filestamp": filename,
-                                               "timestamp": datetime.now(datetime.UTC)})
 
     #
     # def locked_write(self, limit=0, restart=False):
@@ -105,7 +97,7 @@ class DatabaseWriter:
             time_start = timer.start()
             previous_count = 0
             for i, line in enumerate(self._reader.readline(limit=limit), 1):
-                pool_writer.put(self._parser.parse_line(line, i))
+                pool_writer.put(self._parser.enrich_doc(line, i))
                 elapsed = timer.elapsed()
                 if elapsed >= 1.0:
                     inserted_to_date = pool_writer.count

@@ -4,8 +4,9 @@ import os
 import pymongo
 import requests
 
+from pyimport.csvreader import CSVReader
 from pyimport.fieldfile import FieldFile
-from pyimport.csvlinetodictparser import CSVLineToDictParser
+from pyimport.enrichtypes import EnrichTypes
 from pyimport.fileprocessor import FileProcessor
 from pyimport.filereader import FileReader
 from pyimport.databasewriter import DatabaseWriter
@@ -32,25 +33,28 @@ class TestHTTPImport(unittest.TestCase):
         self._db = self._client[ "PYIM_HTTP_TEST"]
         self._collection = self._db["PYIM_HTTP_TEST"]
         self._ff = FieldFile.load("2018_Yellow_Taxi_Trip_Data_1000.tff")
-        self._parser = CSVLineToDictParser(self._ff)
+        self._parser = EnrichTypes(self._ff)
 
     def tearDown(self):
         self._db.drop_collection("PYIM_HTTP_TEST")
 
     def test_limit(self):
         #
-        # need to test limit with a noheader file
+        # TODO:need to test limit with a noheader file
         #
 
-        reader = FileReader("2018_Yellow_Taxi_Trip_Data_1000.csv",
-                            delimiter=";",
-                            limit=10,
-                            has_header=True)
-        count = 0
-        for doc in reader.readline(limit=10):
-            count = count + 1
+        with open("2018_Yellow_Taxi_Trip_Data_1000.csv", "r") as f:
+            ff = FieldFile.load("2018_Yellow_Taxi_Trip_Data_1000.tff")
+            reader = CSVReader(file=f,
+                               delimiter=";",
+                               limit=10,
+                               field_file=ff,
+                               has_header=True)
 
-        self.assertEqual(count, 10)
+            for i, doc in enumerate(reader, 1):
+                pass
+
+            self.assertEqual(i, 10)
 
     def test_local_import(self):
         reader = FileReader("2018_Yellow_Taxi_Trip_Data_1000.csv",

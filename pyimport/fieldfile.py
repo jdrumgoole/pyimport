@@ -11,9 +11,8 @@ import toml
 from enum import Enum
 from datetime import datetime, timezone
 
-from pyimport.linereader import LineReader
+from pyimport.linereader import RemoteLineReader,LocalLineReader, is_url
 from pyimport.type_converter import Converter
-from pyimport.filereader import FileReader
 
 
 class FieldFileException(Exception):
@@ -23,7 +22,7 @@ class FieldFileException(Exception):
 def dict_to_fields(d):
     f = []
     for k, v in d.items():
-        if type(v) == dict:
+        if type(v) is dict:
             f.extend(dict_to_fields(v))
         else:
             f.append(k)
@@ -155,46 +154,39 @@ class FieldFile(object):
         return new_fn
 
     @staticmethod
-    def generate_field_file(csv_filename, ff_filename=None, ext=DEFAULT_EXTENSION, delimiter=","):
+    def create_toml_dict(reader: LocalLineReader | RemoteLineReader, delimiter) -> dict:
+        for i, line in enumerate(reader,1):
+            if i > 2:
+                break
+            if i == 1:
+                field_names = [n for n in line.split(delimiter)]
+            else: # i == 2
+                data_fields = [f.strip() for f in line.split(delimiter)]
 
-        toml_dict: dict = {}
-        if not ext.startswith("."):
-            ext = f".{ext}"
+                if len(field_names) > len(data_fields):
+                    raise ValueError(f"Header line has more columns than first "
+                                     f"line: {len(field_names)} > {len(data_fields)}")
+                elif len(field_names) < len(data_fields):
+                    raise ValueError(f"Header line has less columns"
+                                     f"than first line: {len(field_names)} < {len(data_fields)}")
+                # else:
+                #     header_line = ["" for i in range(len(first_line))]
 
-        if delimiter == "tab":
-            delimiter = "\t"
+                # TODO: write a test for multiple ID fields
+                field_names = FieldFile.clean_field_names(field_names)
+                data_fields = [FieldFile.clean_data_fields(f) for f in data_fields]
+                data_field_types = [Converter.guess_type(v) for v in data_fields]
+                toml_dict = {v: {"type": k, "name": v} for k, v in zip(data_field_types, field_names)}
 
+        return toml_dict
+
+    @staticmethod
+    def write_toml_dict(csv_filename: str, toml_dict: dict, ff_filename: str | None, delimiter: str, ext: str) -> "FieldFile":
         if ff_filename is None:
-            if csv_filename.startswith("http://") or csv_filename.startswith("https://"):
+            if is_url(csv_filename):
                 ff_filename = csv_filename.split('/')[-1]
-                ff_filename = os.path.splitext(ff_filename)[0] + ext
             else:
                 ff_filename = os.path.splitext(csv_filename)[0] + ext
-
-        with LineReader(csv_filename) as lr:
-
-            for line in lr:
-                if not line.startswith("#"):
-                    break
-
-            field_names = [n for n in line.split(delimiter)]
-            data_line = next(iter(lr)).strip()
-            data_fields = [f.strip() for f in data_line.split(delimiter)]
-
-            if len(field_names) > len(data_fields):
-                raise ValueError(f"Header line has more columns than first "
-                                 f"line: {len(field_names)} > {len(data_fields)}")
-            elif len(field_names) < len(data_fields):
-                raise ValueError(f"Header line has less columns"
-                                 f"than first line: {len(field_names)} < {len(data_fields)}")
-            # else:
-            #     header_line = ["" for i in range(len(first_line))]
-
-            # TODO: write a test for multiple ID fields
-            field_names = FieldFile.clean_field_names(field_names)
-            data_fields = [FieldFile.clean_data_fields(f) for f in data_fields]
-            data_field_types = [Converter.guess_type(v) for v in data_fields]
-            toml_dict = {v: {"type": k, "name": v} for k, v in zip(data_field_types, field_names)}
 
         with open(ff_filename, "w") as ff_file:
             ff_file.write("#\n")
@@ -207,8 +199,25 @@ class FieldFile(object):
             toml_string = toml.dumps(toml_dict)
             ff_file.write(toml_string)
             ff_file.write(f"#end\n")
+            return FieldFile(toml_dict)
 
-        return FieldFile(toml_dict)
+    @staticmethod
+    def generate_field_file(csv_filename, ff_filename=None, ext=DEFAULT_EXTENSION, delimiter=","):
+
+        toml_dict: dict = {}
+        if not ext.startswith("."):
+            ext = f".{ext}"
+
+        if delimiter == "tab":
+            delimiter = "\t"
+
+        if is_url(csv_filename):
+            toml_dict = FieldFile.create_toml_dict(RemoteLineReader(csv_filename), delimiter)
+        else:
+            with open(csv_filename) as csv_file:
+                toml_dict = FieldFile.create_toml_dict(LocalLineReader(csv_file), delimiter)
+
+        return FieldFile.write_toml_dict(csv_filename, toml_dict, ff_filename, delimiter, ext)
 
     @staticmethod
     def load(filename:str) -> "FieldFile":

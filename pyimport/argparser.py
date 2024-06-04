@@ -3,14 +3,18 @@ Created on 12 Aug 2017
 
 @author: jdrumgoole
 """
-from pyimport.logger import Logger
-from pyimport.version import __VERSION__
-from pyimport.csvlinetodictparser import ErrorResponse
-from pyimport.doctimestamp import DocTimeStamp
+import argparse
 from configargparse import ArgumentParser
 
+from pyimport.logger import Logger
+from pyimport.version import __VERSION__
+from pyimport.enrichtypes import ErrorResponse
+from pyimport.doctimestamp import DocTimeStamp
+from pyimport.memoize import memoize
 
-def add_standard_args(parser):
+
+
+def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     """
     Construct parser for pyimport return it as a list suitable for passing to the parents
     argument of the next parser
@@ -70,6 +74,74 @@ def add_standard_args(parser):
     #
     # parser.add_argument( '--encoding', default="utf-8", help="Unicode encoding for input file [default: %(default)s]")
     return parser
+
+
+class ArgMgr:
+
+    def __init__(self, ns: argparse.Namespace):
+        self._args = ns
+
+    def merge_namespace(self, ns: argparse.Namespace) -> argparse.Namespace:
+        merged = argparse.Namespace()
+        merged.__dict__.update(vars(self._args))
+        merged.__dict__.update(vars(ns))
+        self._args = merged
+        return merged
+
+    def merge(self, am: "ArgMgr") -> "ArgMgr":
+        return ArgMgr(self.merge_namespace(am._args))
+
+    def __len__(self):
+        return len(vars(self._args))
+
+    @property
+    def d(self) -> dict:
+        return vars(self._args)
+
+    @property
+    def ns(self) -> argparse.Namespace:
+        return self._args
+
+    @classmethod
+    def default_args(cls) -> "ArgMgr":
+        p = ArgumentParser()
+        p = add_standard_args(p)
+        return ArgMgr(p.parse_args([]))
+
+    @staticmethod
+    def default_args_dict() -> dict:
+        return ArgMgr.ns_to_dict(ArgMgr.default_args())
+
+    def add_arguments(self,  **kwargs) -> "ArgMgr":
+        new_ns = argparse.Namespace(**kwargs)
+        self.merge_namespace(new_ns)
+        return self
+
+    @staticmethod
+    def dict_to_ns(d: dict) -> argparse.Namespace:
+        """
+        Convert a dictionary to an argparse.Namespace object.
+
+        :param d: Dictionary to convert
+        :return: Namespace object with attributes corresponding to dictionary keys and values
+        """
+        return argparse.Namespace(**d)
+
+    @staticmethod
+    def ns_to_dict(namespace: argparse.Namespace) -> dict:
+        """
+        Convert an argparse.Namespace object to a dictionary.
+
+        :param namespace: Namespace object to convert
+        :return: Dictionary with keys and values corresponding to Namespace attributes
+        """
+        return vars(namespace)
+
+    def __getitem__(self, key):
+        return self._args.__dict__[key]
+
+    def __setitem__(self, key, value):
+        self._args.__dict__[key] = value
 
 
 if __name__ == "__main__":

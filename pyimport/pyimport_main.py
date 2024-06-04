@@ -20,96 +20,95 @@ from pyimport.audit import Audit
 from pyimport.command import GenerateFieldfileCommand
 from pyimport.dropcollectioncommand import DropCollectionCommand
 from pyimport.importcommand import ImportCommand
-from pyimport.fileprocessor import AbortException
 from pyimport.logger import Logger
-from pyimport.fieldfile import FieldFile, FieldFileException
+from pyimport.fieldfile import FieldFile
 
 
-class Importer(object):
+# class Importer(object):
+#
+#     def __init__(self, audit, batch_ID, args):
+#
+#         self._audit = audit
+#         self._batch_ID = batch_ID
+#         self._log = logging.getLogger(__name__)
+#         self._host = args.host
+#         self._write_concern = args.writeconcern
+#         self._fsync = args.fsync
+#         self._journal = args.journal
+#         self._audit = args.audit
+#         self._database_name = args.database
+#         self._collection_name = args.collection
+#         self._collection = None
+#         self._field_filename = args.fieldfile
+#         self._has_header = args.hasheader
+#         self._delimiter = args.delimiter
+#         self._onerror = args.onerror
+#         self._limit = args.limit
+#         self._locator = args.locator
+#         self._timestamp = args.addtimestamp
+#         self._locator = args.locator
+#         self._args = args
+#         self._batch_size = args.batchsize
+#
+#     def setup_log_handlers(self):
+#         self._log = Logger(self._args.logname, self._args.loglevel).log()
+#
+#         Logger.add_file_handler(self._args.logname)
+#
+#         if not self._args.silent:
+#             Logger.add_stream_handler(self._args.logname)
+#
+#     def run(self, filename):
+#         if not self._log:
+#             self._log = Logger(self._args.logname, self._args.loglevel).log()
+#
+#         self._log.info("Started pyimport")
+#
+#         if self._field_filename is None:
+#             self._field_filename = FieldFile.make_default_tff_name(filename)
+#
+#         if self._write_concern == 0:  # pymongo won't allow other args with w=0 even if they are false
+#             client = pymongo.MongoClient(self._host, w=self._write_concern)
+#         else:
+#             client = pymongo.MongoClient(self._host, w=self._write_concern, fsync=self._fsync, j=self._journal)
+#
+#         database = client[self._database_name]
+#         self._collection = database[self._collection_name]
+#
+#         self._log.info(f"Write concern : {self._write_concern}")
+#         self._log.info(f"journal       : {self._journal}")
+#         self._log.info(f"fsync         : {self._fsync}")
+#         self._log.info(f"has header    : {self._has_header}")
+#
+#         cmd = ImportCommand(collection=self._collection,
+#                             field_filename=self._field_filename,
+#                             delimiter=self._delimiter,
+#                             has_header=self._has_header,
+#                             onerror=self._onerror,
+#                             limit=self._limit,
+#                             audit=self._audit,
+#                             locator=self._locator,
+#                             timestamp=self._timestamp,
+#                             id=self._batch_ID,
+#                             batch_size=self._batch_size)
+#
+#         cmd.run(filename)
+#
+#         return 1
 
-    def __init__(self, audit, batch_ID, args):
-
-        self._audit = audit
-        self._batch_ID = batch_ID
-        self._log = logging.getLogger(__name__)
-        self._host = args.host
-        self._write_concern = args.writeconcern
-        self._fsync = args.fsync
-        self._journal = args.journal
-        self._audit = args.audit
-        self._database_name = args.database
-        self._collection_name = args.collection
-        self._collection = None
-        self._field_filename = args.fieldfile
-        self._has_header = args.hasheader
-        self._delimiter = args.delimiter
-        self._onerror = args.onerror
-        self._limit = args.limit
-        self._locator = args.locator
-        self._timestamp = args.addtimestamp
-        self._locator = args.locator
-        self._args = args
-        self._batch_size = args.batchsize
-
-    def setup_log_handlers(self):
-        self._log = Logger(self._args.logname, self._args.loglevel).log()
-
-        Logger.add_file_handler(self._args.logname)
-
-        if not self._args.silent:
-            Logger.add_stream_handler(self._args.logname)
-
-    def run(self, filename):
-        if not self._log:
-            self._log = Logger(self._args.logname, self._args.loglevel).log()
-
-        self._log.info("Started pyimport")
-
-        if self._field_filename is None:
-            self._field_filename = FieldFile.make_default_tff_name(filename)
-
-        if self._write_concern == 0:  # pymongo won't allow other args with w=0 even if they are false
-            client = pymongo.MongoClient(self._host, w=self._write_concern)
-        else:
-            client = pymongo.MongoClient(self._host, w=self._write_concern, fsync=self._fsync, j=self._journal)
-
-        database = client[self._database_name]
-        self._collection = database[self._collection_name]
-
-        self._log.info(f"Write concern : {self._write_concern}")
-        self._log.info(f"journal       : {self._journal}")
-        self._log.info(f"fsync         : {self._fsync}")
-        self._log.info(f"has header    : {self._has_header}")
-
-        cmd = ImportCommand(collection=self._collection,
-                            field_filename=self._field_filename,
-                            delimiter=self._delimiter,
-                            has_header=self._has_header,
-                            onerror=self._onerror,
-                            limit=self._limit,
-                            audit=self._audit,
-                            locator=self._locator,
-                            timestamp=self._timestamp,
-                            id=self._batch_ID,
-                            batch_size=self._batch_size)
-
-        cmd.run(filename)
-
-        return 1
-
-    def process_batch(self, pool_size, files):
-
-        procs = []
-        for f in files[:pool_size]:
-            self._log.info("Processing:'%s'", f)
-            proc = Process(target=self.run, args=(f,), name=f)
-            proc.start()
-            procs.append(proc)
-
-        for p in procs:
-            p.join()
-
-        return files[pool_size:]
+    # def process_batch(self, pool_size, files):
+    #
+    #     procs = []
+    #     for f in files[:pool_size]:
+    #         self._log.info("Processing:'%s'", f)
+    #         proc = Process(target=self.run, args=(f,), name=f)
+    #         proc.start()
+    #         procs.append(proc)
+    #
+    #     for p in procs:
+    #         p.join()
+    #
+    #     return files[pool_size:]
 
 
 def pyimport_main(input_args=None):
@@ -183,16 +182,14 @@ def pyimport_main(input_args=None):
     if args.genfieldfile:
         args.has_header = True
         log.info('Forcing has_header true for --genfieldfile')
-        cmd = GenerateFieldfileCommand(field_filename=args.fieldfile, delimiter=args.delimiter)
-        for i in args.filenames:
-            cmd.run(i)
+        GenerateFieldfileCommand(args.audit).run(args)
 
     if args.audit:
         audit = Audit(client=client)
-        batch_ID = audit.start_batch({"command": input_args})
+        batch_id = audit.start_batch({"command": input_args})
     else:
         audit = None
-        batch_ID = None
+        batch_id = None
 
     if args.database:
         database_name = args.database
@@ -211,8 +208,7 @@ def pyimport_main(input_args=None):
         if args.restart:
             log.info("Warning --restart overrides --drop ignoring drop commmand")
         else:
-            cmd = DropCollectionCommand(audit=audit, id=batch_ID, database=database)
-            cmd.run(collection_name)
+            cmd = DropCollectionCommand(audit=audit, id=batch_id).run(database, args)
 
     if args.fieldinfo:
         cfg = FieldFile(args.fieldinfo)
@@ -223,32 +219,17 @@ def pyimport_main(input_args=None):
 
     if not args.genfieldfile:
         if args.filenames:
-
             if args.audit:
                 audit = Audit(client=client)
-                batch_ID = audit.start_batch({"command": sys.argv})
+                batch_id = audit.start_batch({"command": sys.argv})
             else:
                 audit = None
-                batch_ID = None
+                batch_id = None
 
-            process = Importer(audit, batch_ID, args)
-
-            for i in args.filenames:
-                try:
-                    process.run(i)
-                except OSError as e:
-                    log.error(f"{e}")
-                except exceptions.HTTPError as e:
-                    log.error(f"{e}")
-                except FieldFileException as e:
-                    log.error(f"{e}")
-                except AbortException as e:
-                    log.error(f"{e}")
-
+            ImportCommand(audit, batch_id, args).run(args)
 
             if args.audit:
-                audit.end_batch(batch_ID)
-
+                audit.end_batch(batch_id)
         else:
             log.info("No input files: Nothing to do")
 
