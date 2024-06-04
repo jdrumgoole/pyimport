@@ -49,7 +49,7 @@ class CSVReader:
         return self._skip_lines
 
     def __iter__(self):
-
+        # TODO: handle reading URLs
         reader = csv.reader(self._file, delimiter=self._delimiter)
         # we use Reader rather than DictReader because it is more straightforward to use when we may
         # or may not have a header line in the file. We can always use the field_file to map the fields

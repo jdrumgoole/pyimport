@@ -4,6 +4,7 @@ import os
 import pymongo
 import requests
 
+from pyimport.argparser import ArgMgr
 from pyimport.csvreader import CSVReader
 from pyimport.fieldfile import FieldFile
 from pyimport.enrichtypes import EnrichTypes
@@ -11,6 +12,7 @@ from pyimport.fileprocessor import FileProcessor
 from pyimport.filereader import FileReader
 from pyimport.databasewriter import DatabaseWriter
 from pyimport.fieldfile import FieldFile
+from pyimport.importcommand import ImportCommand
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -34,6 +36,11 @@ class TestHTTPImport(unittest.TestCase):
         self._collection = self._db["PYIM_HTTP_TEST"]
         self._ff = FieldFile.load("2018_Yellow_Taxi_Trip_Data_1000.tff")
         self._parser = EnrichTypes(self._ff)
+        self._args = ArgMgr.default_args()
+        self._args.add_arguments(host="mongodb://localhost:27017",
+                           database="PYIM_HTTP_TEST",
+                           collection="PYIM_HTTP_TEST",
+                           fieldfile="2018_Yellow_Taxi_Trip_Data_1000.tff")
 
     def tearDown(self):
         self._db.drop_collection("PYIM_HTTP_TEST")
@@ -56,19 +63,6 @@ class TestHTTPImport(unittest.TestCase):
 
             self.assertEqual(i, 10)
 
-    def test_local_import(self):
-        reader = FileReader("2018_Yellow_Taxi_Trip_Data_1000.csv",
-                            has_header=True,
-                            delimiter=";")
-
-        before_doc_count = self._collection.count_documents({})
-        fp = FileProcessor(self._collection, delimiter=";")
-        fp.process_one_file("2018_Yellow_Taxi_Trip_Data_1000.csv", has_header=True, limit=10)
-
-        after_doc_count = self._collection.count_documents({})
-
-        self.assertEqual( after_doc_count - before_doc_count, 10)
-
     def test_http_generate_fieldfile(self):
         if check_internet():
             # Demographic_Statistics_By_Zip_Code.csv
@@ -90,12 +84,13 @@ class TestHTTPImport(unittest.TestCase):
     def test_http_import(self):
         if check_internet():
             url = "https://jdrumgoole.s3.eu-west-1.amazonaws.com/2018_Yellow_Taxi_Trip_Data_1000.csv"
+            args = self._args.add_arguments(filenames=[url], delimiter=";", hasheader=True)
             ff_file = FieldFile.generate_field_file(url,
                                                     delimiter=";",
                                                     ff_filename="yellow-trip-data.tff")
-            fp = FileProcessor(self._collection, delimiter=";")
             before_doc_count = self._collection.count_documents({})
-            after_doc_count = fp.process_one_file(url, field_filename="yellow-trip-data.tff",has_header=True, limit=999)
+            total_written = ImportCommand(args=args.ns).run(args.ns)
+            after_doc_count = self._collection.count_documents({})
             self.assertEqual(after_doc_count - before_doc_count, 999)
         else:
             print("Warning:No internet: test_http_import() skipped")

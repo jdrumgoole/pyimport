@@ -4,6 +4,7 @@ from csv import DictReader
 
 import pymongo
 
+from pyimport.argparser import ArgMgr
 from pyimport.importcommand import ImportCommand
 
 
@@ -14,6 +15,8 @@ class Test(unittest.TestCase):
         self._db = self._client["TEST_FORMAT"]
         self._collection = self._db["format"]
         self._dir = os.path.dirname(os.path.realpath(__file__))
+        self._args = ArgMgr.default_args()
+        self._args.add_arguments(host="mongodb://localhost:27017", database="TEST_FORMAT", collection="format")
 
     def tearDown(self):
         self._client.drop_database(self._db)
@@ -21,12 +24,13 @@ class Test(unittest.TestCase):
     def test_data_format(self):
 
         # MOT delimiter=|
-        cmd = ImportCommand(collection=self._collection, delimiter="|")
-        cmd.run("mot_time_format_test.txt")
+        args = self._args.add_arguments(delimiter="|", filenames=["mot_time_format_test.txt"])
+        cmd = ImportCommand(args=args.ns)
+        cmd.run(args=args.ns)
 
-        fc = cmd.fieldinfo
-        format = fc.format_value("test_date")
-        self.assertEqual(format, "%Y-%m-%d")
+        fc = cmd.field_info
+        fmt = fc.format_value("test_date")
+        self.assertEqual(fmt, "%Y-%m-%d")
         self.assertTrue(fc)
 
         data = {}

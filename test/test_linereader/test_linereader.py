@@ -3,7 +3,7 @@ import os
 import pytest
 
 import pytest
-from pyimport.linereader import BlockReader, LocalLineReader, RemoteLineReader
+from pyimport.linereader import BlockReader, LocalLineReader, RemoteLineReader, diff, is_url
 
 local_expected_lines = [
     "Inventory Item, Amount, Last Order",
@@ -30,7 +30,7 @@ def test_reader():
             for block in BlockReader(file_iter):
                 output.write(block)
                 assert len(block) <= 1024*1024
-    assert Reader.diff('yellow_tripdata_2015-01-06-200k.csv', 'yellow_tripdata_2015-01-06-200k.csv') is True
+    assert diff('yellow_tripdata_2015-01-06-200k.csv', 'yellow_tripdata_2015-01-06-200k.csv') is True
     os.unlink("yellow_tripdata_2015-01-06-200k.csv.copy")
 
 

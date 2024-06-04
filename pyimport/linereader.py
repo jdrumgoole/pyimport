@@ -16,14 +16,14 @@ class BlockReader:
             else:
                 break
 
-    @staticmethod
-    def diff(lhs:str, rhs: str) -> bool:
-        with open(lhs, 'r') as f1:
-            with open(rhs, 'r') as f2:
-                for line1, line2 in zip(f1, f2):
-                    if line1 != line2:
-                        return False
-        return True
+
+def diff(lhs:str, rhs: str) -> bool:
+    with open(lhs, 'r') as f1:
+        with open(rhs, 'r') as f2:
+            for line1, line2 in zip(f1, f2):
+                if line1 != line2:
+                    return False
+    return True
 
 
 def is_url(url: str) -> bool:

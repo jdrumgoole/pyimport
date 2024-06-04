@@ -17,7 +17,7 @@ from pyimport.databasewriter import DatabaseWriter
 from pyimport.doctimestamp import DocTimeStamp
 from pyimport.fieldfile import FieldFile, FieldFileException
 from pyimport.timer import Timer
-
+from pyimport.linereader import RemoteLineReader, is_url
 
 class ImportCommand(Command):
 
@@ -99,8 +99,17 @@ class ImportCommand(Command):
         insert_list = []
         time_period = 1.0
         time_start = timer.start()
+        is_url_file = is_url(filename)
+        csv_file = None
 
-        with open(filename, "r") as csv_file:
+        if is_url_file:
+            self._log.info(f"Reading from URL:'{filename}'")
+            csv_file  = RemoteLineReader(url=filename)
+        else:
+            self._log.info(f"Reading from file:'{filename}'")
+            csv_file = open(filename, "r")
+
+        try:
             reader = CSVReader(file=csv_file,
                                limit=self._limit,
                                field_file=self._field_file,
@@ -133,6 +142,8 @@ class ImportCommand(Command):
                         inserted_this_quantum = 0
                         self._log.info(
                             f"Input:'{filename}': docs per sec:{docs_per_second:7.0f}, total docs:{total_written:>10}")
+            if not is_url_file:
+                csv_file.close()
             if len(insert_list) > 0:
                 try:
                     results = self._writer.write(insert_list)
@@ -142,39 +153,40 @@ class ImportCommand(Command):
                     self._log.error(f"pymongo.errors.BulkWriteError: {e.details}")
                     raise
 
-            time_finish = time.time()
-            elapsed_time = time_finish - time_start
-            return total_written, elapsed_time
+        finally:
+            if not is_url_file:
+                csv_file.close()
+
+        time_finish = time.time()
+        elapsed_time = time_finish - time_start
+        return total_written, elapsed_time
 
     def execute(self, args):
 
         for i in self._filenames:
-            if os.path.exists(i):
-                self._log.info(f"Processing:'{i}'")
-                try:
-                    total_written_this_file, elapsed_time = self.process_file(i)
-                    self._total_written = self._total_written + total_written_this_file
-                    if self._audit:
-                        audit_doc = {"filename": i, "total_written": total_written_this_file}
-                        self._audit.add_command(self._id, self.name(), audit_doc)
-                    self._log.info(f"imported file: '{i}' ({total_written_this_file} rows)")
-                    self._log.info(f"Total elapsed time to upload '{i}' : {seconds_to_duration(elapsed_time)}")
-                    self._log.info(f"Average upload rate per second: {round(self._total_written / elapsed_time)}")
-                except OSError as e:
-                    self._log.error(f"{e}")
-                except exceptions.HTTPError as e:
-                    self._log.error(f"{e}")
-                except FieldFileException as e:
-                    self._log.error(f"{e}")
-                except _csv.Error as e:
-                    self._log.error(f"{e}")
-                except ValueError as e:
-                    self._log.error(f"{e}")
-                except KeyboardInterrupt:
-                    self._log.error(f"Keyboard interrupt... exiting")
-                    sys.exit(1)
-            else:
-                self._log.warning(f"No such file: '{i}' ignoring")
+            self._log.info(f"Processing:'{i}'")
+            try:
+                total_written_this_file, elapsed_time = self.process_file(i)
+                self._total_written = self._total_written + total_written_this_file
+                if self._audit:
+                    audit_doc = {"filename": i, "total_written": total_written_this_file}
+                    self._audit.add_command(self._id, self.name(), audit_doc)
+                self._log.info(f"imported file: '{i}' ({total_written_this_file} rows)")
+                self._log.info(f"Total elapsed time to upload '{i}' : {seconds_to_duration(elapsed_time)}")
+                self._log.info(f"Average upload rate per second: {round(self._total_written / elapsed_time)}")
+            except OSError as e:
+                self._log.error(f"{e}")
+            except exceptions.HTTPError as e:
+                self._log.error(f"{e}")
+            except FieldFileException as e:
+                self._log.error(f"{e}")
+            except _csv.Error as e:
+                self._log.error(f"{e}")
+            except ValueError as e:
+                self._log.error(f"{e}")
+            except KeyboardInterrupt:
+                self._log.error(f"Keyboard interrupt... exiting")
+                sys.exit(1)
 
         return self._total_written
 
@@ -182,8 +194,8 @@ class ImportCommand(Command):
         return self._total_written
 
     @property
-    def fieldinfo(self):
-        return self._fieldinfo
+    def field_info(self):
+        return self._field_file
 
     def post_execute(self, arg):
         super().post_execute(arg)
