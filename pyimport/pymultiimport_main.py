@@ -118,7 +118,7 @@ def multi_import(*argv):
     ####
     log.info("Started multi-import...")
 
-    subprocess = ImportCommand(audit, batch_id, args)
+    subprocess = ImportCommand(audit, args)
 
     try:
 

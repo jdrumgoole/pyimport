@@ -21,9 +21,9 @@ from pyimport.linereader import RemoteLineReader, is_url
 
 class ImportCommand(Command):
 
-    def __init__(self, audit=None, batch_id=None, args=None):
+    def __init__(self, audit=None, args=None):
 
-        super().__init__(audit, batch_id)
+        super().__init__(audit)
         self._log = logging.getLogger(__name__)
         self._host = args.host
         self._database_name = args.database
@@ -169,8 +169,11 @@ class ImportCommand(Command):
                 total_written_this_file, elapsed_time = self.process_file(i)
                 self._total_written = self._total_written + total_written_this_file
                 if self._audit:
-                    audit_doc = {"filename": i, "total_written": total_written_this_file}
-                    self._audit.add_command(self._id, self.name(), audit_doc)
+                    audit_doc = { "command": "import",
+                                  "filename": i,
+                                  "elapsed_time": elapsed_time,
+                                  "total_written": total_written_this_file}
+                    self._audit.add_batch_info(self._audit.current_batch_id, audit_doc)
                 self._log.info(f"imported file: '{i}' ({total_written_this_file} rows)")
                 self._log.info(f"Total elapsed time to upload '{i}' : {seconds_to_duration(elapsed_time)}")
                 self._log.info(f"Average upload rate per second: {round(self._total_written / elapsed_time)}")

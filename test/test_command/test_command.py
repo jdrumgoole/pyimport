@@ -3,7 +3,6 @@ import os
 import shutil
 import unittest
 
-
 import pymongo
 
 from pyimport.argparser import ArgMgr
@@ -27,15 +26,13 @@ class Test(unittest.TestCase):
         self._default_args.add_arguments(database="TEST_CMD", collection="import_test")
 
     def tearDown(self):
-        self._client.drop_database( "TEST_CMD")
+        self._client.drop_database("TEST_CMD")
 
     def test_Drop_Command(self):
         self._audit = Audit(database=self._client["TEST_AUDIT"])
         batch_id = self._audit.start_batch({"test": "test_batch"})
 
-        cmd = DropCollectionCommand(database=self._database,
-                                    audit=self._audit,
-                                    id=batch_id)
+        cmd = DropCollectionCommand(audit=self._audit, database=self._database)
 
         self.assertTrue(self._collection.find_one({"hello": "world"}))
         ns = argparse.Namespace(collection='test')
@@ -66,9 +63,10 @@ class Test(unittest.TestCase):
         start_size = collection.count_documents({})
         size_10k = LineCounter("10k.txt").line_count
         size_120 = LineCounter("120lines.txt").line_count
-        args = self._default_args.add_arguments(fieldfile="10k.tff", filenames=["10k.txt", "120lines.txt"], delimiter="|")
+        args = self._default_args.add_arguments(fieldfile="10k.tff", filenames=["10k.txt", "120lines.txt"],
+                                                delimiter="|")
 
-        ImportCommand(audit=self._audit, batch_id=batch_id, args=args.ns).run(args.ns)
+        ImportCommand(audit=self._audit, args=args.ns).run(args.ns)
 
         new_size = collection.count_documents({})
         self.assertEqual(size_10k + size_120, new_size - start_size)
@@ -83,7 +81,7 @@ class Test(unittest.TestCase):
         start_size = collection.count_documents({})
         size_test = LineCounter("test_date_data.csv").line_count - 1
         args = self._default_args.add_arguments(fieldfile="10k.tff", filenames=["test_date_data.csv"], hasheader=True)
-        docs_written = ImportCommand(audit=self._audit, batch_id=batch_id, args=args.ns).run(args.ns)
+        docs_written = ImportCommand(audit=self._audit, args=args.ns).run(args.ns)
         assert size_test == docs_written
 
         new_size = collection.count_documents({})
@@ -100,7 +98,7 @@ class Test(unittest.TestCase):
         args = self._default_args.add_arguments(fieldfile="yellow_trip_data_10.tff",
                                                 collection="nyc_test",
                                                 filenames=["yellow_trip_data_10.csv"], hasheader=True)
-        ImportCommand(audit=self._audit, batch_id=batch_id,args=args.ns).run(args.ns)
+        ImportCommand(audit=self._audit, args=args.ns).run(args.ns)
         new_size = collection.count_documents({})
         self.assertEqual(size_test, new_size - start_size)
 

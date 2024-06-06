@@ -30,173 +30,159 @@ There is an index on batchID.
 import getpass
 import os
 import socket
+import time
 from datetime import datetime, timezone
 from threading import Lock
+from typing import Generator
 
+from bson import CodecOptions
+from pymongo.database import Database
 import pymongo
+
+from pyimport.monotonicid import MonotonicID
 
 
 class Audit(object):
     name = "audit"
 
-    def __init__(self, client=None, database=None, collection="audit"):
+    def __init__(self, database: Database, collection_name: str = "audit"):
 
+        self._database = database
         self._lock = Lock()
-
-        if database is not None:
-            self._database = database
-        elif client is not None:
-            self._database = client["AUDIT"]
-        else:
-            raise ValueError("Neither database nor client defined")
-
-        self._auditCollection = self._database[collection]
+        options = CodecOptions(tz_aware=True)
+        self._col = database.get_collection(collection_name, options)
         self._open_batch_count = 0
-        self._auditCollection.create_index("batchID")
+        self._current_batch_id :MonotonicID = None
+        indexes = list(self._col.list_indexes())
+        if "batch_id" not in indexes:
+            self._col.create_index("batch_id")
 
+    @property
     def collection(self):
-        return self._auditCollection
+        return self._col
 
     def drop_collection(self):
-        self._auditCollection.drop()
+        self._col.drop()
 
-    def getBatchIDs(self):
-        cursor = self._auditCollection.find({"batchID": {"$exists": 1}}, {"_id": 0, "batchID": 1})
-        for i in cursor:
-            if i["batchID"] == 0:
-                continue
-            yield i['batchID']
-
-    def start_batch(self, doc):
-
-        updated_doc = self._auditCollection.find_one_and_update({"batchID": 0,
-                                                                 "filename": "Current Batch"},
-                                                                {"$inc": {"currentID": 1}},
-                                                                upsert=True,
-                                                                return_document=pymongo.ReturnDocument.AFTER)
-
-        assert updated_doc
+    def start_batch(self, info: dict) -> MonotonicID:
 
         self._open_batch_count = self._open_batch_count + 1
-        self._auditCollection.insert_one({"batchID": updated_doc["currentID"],
-                                          "username": getpass.getuser(),
-                                          "start": datetime.now(timezone.utc),
-                                          "host": socket.getfqdn(),
-                                          "pid": os.getpid(),
-                                          "info": doc})
+        self._current_batch_id = MonotonicID()
+        self._col.insert_one({"batch_id": self._current_batch_id.id,
+                              "username": getpass.getuser(),
+                              "start": datetime.now(timezone.utc),
+                              "host": socket.getfqdn(),
+                              "pid": os.getpid(),
+                              "info": info})
 
-        return updated_doc["currentID"]
+        return self._current_batch_id
 
-    def add_batch_info(self, batchID, field_name, doc):
-        self._auditCollection.insert_one({"batchID": batchID,
-                                          "timestamp": datetime.now(timezone.utc),
-                                          field_name: doc})
+    @property
+    def current_batch_id(self):
+        return self._current_batch_id
 
-    def add_command(self, batchID, cmd_name, args):
+    def add_batch_info(self, batch_id:MonotonicID, info: dict) -> pymongo.results.InsertOneResult:
+        return self._col.insert_one({"batch_id": batch_id.id,
+                                     "timestamp": datetime.now(timezone.utc),
+                                     "info": info})
 
-        self.add_batch_info(batchID, "command", {"filename": cmd_name,
-                                                 "args": args})
+    def end_batch(self, batch_id: MonotonicID, info: dict | None = None) -> dict:
 
-    def end_batch(self, batchID):
+        batch = self._col.find_one({"batch_id": batch_id.id})
+        if batch is None:
+            raise ValueError("batch_id does not exist: %s" % batch_id.id)
+        if "end" in batch:
+            raise ValueError("batch_id already ended: %s" % batch_id.id)
+        else:
+            info = info if info else {}
+            end_doc = {"end": datetime.now(timezone.utc),
+                       "info": info}
+            result = self._col.update_one(
+                {"batch_id": batch_id.id},
+                {"$set": end_doc}
+            )
 
-        if not self.is_batch(batchID):
-            raise ValueError("BatchID does not exist: %s" % batchID)
+            if result.matched_count != 1:
+                raise ValueError("batch_id does not exist: %s" % batch_id.id)
+            elif result.modified_count < 1:
+                raise ValueError("Update operation failed to change any docs: %s" % batch_id.id)
+            elif result.modified_count > 1:
+                raise ValueError("Update operation changed more than one doc: %s" % batch_id.id)
+            else:
+                self._open_batch_count = self._open_batch_count - 1
 
-        start = self._auditCollection.find_one({"batchID": batchID,
-                                                "start": {"$type": 9}})  # is a timestamp
-
-        assert (start)
-        self._auditCollection.insert_one({"batchID": batchID,
-                                          "start": start["start"],
-                                          "end": datetime.now(timezone.utc)})
-
-        self._open_batch_count = self._open_batch_count - 1
-        return batchID
+        return end_doc
 
     def in_batch(self):
         with self._lock:
             return self._open_batch_count > 0
 
-    def get_batch(self, batchID):
-        batch = self._auditCollection.find_one({"batchID": batchID})
+    def get_batch(self, batch_id: MonotonicID):
+        batch = self._col.find_one({"batch_id": batch_id.id})
         if batch is None:
-            raise ValueError("BatchID does not exist: %s" % batchID)
+            raise ValueError("batch_id does not exist: %s" % batch_id.id)
         else:
             return batch
 
-    def get_batch_end(self, batchID):
-        batch = self._auditCollection.find_one({"batchID": batchID,
-                                                "end": {"$exists": 1}})
+    def get_batch_end(self, batch_id: MonotonicID) -> dict:
+        batch = self._col.find_one({"batch_id": batch_id.id,
+                                    "end": {"$exists": 1}})
         if batch is None:
-            raise ValueError("{ BatchID, end } does not exist: %s" % batchID)
-
+            raise ValueError("{ batch_id, end } does not exist: %s" % batch_id.id)
         return batch
 
-    def is_batch(self, batchID):
-        return self._auditCollection.find_one({"batchID": batchID})
+    def is_batch(self, batch_id: MonotonicID) -> bool:
+        return self._col.find_one({"batch_id": batch_id.id})
 
-    def is_complete(self, batchID):
-        if self._auditCollection.find_one({"batchID": batchID}) is None:
-            raise ValueError("BatchID does not exist: %s" % batchID)
+    def is_complete(self, batch_id: MonotonicID) -> bool:
+        end_doc = self._col.find_one({"batch_id": batch_id.id, "end": {"$exists": 1}})
+        if end_doc is None:
+            raise ValueError("batch_id does not exist: %s" % batch_id.id)
         else:
-            return self._auditCollection.find_one({"batchID": batchID, "end": {"$exists": 1}})
+            return end_doc
 
-    def auditCollection(self):
-        return self._auditCollection
+    def audit_collection(self) -> pymongo.collection.Collection:
+        return self._col
 
-    def get_last_batch_id(self):
-        curBatch = self._auditCollection.find_one({"filename": 'Current Batch'})
-        return curBatch["currentID"]
+    def get_last_batch_id(self) -> MonotonicID:
+        d = self._col.find_one(sort=[("batch_id", pymongo.DESCENDING)])
+        return MonotonicID(d["batch_id"])
 
-    def get_batches(self):
+    def get_last_batch(self) -> dict:
+        return self._col.find_one(sort=[("batch_id", pymongo.DESCENDING)])
 
-        batches = self._auditCollection.find({"batchID": {"$exists": 1},
-                                              "start": {"$exists": 1}}).sort("start", pymongo.DESCENDING)
-        for i in batches:
-            yield i
+    def get_last_valid_batch_id(self) -> MonotonicID:
+        d = self._col.find_one({}, sort=[("end", pymongo.DESCENDING)])
+        return MonotonicID(d["batch_id"])
 
-    def get_batch_ids(self):
-        for i in self.get_batches():
-            yield i["batchID"]
+    def get_last_valid_batch(self) -> dict:
+        return self._col.find_one({"end": {"$exists": 1}}, sort=[("end", pymongo.DESCENDING)])
 
-    def count_to_end(self):
-        for i in self.get_batch_ids():
-            return i
+    def get_batches(self) -> Generator[dict, None, None]:
+        # If we included documents with an end field, we would have to filter them out other wise we would have
+        # duplicate batch_id's for start and end documents.
+        return (i for i in self._col.find({"batch_id": {"$exists": 1},
+                                           "start": {"$exists": 1},
+                                           "end": {"$exists": 0}}).sort("start", pymongo.DESCENDING))
 
-    def get_batch_zero(self):
-        return self._auditCollection.find_one({"batchID": 0})
+    def get_batch_ids(self) -> Generator[MonotonicID, None, None]:
+        return (MonotonicID(i["batch_id"]) for i in self.get_batches())
 
-    def get_valid_batches(self, start=None, end=None):
+    def get_valid_batches(self, start: datetime = None, end: datetime = None) -> Generator[dict, None, None]:
 
-        if start and not isinstance(start, datetime):
+        if start is None and end is None:
+            query = {}
+        elif start and not isinstance(start, datetime):
             raise ValueError("start is not a datetime object")
-        if end and not isinstance(end, datetime):
+        elif end and not isinstance(end, datetime):
             raise ValueError("end is not a datetime object")
+        elif start > end:
+            raise ValueError("start is greater than end")
+        else:
+            query = {"end": {"$gte": start, "$lte": end}}
 
-        batches = self._auditCollection.find(  # { "start" : { "$exists" : 0},
-            {"end": {"$type": 9}},
-            {"_id": 0, "batchID": 1, "start": 1, "end": 1}).sort("end", pymongo.DESCENDING)
+        projection = {"_id": 0, "batch_id": 1, "start": 1, "end": 1}
+        return (i for i in self._col.find(query, projection).sort("end", pymongo.DESCENDING))
 
-        for i in batches:
-            batch_date = i['end']
-            # print( batch_date )
-            if start and end:
-                if start <= batch_date <= end:
-                    yield i
-            elif start:
-                if batch_date >= start:
-                    yield i
-            elif end:
-                if batch_date <= end:
-                    yield i
-            else:
-                yield i
-
-    def get_valid_batch_ids(self):
-        for i in self.get_valid_batches():
-            yield i["batchID"]
-
-    def get_last_valid_batch_id(self):
-        ids = self.get_valid_batch_ids()
-        for i in ids:
-            return i
+    def get_valid_batch_ids(self) -> Generator[MonotonicID, None, None]:
+        return (MonotonicID(i["batch_id"]) for i in self.get_valid_batches())

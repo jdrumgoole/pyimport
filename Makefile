@@ -54,15 +54,18 @@ test_scripts:
 
 test_data:
 	poetry run python pyimport/splitfile.py --autosplit 4 test/data/100k.txt > /dev/null
-	poetry run python pyimport/pymultiimport_main.py --fieldfile test/data/100k.tff --delimiter "|" --poolsize 2 100k.txt.[1234] > /dev/null
+	poetry run python pyimport/pymultiimport_main.py --drop --fieldfile test/data/100k.tff --delimiter "|" --poolsize 2 100k.txt.[1234] > /dev/null
 	rm 100k.txt.* > /dev/null 2>&1
+	poetry run python pyimport/dbop.py --drop PYIM.imported
 
 split_file:
 	poetry run python pyimport/splitfile.py --autosplit 4 test/data/100k.txt > /dev/null
 	rm 100k.txt.* > /dev/null 2>&1
+	poetry run python pyimport/dbop.py --drop PYIM.imported
 
 test_yellowtrip:
 	poetry run python pyimport/pyimport_main.py --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
+	poetry run python pyimport/dbop.py --drop PYIM.imported
 
 test_multi:
 	poetry run python pyimport/dropdb.py --database PYIM
@@ -71,7 +74,7 @@ test_multi:
 	poetry run python pyimport/pymultiimport_main.py --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --poolsize 3  yellow_tripdata_2015-01-06-200k.csv.1 yellow_tripdata_2015-01-06-200k.csv.2 yellow_tripdata_2015-01-06-200k.csv.3  > /dev/null
 	rm yellow_tripdata_2015-01-06-200k.csv.*
 	rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
-	#poetry run python pyimport/dropdb.py --database PYIM
+	poetry run python pyimport/dbop.py --drop PYIM.imported
 
 test_small_multi:
 	head -n 5000 ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > yellow_tripdata_2015-01-06-5k.csv
@@ -80,12 +83,13 @@ test_small_multi:
 	poetry run python pyimport/pymultiimport_main.py --database SMALL --collection yellowcab --fieldfile yellow_tripdata_2015-01-06-5k.tff --poolsize 2 yellow_tripdata_2015-01-06-5k.csv.1 yellow_tripdata_2015-01-06-5k.csv.2  > /dev/null
 	#rm yellow_tripdata_2015-01-06-5k.csv.*
 	rm yellow_tripdata_2015-01-06-5k.tff
+	poetry run python pyimport/dbop.py --drop PYIM.imported
 
 
 
 genfieldfile:
 	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
-	#rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
+	rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
 
 test_all: pytest test_scripts
 

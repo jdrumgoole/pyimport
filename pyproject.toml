@@ -8,7 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-pymongo = "^4.7.0"
+pymongo = "^4.7.3"
 python-dateutil = "^2.9.0.post0"
 toml = "^0.10.2"
 requests = "^2.31.0"
