@@ -4,7 +4,7 @@
 
 Warning - This documentation is incomplete, give it time :-).
 
-For questions please email joe.drumgoole@mongodb.com
+For questions please email joe@joedrumgoole.com
 
 
 ## Why pyimport?
