@@ -6,6 +6,7 @@ import unittest
 import pymongo
 
 from pyimport.argparser import ArgMgr
+from pyimport.asyncimport import AsyncImportCommand
 from pyimport.audit import Audit
 from pyimport.command import GenerateFieldfileCommand
 from pyimport.dropcollectioncommand import DropCollectionCommand
@@ -26,7 +27,8 @@ class Test(unittest.TestCase):
         self._default_args.add_arguments(database="TEST_CMD", collection="import_test")
 
     def tearDown(self):
-        self._client.drop_database("TEST_CMD")
+        pass
+        #self._client.drop_database("TEST_CMD")
 
     def test_Drop_Command(self):
         self._audit = Audit(database=self._client["TEST_AUDIT"])
@@ -72,6 +74,22 @@ class Test(unittest.TestCase):
         self.assertEqual(size_10k + size_120, new_size - start_size)
 
         self._audit.end_batch(batch_id)
+
+    def test_Async_Import_Command(self):
+        self._audit = Audit(database=self._client["TEST_AUDIT"])
+        batch_id = self._audit.start_batch({"test": "test_batch"})
+        collection = self._database["import_test"]
+
+        start_size = collection.count_documents({})
+        size_10k = LineCounter("10k.txt").line_count
+        size_120 = LineCounter("120lines.txt").line_count
+        args = self._default_args.add_arguments(fieldfile="10k.tff", filenames=["10k.txt", "120lines.txt"],
+                                                delimiter="|")
+
+        AsyncImportCommand(audit=self._audit, args=args.ns).run(args.ns)
+
+        new_size = collection.count_documents({})
+        self.assertEqual(size_10k + size_120, new_size - start_size)
 
     def test_Import_Command_new(self):
         self._audit = Audit(database=self._client["TEST_AUDIT"])

@@ -19,11 +19,12 @@ from pyimport.fieldfile import FieldFile, FieldFileException
 from pyimport.timer import Timer
 from pyimport.linereader import RemoteLineReader, is_url
 
-class ImportCommand(Command):
+
+class ImportCommand:
 
     def __init__(self, audit=None, args=None):
 
-        super().__init__(audit)
+        self._audit = audit
         self._log = logging.getLogger(__name__)
         self._host = args.host
         self._database_name = args.database
@@ -49,18 +50,6 @@ class ImportCommand(Command):
         self._writer: DatabaseWriter = None
         self._field_file: FieldFile = None
 
-    @staticmethod
-    def time_stamp(d):
-        d["timestamp"] = datetime.now(timezone.utc)
-        return d
-
-    def batch_time_stamp(self, d):
-        d["timestamp"] = self._batch_timestamp
-        return d
-
-    def pre_execute(self, args):
-        # print(f"'{arg}'")
-        super().pre_execute(args)
         self._log.info("Using collection:'{}'".format(self._collection_name))
         self._log.info(f"Write concern : {self._write_concern}")
         self._log.info(f"journal       : {self._journal}")
@@ -89,6 +78,15 @@ class ImportCommand(Command):
         database = client[self._database_name]
         collection = database[self._collection_name]
         self._writer = DatabaseWriter(collection)
+
+    @staticmethod
+    def time_stamp(d):
+        d["timestamp"] = datetime.now(timezone.utc)
+        return d
+
+    def batch_time_stamp(self, d):
+        d["timestamp"] = self._batch_timestamp
+        return d
 
     def process_file(self, filename: str):
 
@@ -161,7 +159,7 @@ class ImportCommand(Command):
         elapsed_time = time_finish - time_start
         return total_written, elapsed_time
 
-    def execute(self, args):
+    def run(self, args):
 
         for i in self._filenames:
             self._log.info(f"Processing:'{i}'")
@@ -199,6 +197,3 @@ class ImportCommand(Command):
     @property
     def field_info(self):
         return self._field_file
-
-    def post_execute(self, arg):
-        super().post_execute(arg)

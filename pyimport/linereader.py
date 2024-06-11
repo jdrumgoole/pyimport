@@ -1,4 +1,7 @@
+from sys import exception
+
 import requests
+import aiohttp
 from typing import TextIO
 
 
@@ -74,3 +77,31 @@ class RemoteLineReader:
             assert residue is None
 
 
+class AsyncRemoteLineReaderException(Exception):
+    pass
+
+
+class AsyncRemoteLineReader:
+    def __init__(self, url):
+        self.url = url
+
+    async def __aenter__(self):
+        self.session = aiohttp.ClientSession()
+        self.response = await self.session.get(self.url)
+        self.response.raise_for_status()  # Ensure we get a successful response
+        self.content = self.response.content
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.response.release()
+        await self.session.close()
+
+    async def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        line = await self.content.readline()
+        if line:
+            return line.decode('utf-8').strip()
+        else:
+            raise StopAsyncIteration

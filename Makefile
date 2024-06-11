@@ -18,8 +18,11 @@ all: test_all build test_build
 	-@echo "Ace King, Check it out! A full build"
 
 
-build: clean
-	python -m build
+build:
+	poetry build
+
+publish: build
+	poetry publish
 
 path:
 	@echo PATH=${PATH}

@@ -16,6 +16,7 @@ import pymongo
 from requests import exceptions
 
 from pyimport.argparser import add_standard_args
+from pyimport.asyncimport import AsyncImportCommand
 from pyimport.audit import Audit
 from pyimport.command import GenerateFieldfileCommand
 from pyimport.dropcollectioncommand import DropCollectionCommand
@@ -130,7 +131,10 @@ def pyimport_main(input_args=None):
                 info = {"command": sys.argv}
                 audit.add_batch_info( batch_id=audit.current_batch_id, info=info)
 
-            ImportCommand(audit, args).run(args)
+            if args.asyncpro:
+                AsyncImportCommand(audit, args).run(args)
+            else:
+                ImportCommand(audit, args).run(args)
 
             if args.audit:
                 audit.end_batch(batch_id)

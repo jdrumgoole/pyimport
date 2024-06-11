@@ -69,6 +69,7 @@ def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
                         help="Report field info from a named field file e.g. --fieldinfo <filename>.tff")
     parser.add_argument("--limit", default=0, type=int,
                         help="Limit the number of records we read in (0 means read all records) [default: %(default)s]")
+    parser.add_argument("--asyncpro", default=False, action="store_true", help="Use async IO for processing files")
     #
     # Also try ISO-8859-1
     #

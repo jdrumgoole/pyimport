@@ -3,7 +3,7 @@ import os
 import pytest
 
 import pytest
-from pyimport.linereader import BlockReader, LocalLineReader, RemoteLineReader, diff, is_url
+from pyimport.linereader import BlockReader, LocalLineReader, RemoteLineReader, diff, is_url, AsyncRemoteLineReader
 
 local_expected_lines = [
     "Inventory Item, Amount, Last Order",
@@ -64,4 +64,14 @@ def test_skip_remote_lines_skip():
         assert line == remote_expected_lines[i+1]
         if i == 3:
             break
+
+
+@pytest.mark.asyncio
+async def test_async_remote_line_reader():
+
+    async with AsyncRemoteLineReader(remote_url) as reader:
+        async for line in iter(reader):
+            assert line == remote_expected_lines[i + 1]
+            if i == 3:
+                break
 
