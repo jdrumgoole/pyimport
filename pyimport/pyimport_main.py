@@ -18,7 +18,7 @@ from requests import exceptions
 from pyimport.argparser import add_standard_args
 from pyimport.asyncimport import AsyncImportCommand
 from pyimport.audit import Audit
-from pyimport.command import GenerateFieldfileCommand
+from pyimport.generatefieldfilecommand import GenerateFieldfileCommand
 from pyimport.dropcollectioncommand import DropCollectionCommand
 from pyimport.importcommand import ImportCommand
 from pyimport.logger import Logger
@@ -87,10 +87,7 @@ def pyimport_main(input_args=None):
     else:
         client = pymongo.MongoClient(args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal)
 
-    if args.genfieldfile:
-        args.has_header = True
-        log.info('Forcing has_header true for --genfieldfile')
-        GenerateFieldfileCommand(args.audit).run(args)
+
 
     if args.audit:
         audit = Audit(client=client["PYIMPORT_AUDIT"])
@@ -116,7 +113,12 @@ def pyimport_main(input_args=None):
         if args.restart:
             log.info("Warning --restart overrides --drop ignoring drop commmand")
         else:
-            cmd = DropCollectionCommand(audit=audit, database=database).run(args)
+            DropCollectionCommand(audit=audit, client=client, args=args).run()
+
+    if args.genfieldfile:
+        args.has_header = True
+        log.info('Forcing has_header true for --genfieldfile')
+        GenerateFieldfileCommand(audit=args.audit, args=args).run()
 
     if args.fieldinfo:
         cfg = FieldFile(args.fieldinfo)
@@ -132,9 +134,9 @@ def pyimport_main(input_args=None):
                 audit.add_batch_info( batch_id=audit.current_batch_id, info=info)
 
             if args.asyncpro:
-                AsyncImportCommand(audit, args).run(args)
+                AsyncImportCommand(audit, args).run()
             else:
-                ImportCommand(audit, args).run(args)
+                ImportCommand(audit, args).run()
 
             if args.audit:
                 audit.end_batch(batch_id)

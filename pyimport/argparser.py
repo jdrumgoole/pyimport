@@ -4,14 +4,13 @@ Created on 12 Aug 2017
 @author: jdrumgoole
 """
 import argparse
+
 from configargparse import ArgumentParser
 
+from pyimport.doctimestamp import DocTimeStamp
+from pyimport.enrichtypes import ErrorResponse
 from pyimport.logger import Logger
 from pyimport.version import __VERSION__
-from pyimport.enrichtypes import ErrorResponse
-from pyimport.doctimestamp import DocTimeStamp
-from pyimport.memoize import memoize
-
 
 
 def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
@@ -22,11 +21,10 @@ def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
 
     parser.add_argument('-v", ''--version', action='version', version='%(prog)s ' + __VERSION__)
     parser.add_argument('--database', default="PYIM", help='specify the database filename [default: %(default)s]')
-    parser.add_argument('--collection', default="imported", help='specify the collection filename [default: %(default)s]')
-    parser.add_argument('--host', default="mongodb://localhost:27017/test",
-                        help='mongodb URI. [default: %(default)s]')
-    parser.add_argument('--locator', default=False, action="store_true",
-                        help="add a locator field consisting of filename and \
+    parser.add_argument('--collection', default="imported",
+                        help='specify the collection filename [default: %(default)s]')
+    parser.add_argument('--host', default="mongodb://localhost:27017/test", help='mongodb URI. [default: %(default)s]')
+    parser.add_argument('--locator', default=False, action="store_true", help="add a locator field consisting of filename and \
                         input record line to each doc [default: %(default)s]")
     parser.add_argument('--batchsize', type=int, default=1000,
                         help='set mongodb batch size for bulk inserts [default: %(default)s]')
@@ -34,20 +32,22 @@ def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
                         help="use record thread_id insert to restart at last write also enable restart logfile [default: %(default)s]")
     parser.add_argument('--drop', default=False, action="store_true",
                         help="drop collection before loading [default: %(default)s]")
-    #parser.add_argument('--ordered', default=False, action="store_true", help="forced ordered inserts")
+    # parser.add_argument('--ordered', default=False, action="store_true", help="forced ordered inserts")
     parser.add_argument("--fieldfile", default=None, type=str, help="Field and type mappings")
     parser.add_argument("--delimiter", default=",", type=str,
                         help="The delimiter string used to split fields [default: %(default)s]")
     parser.add_argument("filenames", nargs="*", help='list of files')
     parser.add_argument("--filelist", default=None, help="Read files from an input file one per line")
-    parser.add_argument('--addfilename', default=False, action="store_true", help="Add file filename field to every entry")
-    parser.add_argument('--addtimestamp', default=DocTimeStamp.NO_TIMESTAMP, type=DocTimeStamp, choices=list(DocTimeStamp),
+    parser.add_argument('--addfilename', default=False, action="store_true",
+                        help="Add file filename field to every entry")
+    parser.add_argument('--addtimestamp', default=DocTimeStamp.NO_TIMESTAMP, type=DocTimeStamp,
+                        choices=list(DocTimeStamp),
                         help="Add a timestamp to each doc, either generate per doc('doc'), or per batch {'batch') [default: %(default)s]")
     parser.add_argument('--hasheader', default=False, action="store_true",
                         help="Use header line for column names [default: %(default)s]")
     parser.add_argument('--genfieldfile', default=False, action="store_true",
                         help="Generate a fieldfile from the data file, we set has_header to true [default: %(default)s]")
-    parser.add_argument('--onerror', type=ErrorResponse,  default=ErrorResponse.Warn, choices=list(ErrorResponse),
+    parser.add_argument('--onerror', type=ErrorResponse, default=ErrorResponse.Warn, choices=list(ErrorResponse),
                         help="What to do when we hit an error parsing a csv file [default: %(default)s]")
     parser.add_argument('--logname', default=Logger.LOGGER_NAME,
                         help="Logfile to write output to [default: %(default)s]")
@@ -113,7 +113,7 @@ class ArgMgr:
     def default_args_dict() -> dict:
         return ArgMgr.ns_to_dict(ArgMgr.default_args())
 
-    def add_arguments(self,  **kwargs) -> "ArgMgr":
+    def add_arguments(self, **kwargs) -> "ArgMgr":
         new_ns = argparse.Namespace(**kwargs)
         self.merge_namespace(new_ns)
         return self
@@ -146,7 +146,6 @@ class ArgMgr:
 
 
 if __name__ == "__main__":
-
     parser = ArgumentParser()
     parser = add_standard_args(parser)
     args = parser.parse_args()

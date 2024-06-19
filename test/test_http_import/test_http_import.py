@@ -8,9 +8,6 @@ from pyimport.argparser import ArgMgr
 from pyimport.csvreader import CSVReader
 from pyimport.fieldfile import FieldFile
 from pyimport.enrichtypes import EnrichTypes
-from pyimport.fileprocessor import FileProcessor
-from pyimport.filereader import FileReader
-from pyimport.databasewriter import DatabaseWriter
 from pyimport.fieldfile import FieldFile
 from pyimport.importcommand import ImportCommand
 
@@ -84,12 +81,13 @@ class TestHTTPImport(unittest.TestCase):
     def test_http_import(self):
         if check_internet():
             url = "https://jdrumgoole.s3.eu-west-1.amazonaws.com/2018_Yellow_Taxi_Trip_Data_1000.csv"
-            args = self._args.add_arguments(filenames=[url], delimiter=";", hasheader=True)
-            ff_file = FieldFile.generate_field_file(url,
-                                                    delimiter=";",
-                                                    ff_filename="yellow-trip-data.tff")
+
+            FieldFile.generate_field_file(url,
+                                          delimiter=";",
+                                          ff_filename="yellow-trip-data.tff")
+            args = self._args.add_arguments(fieldfile="yellow-trip-data.tff", filenames=[url], delimiter=";", hasheader=True)
             before_doc_count = self._collection.count_documents({})
-            total_written = ImportCommand(args=args.ns).run(args.ns)
+            total_written = ImportCommand(args=args.ns).run()
             after_doc_count = self._collection.count_documents({})
             self.assertEqual(after_doc_count - before_doc_count, 999)
         else:

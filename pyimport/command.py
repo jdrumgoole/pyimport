@@ -8,9 +8,6 @@ Author: joe@joedrumgoole.com
 import logging
 from datetime import datetime, timedelta
 
-from pyimport.fieldfile import FieldFile
-from pyimport.monotonicid import MonotonicID
-
 
 def seconds_to_duration(seconds):
     result=""
@@ -59,39 +56,8 @@ class Command:
         pass
 
     def run(self, args):
-        self._pre_result = self.pre_execute(args)
-        self._execute_result = self.execute(args)
-        self._post_result = self.post_execute(args)
-        return self._execute_result
+        pass
 
 
-class GenerateFieldfileCommand(Command):
-
-    def __init__(self, audit=None):
-        super().__init__(audit)
-        self._name = "generate"
-        self._log = logging.getLogger(__name__)
-        self._field_files: list[str] = []
-
-    def field_filename(self):
-        return self._field_filename
-
-    def pre_execute(self, args):
-        self._log.info(f"Generating field file from {args.filenames}")
-        return args
-
-    def execute(self, args):
-        for i in args.filenames:
-            if args.fieldfile is None:
-                field_filename = FieldFile.make_default_tff_name(i)
-            else:
-                field_filename = args.fieldfile
-            FieldFile.generate_field_file(csv_filename=i, ff_filename=field_filename, delimiter=args.delimiter)
-            self._field_files.append(field_filename)
-        return self._field_files
-
-    def post_execute(self, args):
-        field_list = ",".join([f"'{i}'" for i in self._field_files])
-        self._log.info(f"Created field filename(s) {field_list} from '{args.filenames}'")
 
 

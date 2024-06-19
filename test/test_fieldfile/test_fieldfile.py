@@ -3,19 +3,16 @@ Created on 8 Aug 2017
 
 @author: jdrumgoole
 """
-import argparse
+
 import os
 import shutil
 import unittest
-from csv import DictReader
-from typing import Dict
-from datetime import datetime
+
 
 import pymongo
 import dateutil
 
 from pyimport.fieldfile import FieldFile, FieldFileException
-from pyimport.fileprocessor import FileProcessor
 from pyimport.filesplitter import LineCounter
 from pyimport.logger import Logger
 from pyimport.importcommand import ImportCommand
@@ -60,18 +57,18 @@ class TestFieldFile(unittest.TestCase):
     def test_delimiter_no_header(self):
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["10k.txt"], delimiter="|", hasheader=False)
-        ImportCommand(args=args.ns).run(args.ns)
+        ImportCommand(args=args.ns).run()
         self.assertEqual(self._col.count_documents({}) - start_count, 10000)
 
     def test_fieldfile_nomatch(self):
         args = self._args.add_arguments(filenames=["inventory.csv"], fieldfile="AandE_Data_2011-04-10.tff")
-        total_written = ImportCommand(args=args.ns).run(args.ns)
+        total_written = ImportCommand(args=args.ns).run()
         assert total_written == 0
 
     def test_new_delimiter_and_timeformat_header(self):
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["mot_test_set_small.csv"], fieldfile="mot.tff", hasheader=False, delimiter="|")
-        total_written = ImportCommand(args=args.ns).run(args.ns)
+        total_written = ImportCommand(args=args.ns).run()
         lines = LineCounter('mot_test_set_small.csv').line_count
         inserted_count = self._col.count_documents({}) - start_count
         self.assertEqual(inserted_count, total_written)
@@ -80,7 +77,7 @@ class TestFieldFile(unittest.TestCase):
     def test_delimiter_header(self):
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["AandE_Data_2011-04-10.csv"], fieldfile="AandE_Data_2011-04-10.tff", hasheader=True)
-        total_written = ImportCommand(args=args.ns).run(args.ns)
+        total_written = ImportCommand(args=args.ns).run()
         self.assertEqual(self._col.count_documents({}) - start_count, 300)
         self.assertEqual(self._col.count_documents({}) - start_count, total_written)
 
@@ -91,7 +88,7 @@ class TestFieldFile(unittest.TestCase):
         self.assertTrue("Amount" in rfc.fields())
         self.assertTrue("Last Order", rfc.fields())
         self.assertEqual(len(rfc.fields()), 3)
-        #os.unlink("inventory.xx")
+        os.unlink("inventory.xx")
 
     def test_generate_field_filename(self):
 
@@ -128,7 +125,7 @@ class TestFieldFile(unittest.TestCase):
         self.assertTrue(os.path.exists("inventory.testff"))
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["inventory.csv"], fieldfile="inventory.testff", hasheader=True)
-        total_written = ImportCommand(args=args.ns).run(args.ns)
+        total_written = ImportCommand(args=args.ns).run()
         line_count = LineCounter("inventory.csv").line_count
         new_inserted_count = self._col.count_documents({}) - start_count
         self.assertEqual(new_inserted_count, total_written)  # header must be subtracted
@@ -136,10 +133,9 @@ class TestFieldFile(unittest.TestCase):
         os.unlink("inventory.testff")
 
     def test_date(self):
-        fp = FileProcessor(self._col)
         start_count = self._col.count_documents({})
         args= self._args.add_arguments(filenames=["inventory.csv"], fieldfile="inventory_dates.tff", hasheader=True)
-        total_written = ImportCommand(args=args.ns).run(args.ns)
+        total_written = ImportCommand(args=args.ns).run()
         lines_count = LineCounter("inventory.csv").line_count - 1  # header
         end_count = self._col.count_documents({})
         self.assertEqual(end_count - start_count, lines_count)

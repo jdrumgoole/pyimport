@@ -4,23 +4,29 @@ import os
 import pprint
 import sys
 import time
+import asyncio
+from asyncio import Queue, TaskGroup
 from datetime import datetime, timezone
 
+import aiofile
 import pymongo
 from pymongo import errors
 from requests import exceptions
+from asyncstdlib import enumerate as aenumerate
+from motor.motor_asyncio import AsyncIOMotorClient
 
+from pyimport.asyncinserter import AsyncInserter
 from pyimport.command import Command, seconds_to_duration
-from pyimport.csvreader import CSVReader
-from pyimport.enrichtypes import ErrorResponse, EnrichTypes
-from pyimport.databasewriter import DatabaseWriter
+from pyimport.csvreader import AsyncCSVReader
+from pyimport.enrichtypes import EnrichTypes
+
 from pyimport.doctimestamp import DocTimeStamp
 from pyimport.fieldfile import FieldFile, FieldFileException
 from pyimport.timer import Timer
-from pyimport.linereader import RemoteLineReader, is_url
+from pyimport.linereader import is_url, AsyncRemoteLineReader
 
 
-class ImportCommand:
+class AsyncImportCommand:
 
     def __init__(self, audit=None, args=None):
 
@@ -47,8 +53,10 @@ class ImportCommand:
         self._journal = args.journal
         self._field_filename = args.fieldfile
 
-        self._writer: DatabaseWriter = None
+        self._collection: pymongo.collection.Collection = None
         self._field_file: FieldFile = None
+        self._queue: Queue = asyncio.Queue()
+        self._inserter = AsyncInserter(self._collection_name, self._queue)
 
         self._log.info("Using collection:'{}'".format(self._collection_name))
         self._log.info(f"Write concern : {self._write_concern}")
@@ -58,8 +66,6 @@ class ImportCommand:
 
         if self._field_filename is None:
             self._field_filename = FieldFile.make_default_tff_name(self._filenames[0])
-
-        self._log.info(f"Using field file:'{self._field_filename}'")
 
         if not os.path.isfile(self._field_filename):
             raise OSError(f"No such field file:'{self._field_filename}'")
@@ -71,24 +77,27 @@ class ImportCommand:
         self._field_file = FieldFile.load(self._field_filename)
         self._log.info(f"Using field file:'{self._field_filename}'")
         if self._write_concern == 0:  # pymongo won't allow other args with w=0 even if they are false
-            client = pymongo.MongoClient(self._host, w=self._write_concern)
+            client = AsyncIOMotorClient(self._host, w=self._write_concern)
         else:
-            client = pymongo.MongoClient(self._host, w=self._write_econcern, fsync=self._fsync, j=self._journal)
+            client = AsyncIOMotorClient(self._host, w=self._write_econcern, fsync=self._fsync, j=self._journal)
 
         database = client[self._database_name]
-        collection = database[self._collection_name]
-        self._writer = DatabaseWriter(collection)
+        self._collection = database[self._collection_name]
 
     @staticmethod
     def time_stamp(d):
         d["timestamp"] = datetime.now(timezone.utc)
         return d
 
+    @property
+    def delimiter(self):
+        return self._delimiter
+
     def batch_time_stamp(self, d):
         d["timestamp"] = self._batch_timestamp
         return d
 
-    def process_file(self, filename: str):
+    async def read_file(self, filename: str):
 
         total_written = 0
         timer = Timer()
@@ -101,18 +110,16 @@ class ImportCommand:
         csv_file = None
 
         if is_url_file:
-            self._log.info(f"Reading from URL:'{filename}'")
-            csv_file  = RemoteLineReader(url=filename)
+            csv_file = AsyncRemoteLineReader(url=filename)
         else:
-            self._log.info(f"Reading from file:'{filename}'")
-            csv_file = open(filename, "r")
+            csv_file = await aiofile.async_open(filename, "r")
 
         try:
-            reader = CSVReader(file=csv_file,
-                               limit=self._limit,
-                               field_file=self._field_file,
-                               has_header=self._has_header,
-                               delimiter=self._delimiter)
+            async_reader = AsyncCSVReader(file=csv_file,
+                                          limit=self._limit,
+                                          field_file=self._field_file,
+                                          has_header=self._has_header,
+                                          delimiter=self._delimiter)
             ts_func = None
             if self._timestamp == DocTimeStamp.DOC_TIMESTAMP:
                 ts_func = self.time_stamp
@@ -125,53 +132,45 @@ class ImportCommand:
                                  onerror=self._onerror,
                                  filename=filename)
 
-            for i, doc in enumerate(reader, 1):
+            async for i, doc in aenumerate(async_reader, 1):
                 d = parser.enrich_doc(doc, i)
-                insert_list.append(d)
-                if len(insert_list) >= self._batch_size:
-                    results = self._writer.write(insert_list)
-                    total_written = total_written + len(results)
-                    inserted_this_quantum = inserted_this_quantum + len(results)
-                    insert_list = []
-                    elapsed = timer.elapsed()
-                    if elapsed >= time_period:
-                        docs_per_second = inserted_this_quantum / elapsed
-                        timer.reset()
-                        inserted_this_quantum = 0
-                        self._log.info(
-                            f"Input:'{filename}': docs per sec:{docs_per_second:7.0f}, total docs:{total_written:>10}")
+                await self._queue.put(d)
+
+            await self._queue.put(None)
+
             if not is_url_file:
-                csv_file.close()
-            if len(insert_list) > 0:
-                try:
-                    results = self._writer.write(insert_list)
-                    total_written = total_written + len(results)
-                    self._log.info("Input: '%s' : Inserted %i records", filename, total_written)
-                except errors.BulkWriteError as e:
-                    self._log.error(f"pymongo.errors.BulkWriteError: {e.details}")
-                    raise
+                await csv_file.close()
 
         finally:
             if not is_url_file:
-                csv_file.close()
+                await csv_file.close()
 
         time_finish = time.time()
         elapsed_time = time_finish - time_start
-        return total_written, elapsed_time
+        return i, elapsed_time
 
-    def run(self):
+    async def reader_writer(self):
+
+        total_written_this_file = 0
 
         for i in self._filenames:
+            inserter = AsyncInserter(self._collection, self._queue, filename=i)
+            print(f"Processing:'{i}'")
             self._log.info(f"Processing:'{i}'")
             try:
-                total_written_this_file, elapsed_time = self.process_file(i)
+                async with asyncio.TaskGroup() as tg:
+                    t1 = tg.create_task(self.read_file(i))
+                    t2 = tg.create_task(inserter())
+
+                total_written_this_file, elapsed_time = t1.result()
                 self._total_written = self._total_written + total_written_this_file
+
                 if self._audit:
                     audit_doc = { "command": "import",
                                   "filename": i,
                                   "elapsed_time": elapsed_time,
                                   "total_written": total_written_this_file}
-                    self._audit.add_batch_info(self._audit.current_batch_id, audit_doc)
+                    await self._audit.add_batch_info(self._audit.current_batch_id, audit_doc)
                 self._log.info(f"imported file: '{i}' ({total_written_this_file} rows)")
                 self._log.info(f"Total elapsed time to upload '{i}' : {seconds_to_duration(elapsed_time)}")
                 self._log.info(f"Average upload rate per second: {round(self._total_written / elapsed_time)}")
@@ -189,7 +188,19 @@ class ImportCommand:
                 self._log.error(f"Keyboard interrupt... exiting")
                 sys.exit(1)
 
-        return self._total_written
+        await self._queue.join()
+        return self._total_written, elapsed_time
+
+    async def _runner(self):
+        async with TaskGroup() as tg:
+            t1 = tg.create_task(self.reader_writer())
+        self._total_written, self._elapsed_time = t1.result()
+
+        return self._total_written, self._elapsed_time
+
+    def run(self):
+
+        asyncio.run(self._runner())
 
     def total_written(self):
         return self._total_written
@@ -197,3 +208,4 @@ class ImportCommand:
     @property
     def field_info(self):
         return self._field_file
+

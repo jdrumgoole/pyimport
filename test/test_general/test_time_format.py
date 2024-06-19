@@ -26,7 +26,7 @@ class Test(unittest.TestCase):
         # MOT delimiter=|
         args = self._args.add_arguments(delimiter="|", filenames=["mot_time_format_test.txt"])
         cmd = ImportCommand(args=args.ns)
-        cmd.run(args=args.ns)
+        cmd.run()
 
         fc = cmd.field_info
         fmt = fc.format_value("test_date")

@@ -1,8 +1,9 @@
 import os
 
-import pytest
 
 import pytest
+import pytest_asyncio
+from  asyncstdlib.builtins import enumerate as aenumerate
 from pyimport.linereader import BlockReader, LocalLineReader, RemoteLineReader, diff, is_url, AsyncRemoteLineReader
 
 local_expected_lines = [
@@ -69,8 +70,9 @@ def test_skip_remote_lines_skip():
 @pytest.mark.asyncio
 async def test_async_remote_line_reader():
 
-    async with AsyncRemoteLineReader(remote_url) as reader:
-        async for line in iter(reader):
+    i: int = 0
+    async with AsyncRemoteLineReader(remote_url, skip_lines=1) as reader:
+        async for i, line in aenumerate(reader):
             assert line == remote_expected_lines[i + 1]
             if i == 3:
                 break

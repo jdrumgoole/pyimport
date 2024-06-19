@@ -10,7 +10,6 @@ import dateutil
 
 from pyimport.argparser import ArgMgr
 from pyimport.fieldfile import FieldFile, FieldNames
-from pyimport.fileprocessor import FileProcessor
 from pyimport.filesplitter import LineCounter
 from pyimport.importcommand import ImportCommand
 
@@ -39,10 +38,9 @@ class TestEndToEnd(unittest.TestCase):
         self.assertEqual(fc.fields()[0], "TestID")
         self.assertEqual(fc.fields()[13], "FirstUseDate")
 
-        fp = FileProcessor(self._col, delimiter="|")
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["mot.txt"], delimiter="|", fieldfile="mot.tff", has_header=False)
-        ImportCommand(args=args.ns).run(args.ns)
+        ImportCommand(args=args.ns).run()
         file_size = LineCounter("mot.txt").line_count
         end_count = self._col.count_documents({})
 
@@ -68,7 +66,7 @@ class TestEndToEnd(unittest.TestCase):
         self.assertEqual(fc.fields()[19], "Number of patients spending >12 hours from decision to admit to admission")
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["AandEData.csv"], delimiter=",", fieldfile="AandEData.tff", hasheader=True)
-        ImportCommand(args=args.ns).run(args.ns)
+        ImportCommand(args=args.ns).run()
         file_size = LineCounter("AandEData.csv").line_count - 1
         end_count = self._col.count_documents({})
         self.assertEqual(end_count - start_count, file_size)

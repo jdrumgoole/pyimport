@@ -160,6 +160,22 @@ files = [
 frozenlist = ">=1.1.0"
 
 [[package]]
+name = "asyncstdlib"
+version = "3.12.3"
+description = "The missing async toolbox"
+optional = false
+python-versions = "~=3.8"
+files = [
+    {file = "asyncstdlib-3.12.3-py3-none-any.whl", hash = "sha256:ef4660462338fa30746fef4166dd01df22b07ab072b7eb1f52f10b2a974c8cf8"},
+    {file = "asyncstdlib-3.12.3.tar.gz", hash = "sha256:2acd0c04e205965cc2bb063b75370df92d207a3035bc4f83fb6b5686cffad7a0"},
+]
+
+[package.extras]
+doc = ["sphinx", "sphinxcontrib-trio"]
+test = ["black", "coverage", "flake8", "flake8-2020", "flake8-bugbear", "mypy", "pytest", "pytest-cov"]
+typetest = ["mypy", "pyright", "typing-extensions"]
+
+[[package]]
 name = "attrs"
 version = "23.2.0"
 description = "Classes Without Boilerplate"
@@ -529,6 +545,21 @@ files = [
     {file = "iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"},
     {file = "iniconfig-2.0.0.tar.gz", hash = "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3"},
 ]
+
+[[package]]
+name = "mimesis"
+version = "17.0.0"
+description = "Mimesis: Fake Data Generator."
+optional = false
+python-versions = "<4.0,>=3.10"
+files = [
+    {file = "mimesis-17.0.0-py3-none-any.whl", hash = "sha256:a088a14075c6d0356fea15e7687afb8f900a412daa80f2f3fe20f1771532402f"},
+    {file = "mimesis-17.0.0.tar.gz", hash = "sha256:57fd7c2762c668054f2ebb85f71d484fa2fd55647d2a02bac4f2e97b81f22d8d"},
+]
+
+[package.extras]
+factory = ["factory-boy (>=3.3.0,<4.0.0)"]
+pytest = ["pytest (>=7.2,<8.0)"]
 
 [[package]]
 name = "motor"
@@ -1009,4 +1040,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "d1e550e4524c0942b40f59e31314a5dd38a627a161985114c0b14263bd38d2e0"
+content-hash = "845bbd30659a850cd5c8ca6e1b561ed0696b61b7ecda1e9d6fc5862e21677f80"

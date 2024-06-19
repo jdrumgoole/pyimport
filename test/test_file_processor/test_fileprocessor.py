@@ -38,7 +38,7 @@ class Test(unittest.TestCase):
 
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["uk_property_prices.csv"], delimiter=",", hasheader=True)
-        ImportCommand(args=args.ns).run(args.ns)
+        ImportCommand(args=args.ns).run()
         lines = LineCounter("uk_property_prices.csv").line_count - 1
         self.assertEqual(lines, self._col.count_documents({}) - start_count)
         self.assertTrue(self._col.find_one({"Postcode": "NG10 5NN"}))
@@ -47,7 +47,7 @@ class Test(unittest.TestCase):
 
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["10k.txt"], delimiter="|", hasheader=True)
-        ImportCommand(args=args.ns).run(args.ns)
+        ImportCommand(args=args.ns).run()
         lines = LineCounter("10k.txt").line_count - 1
         self.assertEqual(lines, self._col.count_documents({}) - start_count)
         self.assertTrue(self._col.find_one({"test_id": 114624}))
@@ -56,7 +56,7 @@ class Test(unittest.TestCase):
 
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["mot_time_format_test.txt"], delimiter="|", hasheader=True)
-        ImportCommand(args=args.ns).run(args.ns)
+        ImportCommand(args=args.ns).run()
         lines = LineCounter("mot_time_format_test.txt").line_count - 1
         self.assertEqual(lines, self._col.count_documents({}) - start_count)
         self.assertTrue(self._col.find_one({"test_id": 1077}))
@@ -65,7 +65,7 @@ class Test(unittest.TestCase):
 
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["AandE_Data_2011-04-10.csv"], delimiter=",", hasheader=True)
-        ImportCommand(args=args.ns).run(args.ns)
+        ImportCommand(args=args.ns).run()
         lines = LineCounter("AandE_Data_2011-04-10.csv").line_count - 1
         self.assertEqual(lines, self._col.count_documents({}) - start_count)
         self.assertTrue(self._col.find_one({"Code": "RA4"}))
@@ -73,7 +73,7 @@ class Test(unittest.TestCase):
     def test_gdelt_data(self):
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["gdelt.tsv"], fieldfile="GDELT_columns.tff", delimiter="tab", hasheader=False)
-        ImportCommand(args=args.ns).run(args.ns)
+        ImportCommand(args=args.ns).run()
         lines = LineCounter("gdelt.tsv").line_count
         self.assertEqual(lines, self._col.count_documents({}) - start_count)
         self.assertTrue(self._col.find_one(

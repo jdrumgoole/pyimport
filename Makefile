@@ -49,11 +49,13 @@ test_build:build test
 # Just test that these scripts run
 #
 test_scripts:
-	poetry run python pyimport/pyimport_main.py -h > /dev/null
-	poetry run python pyimport/pyimport_main.py --delimiter '|' ./test/test_mot/10k.txt > /dev/null
-	poetry run python pyimport/pymultiimport_main.py -h > /dev/null
-	poetry run python pyimport/pwc.py -h > /dev/null
-	poetry run python pyimport/splitfile.py -h > /dev/null
+	poetry run python pyimport/pyimport_main.py -h > /dev/null  2>&1
+	poetry run python pyimport/pyimport_main.py --delimiter '|' ./test/test_mot/10k.txt > /dev/null 2>&1
+	poetry run python pyimport/pyimport_main.py --asyncpro --delimiter '|' ./test/test_mot/10k.txt > /dev/null 2>&1
+	poetry run python pyimport/pymultiimport_main.py -h > /dev/null 2>&1
+	poetry run python pyimport/pwc.py -h > /dev/null 2>&1
+	poetry run python pyimport/splitfile.py -h > /dev/null 2>&1
+	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null 2>&1
 
 test_data:
 	poetry run python pyimport/splitfile.py --autosplit 4 test/data/100k.txt > /dev/null
@@ -68,6 +70,10 @@ split_file:
 
 test_yellowtrip:
 	poetry run python pyimport/pyimport_main.py --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
+	poetry run python pyimport/dbop.py --drop PYIM.imported
+
+test_yellowtrip_async:
+	poetry run python pyimport/pyimport_main.py --asyncpro --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --async ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
 	poetry run python pyimport/dbop.py --drop PYIM.imported
 
 test_multi:

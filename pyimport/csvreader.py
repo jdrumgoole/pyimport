@@ -5,7 +5,7 @@ from typing import TextIO
 
 import aiocsv
 import aiofile
-
+from asyncstdlib import enumerate as aenumerate
 from pyimport.fieldfile import FieldFile
 from pyimport.linereader import LocalLineReader
 
@@ -99,7 +99,7 @@ class AsyncCSVReader(CSVReader):
 
     async def __aiter__(self):
         reader = aiocsv.AsyncReader(self._file, delimiter=self._delimiter)
-        async for i, row in enumerate(reader, 1):
+        async for i, row in aenumerate(reader, 1):
             if self._has_header and i == 1:
                 self._header_line = row
                 continue
