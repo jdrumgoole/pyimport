@@ -18,7 +18,7 @@ all: test_all build test_build
 	-@echo "Ace King, Check it out! A full build"
 
 
-build:
+build: test_all
 	poetry build
 
 publish: build
@@ -39,11 +39,6 @@ python_bin:
 	python -c "import os;print(os.environ.get('USERNAME'))"
 	which python
 
-prod_build:build test
-	twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u jdrumgoole
-
-test_build:build test
-	twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u jdrumgoole
 
 #
 # Just test that these scripts run
@@ -69,30 +64,33 @@ split_file:
 	poetry run python pyimport/dbop.py --drop PYIM.imported
 
 test_yellowtrip:
+	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
 	poetry run python pyimport/pyimport_main.py --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
 	poetry run python pyimport/dbop.py --drop PYIM.imported
+	rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
 
 test_yellowtrip_async:
+	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
 	poetry run python pyimport/pyimport_main.py --asyncpro --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --async ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
-	poetry run python pyimport/dbop.py --drop PYIM.imported
+	@poetry run python pyimport/dbop.py --drop PYIM.imported
+	@rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
 
 test_multi:
-	poetry run python pyimport/dropdb.py --database PYIM
-	poetry run python pyimport/splitfile.py --autosplit 2 ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
+	poetry run python pyimport/splitfile.py --autosplit 10 ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
 	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv #> /dev/null
-	poetry run python pyimport/pymultiimport_main.py --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --poolsize 3  yellow_tripdata_2015-01-06-200k.csv.1 yellow_tripdata_2015-01-06-200k.csv.2 yellow_tripdata_2015-01-06-200k.csv.3  > /dev/null
+	poetry run python pyimport/pymultiimport_main.py  --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --poolsize 4 yellow_tripdata_2015-01-06-200k.csv.*  > /dev/null
 	rm yellow_tripdata_2015-01-06-200k.csv.*
-	rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
-	poetry run python pyimport/dbop.py --drop PYIM.imported
+	@rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
+	@poetry run python pyimport/dbop.py --drop PYIM.imported
 
 test_small_multi:
 	head -n 5000 ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > yellow_tripdata_2015-01-06-5k.csv
 	poetry run python pyimport/splitfile.py --autosplit 2 yellow_tripdata_2015-01-06-5k.csv
 	poetry run python pyimport/pyimport_main.py --genfieldfile yellow_tripdata_2015-01-06-5k.csv #> /dev/null
-	poetry run python pyimport/pymultiimport_main.py --database SMALL --collection yellowcab --fieldfile yellow_tripdata_2015-01-06-5k.tff --poolsize 2 yellow_tripdata_2015-01-06-5k.csv.1 yellow_tripdata_2015-01-06-5k.csv.2  > /dev/null
-	#rm yellow_tripdata_2015-01-06-5k.csv.*
+	poetry run python pyimport/pymultiimport_main.py --database SMALL --collection yellowcab --fieldfile yellow_tripdata_2015-01-06-5k.tff --poolsize 2 yellow_tripdata_2015-01-06-5k.csv.*  > /dev/null
+	rm yellow_tripdata_2015-01-06-5k.csv.*
 	rm yellow_tripdata_2015-01-06-5k.tff
-	poetry run python pyimport/dbop.py --drop PYIM.imported
+	poetry run python pyimport/dbop.py --drop SMALL.yellowcab
 
 
 

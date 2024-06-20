@@ -36,12 +36,7 @@ def input_prompt(prompt: str, response: list[str], default: str = None) -> str |
 class Command:
 
     def __init__(self, audit=None):
-        self._name = None
-        self._log = logging.getLogger(__name__)
-        self._audit = audit
-        self._pre_result = None
-        self._execute_result = None
-        self._post_result = None
+        pass
 
     def name(self):
         return self._name

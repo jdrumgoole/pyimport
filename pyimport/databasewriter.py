@@ -81,53 +81,53 @@ class DatabaseWriter:
     #     return thread_writer.thread_id, time_finish - time_start
     #
 
-    def pool_write(self, limit=0, restart=False, worker_count=4):
-        '''
-        TODO: clean pool writer, may just replace it with the async version
-        '''
+    # def pool_write(self, limit=0, restart=False, worker_count=4):
+    #     '''
+    #     TODO: clean pool writer, may just replace it with the async version
+    #     '''
+    #
+    #     total_written = 0
+    #     timer = Timer()
+    #     pool_writer = PoolWriter(self._collection, worker_count=worker_count, timeout=0.1)
+    #     total_read = 0
+    #     insert_list = []
+    #
+    #     pool_writer.start()
+    #     try:
+    #         time_start = timer.start()
+    #         previous_count = 0
+    #         for i, line in enumerate(self._reader.readline(limit=limit), 1):
+    #             pool_writer.put(self._parser.enrich_doc(line, i))
+    #             elapsed = timer.elapsed()
+    #             if elapsed >= 1.0:
+    #                 inserted_to_date = pool_writer.count
+    #                 this_insert = inserted_to_date - previous_count
+    #                 previous_count = inserted_to_date
+    #                 docs_per_second = this_insert / elapsed
+    #                 timer.reset()
+    #                 self._logger.info(
+    #                     f"Input:'{self._reader.filename}': docs per sec:{docs_per_second:7.0f}, total docs:{inserted_to_date:>10}")
+    #         pool_writer.stop()
+    #     except UnicodeDecodeError as exp:
+    #         if self._logger:
+    #             self._logger.error(exp)
+    #             self._logger.error("Error on line:%i", total_read + 1)
+    #             pool_writer.stop()
+    #         raise;
+    #
+    #     except KeyboardInterrupt:
+    #         pool_writer.stop()
+    #         raise KeyboardInterrupt;
+    #
+    #     time_finish = time.time()
+    #
+    #     return pool_writer.count, time_finish - time_start
 
-        total_written = 0
-        timer = Timer()
-        pool_writer = PoolWriter(self._collection, worker_count=worker_count, timeout=0.1)
-        total_read = 0
-        insert_list = []
-
-        pool_writer.start()
-        try:
-            time_start = timer.start()
-            previous_count = 0
-            for i, line in enumerate(self._reader.readline(limit=limit), 1):
-                pool_writer.put(self._parser.enrich_doc(line, i))
-                elapsed = timer.elapsed()
-                if elapsed >= 1.0:
-                    inserted_to_date = pool_writer.count
-                    this_insert = inserted_to_date - previous_count
-                    previous_count = inserted_to_date
-                    docs_per_second = this_insert / elapsed
-                    timer.reset()
-                    self._logger.info(
-                        f"Input:'{self._reader.filename}': docs per sec:{docs_per_second:7.0f}, total docs:{inserted_to_date:>10}")
-            pool_writer.stop()
-        except UnicodeDecodeError as exp:
-            if self._logger:
-                self._logger.error(exp)
-                self._logger.error("Error on line:%i", total_read + 1)
-                pool_writer.stop()
-            raise;
-
-        except KeyboardInterrupt:
-            pool_writer.stop()
-            raise KeyboardInterrupt;
-
-        time_finish = time.time()
-
-        return pool_writer.count, time_finish - time_start
-
-    def write(self, buffer: list[dict], writer=WriterType.direct, worker_count=2) -> list[str]:
-        if writer is WriterType.direct:
-            return self.direct_write(buffer)
-        elif writer is WriterType.pool:
-            return self.pool_write(buffer, limit=limit, restart=restart, worker_count=worker_count)
+    # def write(self, buffer: list[dict], writer=WriterType.direct, worker_count=2) -> list[str]:
+    #     if writer is WriterType.direct:
+    #         return self.direct_write(buffer)
+    #     elif writer is WriterType.pool:
+    #         return self.pool_write(buffer, limit=limit, restart=restart, worker_count=worker_count)
 
     def direct_write(self, buffer: list[dict]) -> list[str]:
 

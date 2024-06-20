@@ -68,7 +68,7 @@ def multi_import(*argv):
     parser = add_standard_args(parser)
     parser.add_argument("--poolsize", type=int, default=multiprocessing.cpu_count(),
                         help="The number of parallel processes to run")
-    parser.add_argument("--forkmethod", choices=["spawn", "fork", "forkserver"], default="spawn",
+    parser.add_argument("--forkmethod", choices=["spawn", "fork", "forkserver"], default="fork",
                         help="The model used to define how we create subprocesses (default:'spawn')")
 
     args = parser.parse_args(*argv)
@@ -81,7 +81,6 @@ def multi_import(*argv):
     Logger.add_stream_handler("multi_import")
 
     child_args = sys.argv[1:]
-    children = OrderedDict()
 
     if len(args.filenames) == 0:
         log.info("no input files")
@@ -118,7 +117,8 @@ def multi_import(*argv):
     ####
     log.info("Started multi-import...")
 
-    subprocess = ImportCommand(audit, args)
+    cmd = ImportCommand(audit=audit, args=args)
+
 
     try:
 
@@ -134,7 +134,7 @@ def multi_import(*argv):
                 if os.path.isfile(i):
                     log.info(f"Processing:'{i}'")
                     args.filenames = [i]
-                    proc = Process(target=subprocess.run, args=(args,))
+                    proc = Process(target=cmd.process_file, args=(i,))
                     proc.start()
                     proc_list.append(proc)
                 else:

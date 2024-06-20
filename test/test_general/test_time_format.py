@@ -4,6 +4,7 @@ from csv import DictReader
 
 import pymongo
 
+from pyimport import commandutils
 from pyimport.argparser import ArgMgr
 from pyimport.importcommand import ImportCommand
 
@@ -23,12 +24,8 @@ class Test(unittest.TestCase):
 
     def test_data_format(self):
 
-        # MOT delimiter=|
-        args = self._args.add_arguments(delimiter="|", filenames=["mot_time_format_test.txt"])
-        cmd = ImportCommand(args=args.ns)
-        cmd.run()
-
-        fc = cmd.field_info
+        # MOT delimiter=| fieldfile=mot_time_format_test.tff filenames=mot_time_format_test.txt
+        fc = commandutils.prep_field_file(["mot_time_format_test.txt"], None)
         fmt = fc.format_value("test_date")
         self.assertEqual(fmt, "%Y-%m-%d")
         self.assertTrue(fc)
