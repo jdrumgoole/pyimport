@@ -19,15 +19,6 @@ class ImportCommand:
 
         commandutils.print_args(self._log, args)
 
-    @staticmethod
-    def time_stamp(d):
-        d["timestamp"] = datetime.now(timezone.utc)
-        return d
-
-    def batch_time_stamp(self, d):
-        d["timestamp"] = self._batch_timestamp
-        return d
-
     def run(self):
         return commandutils.process_files(self._log, self._args, self._audit)
 

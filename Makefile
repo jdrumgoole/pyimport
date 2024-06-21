@@ -95,6 +95,12 @@ test_multi:
 	@rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
 	@poetry run python pyimport/dbop.py --drop PYIM.imported
 
+test_threads:
+	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
+	poetry run python pyimport/pyimport_main.py  --threads 4 --splitfile --autosplit 10 --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
+	@rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
+	@poetry run python pyimport/dbop.py --drop PYIM.imported
+
 test_small_multi:
 	head -n 5000 ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > yellow_tripdata_2015-01-06-5k.csv
 	poetry run python pyimport/splitfile.py --autosplit 2 yellow_tripdata_2015-01-06-5k.csv
@@ -106,6 +112,8 @@ test_small_multi:
 genfieldfile:
 	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
 	rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
+
+test_all_scripts: test_scripts test_multi test_small_multi test_yellowtrip test_yellowtrip_async test_data
 
 test_all: pytest test_scripts test_multi test_small_multi test_yellowtrip test_yellowtrip_async test_data
 

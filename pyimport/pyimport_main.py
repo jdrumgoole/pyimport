@@ -25,6 +25,7 @@ from pyimport.importcommand import ImportCommand
 from pyimport.logger import Logger
 from pyimport.fieldfile import FieldFile
 from pyimport.multiimportcommand import MultiImportCommand
+from pyimport.threadimportcommand import ThreadImportCommand
 
 
 def pyimport_main(input_args=None):
@@ -125,6 +126,8 @@ def pyimport_main(input_args=None):
                     MultiImportCommand(audit, args).run()
                 elif args.asyncpro:
                     AsyncImportCommand(audit, args).run()
+                elif args.threads:
+                    ThreadImportCommand(audit, args).run()
                 else:
                     ImportCommand(audit, args).run()
 

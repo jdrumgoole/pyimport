@@ -98,6 +98,7 @@ def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
                         help="Print out what is happening")
     parser.add_argument('--input', default=False, action="store_true",
                         help="Generate output for another program (list of args)")
+    parser.add_argument("--threads", default=1, type=int, help="Number of threads to use for processing")
     #
     # Also try ISO-8859-1
     #

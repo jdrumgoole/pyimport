@@ -3,7 +3,7 @@ name = "pyimport"
 version = "1.7b1"
 description = "A CSV importer for MongoDB and Postgres (should work on other relational databases too)"
 authors = ["Joe Drumgoole"]
-license = "Apache 2.0"
+license = "Apache-2.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]

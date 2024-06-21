@@ -19,6 +19,20 @@ from pyimport.fieldfile import FieldFile, FieldFileException
 from pyimport.linereader import RemoteLineReader, is_url
 
 
+def time_stamp(d):
+    d["timestamp"] = datetime.now(timezone.utc)
+    return d
+
+
+def batch_time_stamp(self, d):
+    d["timestamp"] = self._batch_timestamp
+    return d
+
+
+def chunker(seq, size):
+    return (seq[pos:pos + size] for pos in range(0, len(seq), size))
+
+
 class ImportResults:
     def __init__(self, total_written, elapsed_time, filename, error=None):
         self._filename = filename
