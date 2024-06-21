@@ -103,7 +103,6 @@ test_small_multi:
 	rm yellow_tripdata_2015-01-06-5k.tff yellow_tripdata_2015-01-06-5k.csv
 	poetry run python pyimport/dbop.py --drop SMALL.yellowcab
 
-
 genfieldfile:
 	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
 	rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff

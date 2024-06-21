@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyimport"
-version = "1.6b2"
+version = "1.7b1"
 description = "A CSV importer for MongoDB and Postgres (should work on other relational databases too)"
 authors = ["Joe Drumgoole"]
 license = "Apache 2.0"
@@ -25,6 +25,8 @@ asyncstdlib = "^3.12.3"
 mimesis = "^17.0.0"
 aiofiles = "^23.2.1"
 
+[tool.poetry.scripts]
+my-script = "pyimport.pyimport_main:pyimport_main"
 
 [build-system]
 requires = ["poetry-core"]
