@@ -10,9 +10,21 @@ import dateutil
 
 from pyimport.argparser import ArgMgr
 from pyimport.fieldfile import FieldFile, FieldNames
-from pyimport.filesplitter import LineCounter
+from pyimport.filesplitter import LineCounter, split_files
 from pyimport.importcommand import ImportCommand
+from pyimport.multiimportcommand import MultiImportCommand
 
+
+def test_multi_split():
+    #  --splitfile --multi --poolsize 2   --delimiter '|' --fieldfile ./test/test_mot/10k.tff ./test/test_mot/10k.txt
+    args = ArgMgr.default_args().add_arguments(filenames=["10k.txt"], delimiter="|", fieldfile="10k.tff", splitfile=True, multi=True, poolsize=2)
+    files = split_files(args.ns)
+    split_files_list = [split[0] for split in files]
+    args.add_arguments(filenames=split_files_list)
+    MultiImportCommand(args=args.ns).run()
+    for i, _ in files:
+        assert os.path.isfile(i) is True
+        os.unlink(i)
 
 class TestEndToEnd(unittest.TestCase):
     def setUp(self):

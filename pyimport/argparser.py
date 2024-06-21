@@ -4,6 +4,7 @@ Created on 12 Aug 2017
 @author: jdrumgoole
 """
 import argparse
+import multiprocessing
 
 from configargparse import ArgumentParser
 
@@ -20,10 +21,7 @@ def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
     """
 
     parser.add_argument('-v", ''--version', action='version', version='%(prog)s ' + __VERSION__)
-    parser.add_argument('--database', default="PYIM", help='specify the database filename [default: %(default)s]')
-    parser.add_argument('--collection', default="imported",
-                        help='specify the collection filename [default: %(default)s]')
-    parser.add_argument('--host', default="mongodb://localhost:27017/test", help='mongodb URI. [default: %(default)s]')
+
     parser.add_argument('--locator', default=False, action="store_true", help="add a locator field consisting of filename and \
                         input record line to each doc [default: %(default)s]")
     parser.add_argument('--batchsize', type=int, default=1000,
@@ -55,12 +53,6 @@ def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
                         help='Logging level [default: %(default)s]')
     parser.add_argument('--silent', default=False, action="store_true",
                         help="Suspend output except for log file [default: %(default)s]")
-    parser.add_argument('--writeconcern', default=0, type=int,
-                        help="specify write concern for a write operation [default: %(default)s]")
-    parser.add_argument('--journal', default=False, action="store_true",
-                        help="Turn on journaling [default: %(default)s]")
-    parser.add_argument('--fsync', default=False, action="store_true",
-                        help="Sync all nodes to disk [default: %(default)s]")
     parser.add_argument('--audit', action="store_true", default=False, help="Capture audit records for an upload")
     parser.add_argument('--info', default="", help="Info string to be added to audit record")
     # parser.add_argument('--tag', default=False, action="store_true", help="Tag each record with filename:<record number>")
@@ -69,7 +61,43 @@ def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
                         help="Report field info from a named field file e.g. --fieldinfo <filename>.tff")
     parser.add_argument("--limit", default=0, type=int,
                         help="Limit the number of records we read in (0 means read all records) [default: %(default)s]")
+    #
+    # MongoDB options
+    #
+    parser.add_argument('--database', default="PYIM", help='specify the database filename [default: %(default)s]')
+    parser.add_argument('--collection', default="imported",
+                        help='specify the collection filename [default: %(default)s]')
+    parser.add_argument('--host', default="mongodb://localhost:27017/test", help='mongodb URI. [default: %(default)s]')
+    parser.add_argument('--writeconcern', default=0, type=int,
+                        help="specify write concern for a write operation [default: %(default)s]")
+    parser.add_argument('--journal', default=False, action="store_true",
+                        help="Turn on journaling [default: %(default)s]")
+    parser.add_argument('--fsync', default=False, action="store_true",
+                        help="Sync all nodes to disk [default: %(default)s]")
+
+
+    #
+    # Async and multiprocessing
+    #
     parser.add_argument("--asyncpro", default=False, action="store_true", help="Use async IO for processing files")
+    parser.add_argument("--multi", default=False, action="store_true", help="Use multiprocessing for processing files")
+    parser.add_argument("--poolsize", type=int, default=multiprocessing.cpu_count(),
+                        help="The number of parallel processes to run")
+    parser.add_argument("--forkmethod", choices=["spawn", "fork", "forkserver"], default="fork",
+                        help="The model used to define how we create subprocesses (default:'spawn')")
+
+    #
+    # Splitfile
+    #
+
+    parser.add_argument("--splitfile", default=False, action="store_true", help="Split file into chunks")
+    parser.add_argument("--autosplit", default=2, type=int,
+                        help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
+    parser.add_argument("--splitsize", default=1024*1024, type=int, help="Split file into chunks of this size")
+    parser.add_argument('--verbose', default=False, action="store_true",
+                        help="Print out what is happening")
+    parser.add_argument('--input', default=False, action="store_true",
+                        help="Generate output for another program (list of args)")
     #
     # Also try ISO-8859-1
     #
@@ -108,6 +136,11 @@ class ArgMgr:
         p = ArgumentParser()
         p = add_standard_args(p)
         return ArgMgr(p.parse_args([]))
+
+    @classmethod
+    def args(cls, **kwargs) -> "ArgMgr":
+        ns = argparse.Namespace(**kwargs)
+        return ArgMgr(ns)
 
     @staticmethod
     def default_args_dict() -> dict:

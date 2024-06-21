@@ -1,0 +1,82 @@
+#
+# Created 'yellow_tripdata_2015-01-06-200k.csv.tff'
+# at UTC: 2024-06-20 18:36:11.193572+00:00 by class pyimport.fieldfile
+# Parameters:
+#    csv        : 'yellow_tripdata_2015-01-06-200k.csv.3'
+#    delimiter  : ','
+#
+[1]
+type = "int"
+name = "1"
+format = ""
+
+["2015-01-01 03:16:34"]
+type = "datetime"
+name = "2015-01-01 03:16:34"
+format = "%Y-%m-%d %H:%M:%S"
+
+["2015-01-01 03:37:02"]
+type = "datetime"
+name = "2015-01-01 03:37:02"
+format = "%Y-%m-%d %H:%M:%S"
+
+[2]
+type = "int"
+name = "2"
+format = ""
+
+[9_60]
+type = "float"
+name = "9_60"
+format = ""
+
+[-73_970466613769531]
+type = "float"
+name = "-73_970466613769531"
+format = ""
+
+[40_756858825683594]
+type = "float"
+name = "40_756858825683594"
+format = ""
+
+[N]
+type = "str"
+name = "N"
+format = ""
+
+[-73_852561950683594]
+type = "float"
+name = "-73_852561950683594"
+format = ""
+
+[40_693721771240234]
+type = "float"
+name = "40_693721771240234"
+format = ""
+
+[28]
+type = "float"
+name = "28"
+format = ""
+
+[0_5]
+type = "float"
+name = "0_5"
+format = ""
+
+[5_85]
+type = "int"
+name = "5_85"
+format = ""
+
+[0]
+type = "int"
+name = "0"
+format = ""
+
+[35_15]
+type = "float"
+name = "35_15"
+format = ""
+#end

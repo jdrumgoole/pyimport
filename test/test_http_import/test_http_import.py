@@ -87,7 +87,7 @@ class TestHTTPImport(unittest.TestCase):
                                           ff_filename="yellow-trip-data.tff")
             args = self._args.add_arguments(fieldfile="yellow-trip-data.tff", filenames=[url], delimiter=";", hasheader=True)
             before_doc_count = self._collection.count_documents({})
-            total_written = ImportCommand(args=args.ns).run()
+            total_written, elapsed = ImportCommand(args=args.ns).run()
             after_doc_count = self._collection.count_documents({})
             self.assertEqual(after_doc_count - before_doc_count, 999)
         else:

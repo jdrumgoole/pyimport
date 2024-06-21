@@ -7,13 +7,14 @@ Created on 28 Jun 2017
 import logging
 
 
-class Logger(object):
+class Logger:
     LOGGER_NAME = "pyimport"
     '''
     Logging class that encapsulates logging interface
     '''
 
-    format_string = "%(asctime)s: %(filename)s:%(funcName)s:%(lineno)s: %(levelname)s: %(message)s"
+    #format_string = "%(asctime)s: %(filename)s:%(funcName)s:%(lineno)s: %(levelname)s: %(message)s"
+    format_string = "%(message)s"
 
     def __init__(self, logger_name, log_level=None):
 
@@ -26,7 +27,7 @@ class Logger(object):
             self._logger.setLevel(logging.INFO)
 
         self.add_null_hander()
-        self._null_hander = True
+        self._null_handler = True
 
     @staticmethod
     def formatter():

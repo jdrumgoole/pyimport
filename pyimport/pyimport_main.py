@@ -18,11 +18,13 @@ from requests import exceptions
 from pyimport.argparser import add_standard_args
 from pyimport.asyncimport import AsyncImportCommand
 from pyimport.audit import Audit
+from pyimport.filesplitter import split_files
 from pyimport.generatefieldfilecommand import GenerateFieldfileCommand
 from pyimport.dropcollectioncommand import DropCollectionCommand
 from pyimport.importcommand import ImportCommand
 from pyimport.logger import Logger
 from pyimport.fieldfile import FieldFile
+from pyimport.multiimportcommand import MultiImportCommand
 
 
 def pyimport_main(input_args=None):
@@ -54,11 +56,9 @@ def pyimport_main(input_args=None):
     python pyimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
     """
 
-    # if input_args:
-    #     print("args: {}".format( " ".join(input_args)))
-
     parser = argparse.ArgumentParser(usage=usage_message)
     parser = add_standard_args(parser)
+    splits = []
 
     if input_args:
         cmd = input_args
@@ -66,8 +66,6 @@ def pyimport_main(input_args=None):
     else:
         cmd = tuple(sys.argv[1:])
         args = parser.parse_args(cmd)
-        cmd_args = " ".join(cmd)
-    # print("args: %s" % args)
 
     log = Logger(args.logname, args.loglevel).log()
 
@@ -82,66 +80,64 @@ def pyimport_main(input_args=None):
         except OSError as e:
             log.error(f"{e}")
 
-    if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
-        client = pymongo.MongoClient(args.host, w=args.writeconcern)
-    else:
-        client = pymongo.MongoClient(args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal)
-
-
-
-    if args.audit:
-        audit = Audit(client=client["PYIMPORT_AUDIT"])
-        batch_id = audit.start_batch({"command line": input_args})
-    else:
-        audit = None
-        batch_id = None
-
-    if args.database:
-        database_name = args.database
-    else:
-        database_name = "PYIM"
-
-    if args.collection:
-        collection_name = args.collection
-    else:
-        collection_name = "ported"
-
-    database = client[database_name]
-    collection = database[collection_name]
-
-    if args.drop:
-        if args.restart:
-            log.info("Warning --restart overrides --drop ignoring drop commmand")
-        else:
-            DropCollectionCommand(audit=audit, client=client, args=args).run()
-
-    if args.genfieldfile:
-        args.has_header = True
-        log.info('Forcing has_header true for --genfieldfile')
-        GenerateFieldfileCommand(audit=args.audit, args=args).run()
-
-    if args.fieldinfo:
-        cfg = FieldFile(args.fieldinfo)
-
-        for i,field in enumerate(cfg.fields(), 1 ):
-            print(f"{i:3}. {field:25}:{cfg.type_value(field)}")
-        print(f"Total fields: {len(cfg.fields())}")
-
-    if not args.genfieldfile:
-        if args.filenames:
-            if audit:
-                info = {"command": sys.argv}
-                audit.add_batch_info( batch_id=audit.current_batch_id, info=info)
-
-            if args.asyncpro:
-                AsyncImportCommand(audit, args).run()
-            else:
-                ImportCommand(audit, args).run()
-
-            if args.audit:
-                audit.end_batch(batch_id)
-        else:
+    try:
+        if args.filenames is None:
             log.info("No input files: Nothing to do")
+            return 0
+
+        if args.audit:
+            audit = Audit(client=client["PYIMPORT_AUDIT"])
+            batch_id = audit.start_batch({"command line": input_args})
+        else:
+            audit = None
+            batch_id = None
+
+        if args.drop:
+            if args.restart:
+                log.info("Warning --restart overrides --drop ignoring drop commmand")
+            else:
+                DropCollectionCommand(audit=audit, args=args).run()
+
+        if args.fieldinfo:
+            cfg = FieldFile(args.fieldinfo)
+            for i,field in enumerate(cfg.fields(), 1 ):
+                print(f"{i:3}. {field:25}:{cfg.type_value(field)}")
+            print(f"Total fields: {len(cfg.fields())}")
+
+        if args.splitfile: # we replaces the filenames if we are autosplitting
+            splits = split_files(args)
+            split_files_list = [split[0] for split in splits]
+
+        if args.genfieldfile:
+            args.has_header = True
+            log.info('Forcing has_header true for --genfieldfile')
+            GenerateFieldfileCommand(audit=args.audit, args=args).run()
+
+        if not args.genfieldfile:
+            if args.filenames:
+                if args.splitfile:
+                    args.filenames = split_files_list  # use the split files for processing
+                if audit:
+                    info = {"command": sys.argv}
+                    audit.add_batch_info( batch_id=audit.current_batch_id, info=info)
+
+                if args.multi:
+                    MultiImportCommand(audit, args).run()
+                elif args.asyncpro:
+                    AsyncImportCommand(audit, args).run()
+                else:
+                    ImportCommand(audit, args).run()
+
+                if args.audit:
+                    audit.end_batch(batch_id)
+            else:
+                log.info("No input files: Nothing to do")
+    except KeyboardInterrupt:
+        log.error("Keyboard interrupt... exiting")
+    finally:
+        for filename, _ in splits:
+            os.unlink(filename)
+        log.info(f"Deleted split files: {[filename for filename, _ in splits]}")
 
     return 1
 

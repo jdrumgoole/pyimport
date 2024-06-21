@@ -127,24 +127,6 @@ class LineCounter(object):
         self._line_count = count
         return os.path.getsize(filename), self._line_count
 
-    # def count_now(cls, filename):
-    #     cls._file_size = 0
-    #     cls._line_count = 0
-    #     block = None
-    #     cls._reader = Block_Reader(cls._blocksize)
-    #     # disable universal newlines with "newline=''" so that sizes are correct when
-    #     # reading DOS and Linux files.
-    #     for i in cls._reader.readline(filename):
-    #         block = i
-    #         cls._line_count = cls._line_count + str(block).thread_id("\n")
-    #         cls._file_size = cls._file_size + len(i)
-    #
-    #     if block and block[-1:] != '\n':  # file doesn't end with a newline but its still a line
-    #         cls._line_count = cls._line_count + 1
-    #
-    #     # print( "getsize({}}, cls._file_size: {}".format( os.path.getsize(filename), cls._file_size))
-    #     assert (os.path.getsize(filename) == cls._file_size)
-    #     return (cls._file_size, cls._line_count)
 
     @staticmethod
     def skip_lines(f, skip_count):
@@ -167,7 +149,7 @@ class LineCounter(object):
         return line_count
 
 
-class FileSplitter(object):
+class FileSplitter:
     """
     Split a file into a number of segments. You can autosplit a file into a specific
     number of pieces (autosplit) or divide in segments of a specific os_size (splitfile)
@@ -398,3 +380,56 @@ class FileSplitter(object):
             # print("Splitting '%s' into at least %i pieces of os_size %i" % (
             # cls._input_filename, split_count + 1, cls._split_size))
             yield from self.splitfile(self._split_size)
+
+
+def split_files(args) -> [(str, int)]:
+
+    files = []
+    for filename in args.filenames:
+        if not os.path.isfile(filename):
+            print(f"No such input file:'{filename}'")
+            continue
+
+        splitter = FileSplitter(filename, args.hasheader)
+
+        if args.autosplit or args.splitsize == 0:
+            if args.verbose and not args.input:
+                print(f"Autosplitting: '{filename}' into approximately {args.autosplit} parts")
+            for name, size in splitter.autosplit(args.autosplit):
+                files.append((name, size))
+        else:
+            if args.verbose and not args.input:
+                print(f"Splitting '{filename}' using {args.splitsize}")
+            for name, size in splitter.splitfile(args.splitsize):
+                files.append((name, size))
+
+        count = 1
+        original_lines = splitter.line_count
+        total_new_lines = 0
+
+        for name, lines in files:
+            total_new_lines = total_new_lines + lines
+
+            if args.input:
+                print(f"{name} ", end="")
+            else:
+                if args.verbose:
+                    print(f"{count:4}. '{name}' Lines: {lines:6}")
+                    count = count + 1
+        if args.input:
+            print("")
+
+        if len(files) > 1:
+            if args.verbose and not args.input:
+                print(f"Original file: '{filename}' Lines: {original_lines}")
+
+        if splitter.has_header:
+            original_lines = original_lines - 1
+        if files and (total_new_lines != original_lines):
+            raise ValueError(f"Lines of '{filename}' and total lines of pieces"\
+                             f"{files}"
+                             f"\ndo not match:"
+                             f"\noriginal_lines : {original_lines}"
+                             f"\npieces lines   : {total_new_lines}")
+
+    return files

@@ -34,7 +34,7 @@ import argparse
 import os
 import sys
 
-from pyimport.filesplitter import FileSplitter
+from pyimport.filesplitter import FileSplitter, split_files
 from pyimport.version import __VERSION__
 
 
@@ -70,68 +70,7 @@ using **--splitsize** chunks until it is consumed.
         print("No input file specified to split")
         sys.exit(0)
 
-    files = []
-
-    for source in args.filenames:
-
-        if not os.path.isfile(source):
-            print(f"No such input file:'{source}'")
-            continue
-
-        splitter = FileSplitter(source, args.hasheader)
-        # if splitter.has_header:
-        #     print(f"{source} has a header line")
-
-        if args.autosplit or args.splitsize == 0:
-            if args.verbose and not args.input:
-                print(f"Autosplitting: '{source}' into approximately {args.autosplit} parts")
-            for name, size in splitter.autosplit(args.autosplit):
-                files.append((name, size))
-        else:
-            if args.verbose and not args.input:
-                print("Splitting '%s' using %i splitsize" % (args.filenames[0], args.splitsize))
-            for name, size in splitter.splitfile(args.splitsize):
-                files.append((name, size))
-
-        # print( "Split '%s' into %i parts"  % ( args.filenames[ 0 ], len( files )))
-
-        #print(f"{source} has {splitter.line_count}")
-        count = 1
-        total_size = 0
-        original_lines = splitter.line_count
-        total_new_lines = 0
-
-        results = list(files)
-        for name, lines in results:
-            total_new_lines = total_new_lines + lines
-
-            if args.input:
-                print(f"{name} ", end="")
-            else:
-                if args.verbose:
-                    print(f"{count:4}. '{name}' Lines: {lines:6}")
-                    count = count + 1
-        if args.input:
-            print("")
-
-        if len(files) > 1:
-            if args.verbose and not args.input:
-                print(f"Original file: '{source}' Lines: {original_lines}")
-
-        # if len(files) > 1:
-        #     if args.verbose:
-        #         print("{} {:16} {:17}".format(" " * (len(i) + 7), total_lines, total_size))
-
-        if splitter.has_header:
-            original_lines = original_lines - 1
-        if files and (total_new_lines != original_lines):
-            raise ValueError(f"Lines of '{source}' and total lines of pieces"\
-                             f"{files}"
-                             f"\ndo not match:"
-                             f"\noriginal_lines : {original_lines}"
-                             f"\npieces lines   : {total_new_lines}")
-
-    return results
+    return split_files(args)
 
 
 if __name__ == '__main__':

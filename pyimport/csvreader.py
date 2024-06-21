@@ -44,13 +44,16 @@ class CSVReader:
         return self._has_header
 
     @property
+    def file(self):
+        return self._file
+
+    @property
     def limit(self):
         return self._limit
 
     @property
     def skip_lines(self):
         return self._skip_lines
-
 
     def __iter__(self):
         # TODO: handle reading URLs
@@ -96,6 +99,10 @@ class AsyncCSVReader(CSVReader):
 
         if self._has_header and limit > 0:
             self._limit += 1
+
+    @property
+    def file(self):
+        return self._file
 
     async def __aiter__(self):
         reader = aiocsv.AsyncReader(self._file, delimiter=self._delimiter)

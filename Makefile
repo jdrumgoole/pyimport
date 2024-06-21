@@ -39,29 +39,42 @@ python_bin:
 	python -c "import os;print(os.environ.get('USERNAME'))"
 	which python
 
-
 #
 # Just test that these scripts run
 #
+
+quicktest:
+	poetry run python pyimport/pyimport_main.py --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
+	@poetry run python pyimport/dbop.py --count PYIM.imported
+	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null
+
+async_quicktest:
+	poetry run python pyimport/pyimport_main.py --asyncpro --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
+	@poetry run python pyimport/dbop.py --count PYIM.imported
+	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null
+
+multi_quicktest:
+	poetry run python pyimport/pyimport_main.py --splitfile --multi --poolsize 2   --delimiter '|' --fieldfile ./test/test_mot/10k.tff ./test/test_mot/10k.txt > /dev/null
+	@poetry run python pyimport/dbop.py --count PYIM.imported
+	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null
+
 test_scripts:
 	poetry run python pyimport/pyimport_main.py -h > /dev/null  2>&1
 	poetry run python pyimport/pyimport_main.py --delimiter '|' ./test/test_mot/10k.txt > /dev/null 2>&1
+	@poetry run python pyimport/dbop.py --count PYIM.imported
 	poetry run python pyimport/pyimport_main.py --asyncpro --delimiter '|' ./test/test_mot/10k.txt > /dev/null 2>&1
-	poetry run python pyimport/pymultiimport_main.py -h > /dev/null 2>&1
+	@poetry run python pyimport/dbop.py --count PYIM.imported
 	poetry run python pyimport/pwc.py -h > /dev/null 2>&1
 	poetry run python pyimport/splitfile.py -h > /dev/null 2>&1
 	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null 2>&1
 
 test_data:
-	poetry run python pyimport/splitfile.py --autosplit 4 test/data/100k.txt > /dev/null
-	poetry run python pyimport/pymultiimport_main.py --drop --fieldfile test/data/100k.tff --delimiter "|" --poolsize 2 100k.txt.[1234] > /dev/null
-	rm 100k.txt.* > /dev/null 2>&1
+	poetry run python pyimport/pyimport_main.py --drop --multi --splitfile --autosplit 4 --fieldfile test/data/100k.tff --delimiter "|" --poolsize 2 test/data/100k.txt > /dev/null
 	poetry run python pyimport/dbop.py --drop PYIM.imported
 
 split_file:
-	poetry run python pyimport/splitfile.py --autosplit 4 test/data/100k.txt > /dev/null
-	rm 100k.txt.* > /dev/null 2>&1
-	poetry run python pyimport/dbop.py --drop PYIM.imported
+	poetry run python pyimport/pyimport_main.py --splitfile  --fieldfile test/data/100k.tff --delimiter "|" test/data/100k.txt > /dev/null
+
 
 test_yellowtrip:
 	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
@@ -75,11 +88,13 @@ test_yellowtrip_async:
 	@poetry run python pyimport/dbop.py --drop PYIM.imported
 	@rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
 
+
+test_auto_split:
+		poetry run python pyimport/pyimport_main.py  --multi  --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --poolsize 4 yellow_tripdata_2015-01-06-200k.csv > /dev/null
+
 test_multi:
-	poetry run python pyimport/splitfile.py --autosplit 10 ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
-	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv #> /dev/null
-	poetry run python pyimport/pymultiimport_main.py  --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --poolsize 4 yellow_tripdata_2015-01-06-200k.csv.*  > /dev/null
-	rm yellow_tripdata_2015-01-06-200k.csv.*
+	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
+	poetry run python pyimport/pyimport_main.py  --multi --autosplit 10 --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --poolsize 4 yellow_tripdata_2015-01-06-200k.csv > /dev/null
 	@rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
 	@poetry run python pyimport/dbop.py --drop PYIM.imported
 
@@ -98,7 +113,7 @@ genfieldfile:
 	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
 	rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
 
-test_all: pytest test_scripts
+test_all: pytest test_scripts test_multi test_small_multi test_yellowtrip test_yellowtrip_async test_auto_split test_data
 
 pytest:
 	(cd test/test_command && poetry run pytest)

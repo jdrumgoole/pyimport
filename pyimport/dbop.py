@@ -65,6 +65,7 @@ def main():
     parser = argparse.ArgumentParser(description="Drop a MongoDB database or collection.")
     parser.add_argument('--touch', help="Touch the collection.")
     parser.add_argument('--drop', help="Drop the database or collection.")
+    parser.add_argument('--count', help="Drop the database or collection.")
     parser.add_argument('--host', type=str, default='mongodb://localhost:27017/',
                         help="MongoDB connection URL (default: 'mongodb://localhost:27017/').")
 
@@ -85,6 +86,14 @@ def main():
             drop_database(client, db)
         else:
             drop_collection(client, db, col)
+    if args.count:
+        db, col = parse_db_and_col(args.count)
+        if col is None:
+            print("Error: You must specify a collection to count in the format 'database_name.collection_name'.")
+            sys.exit(1)
+        else:
+            count = client[db][col].count_documents({})
+            print(f"count {db}.{col}:{count}")
 
 
 if __name__ == '__main__':

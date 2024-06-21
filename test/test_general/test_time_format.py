@@ -25,7 +25,8 @@ class Test(unittest.TestCase):
     def test_data_format(self):
 
         # MOT delimiter=| fieldfile=mot_time_format_test.tff filenames=mot_time_format_test.txt
-        fc = commandutils.prep_field_file(["mot_time_format_test.txt"], None)
+        args = ArgMgr.default_args().add_arguments(filenames=["mot_time_format_test.txt"])
+        fc = commandutils.prep_field_file(args.ns)
         fmt = fc.format_value("test_date")
         self.assertEqual(fmt, "%Y-%m-%d")
         self.assertTrue(fc)

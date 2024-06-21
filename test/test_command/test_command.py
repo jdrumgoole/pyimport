@@ -1,10 +1,16 @@
 import argparse
+import asyncio
+import logging
 import os
 import shutil
 import unittest
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClient
+
+from pyimport import commandutils, asynccommandutils
+from pyimport import commandutils as cu
+from pyimport import asynccommandutils as acu
 
 from pyimport.argparser import ArgMgr
 from pyimport.asyncimport import AsyncImportCommand
@@ -64,25 +70,52 @@ async def setup_async():
 
 
 @pytest.mark.asyncio
+async def test_async_one_file(setup_async):
+    size_120 = LineCounter("120lines.txt").line_count
+    files = ["120lines.txt"]
+    args = ArgMgr.default_args().add_arguments(database="TEST_CMD",
+                                               collection="test",
+                                               fieldfile="10k.tff",
+                                               filenames=files,
+                                               delimiter="|")
+
+    log = logging.getLogger(__name__)
+    field_info = commandutils.prep_field_file(args.ns)
+    col = asynccommandutils.async_prep_collection(args.ns)
+    start_size = await col.count_documents({})
+    total_inserted, elapsed_time = await asynccommandutils.process_file(log, args.ns, audit=None, filename=files[0])
+    end_size = await col.count_documents({})
+    assert total_inserted == size_120
+    assert size_120 == (end_size - start_size)
+    for i in range(20):
+        k, v = get_random_field("120lines.txt", field_info, "|")
+        assert await col.find_one({k: v}) is not None, f"Field '{k}' with value '{v}' not found in collection i={i}"
+    await setup_async['client'].drop_database("TEST_ASYNC_INSERTER")
+
+@pytest.mark.asyncio
 async def test_async_import_command(setup_async):
     col = setup_async["col"]
     size_10k = LineCounter("10k.txt").line_count
     size_120 = LineCounter("120lines.txt").line_count
+    files = ["10k.txt", "120lines.txt"]
     args = ArgMgr.default_args().add_arguments(database="TEST_CMD",
                                                collection="test",
                                                fieldfile="10k.tff",
-                                               filenames=["10k.txt", "120lines.txt"],
+                                               filenames=files,
                                                delimiter="|")
 
-    cmd = AsyncImportCommand(audit=setup_async["audit"], args=args.ns)
+    log = logging.getLogger(__name__)
+    field_info = commandutils.prep_field_file(args.ns)
     start_size = await col.count_documents({})
-    await cmd.reader_writer()
+    total_inserted, elapsed_time = await asynccommandutils.process_files(log, args.ns, audit=None)
     end_size = await col.count_documents({})
+    assert total_inserted == (size_10k + size_120)
     assert (size_10k + size_120) == (end_size - start_size)
     for i in range(20):
-        k, v = get_random_field("10k.txt", cmd.field_info, cmd.delimiter)
+        k, v = get_random_field("10k.txt", field_info, "|")
         assert await col.find_one({k: v}) is not None, f"Field '{k}' with value '{v}' not found in collection i={i}"
     await setup_async['client'].drop_database("TEST_ASYNC_INSERTER")
+
 
 class Test(unittest.TestCase):
 
@@ -102,8 +135,10 @@ class Test(unittest.TestCase):
         batch_id = self._audit.start_batch({"test": "test_batch"})
         args = ArgMgr.default_args().add_arguments(database="TEST_CMD", collection="test")
         self.assertTrue(self._collection.find_one({"hello": "world"}))
-        DropCollectionCommand(audit=self._audit, client=self._client, args=args.ns).run()
-        self.assertFalse(self._collection.find_one({"hello": "world"}))
+        DropCollectionCommand(args=args.ns, audit=self._audit).run()
+        db = commandutils.prep_database(args.ns)
+
+        self.assertFalse("test" in db.list_collection_names())
 
         self._audit.end_batch(batch_id)
 
@@ -146,7 +181,7 @@ class Test(unittest.TestCase):
         start_size = collection.count_documents({})
         size_test = LineCounter("test_date_data.csv").line_count - 1
         args = self._default_args.add_arguments(fieldfile="10k.tff", filenames=["test_date_data.csv"], hasheader=True)
-        docs_written = ImportCommand(audit=self._audit, args=args.ns).run()
+        docs_written, elapsed_time = ImportCommand(audit=self._audit, args=args.ns).run()
         assert size_test == docs_written
 
         new_size = collection.count_documents({})
