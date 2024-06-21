@@ -27,7 +27,7 @@ class GenerateFieldfileCommand:
                 FieldFile.generate_field_file(csv_filename=i, ff_filename=field_filename, delimiter=self._args.delimiter)
                 self._field_files.append(field_filename)
             field_list = ",".join([f"'{i}'" for i in self._field_files])
-            self._log.info(f"Created field filename(s) {field_list} from '{self._args.filenames}'")
+            self._log.info(f"Created field filename(s) {field_list} from {self._args.filenames}")
             return self._field_files
         else:
             return None

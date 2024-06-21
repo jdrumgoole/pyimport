@@ -89,12 +89,9 @@ test_yellowtrip_async:
 	@rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
 
 
-test_auto_split:
-		poetry run python pyimport/pyimport_main.py  --multi  --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --poolsize 4 yellow_tripdata_2015-01-06-200k.csv > /dev/null
-
 test_multi:
 	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
-	poetry run python pyimport/pyimport_main.py  --multi --autosplit 10 --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --poolsize 4 yellow_tripdata_2015-01-06-200k.csv > /dev/null
+	poetry run python pyimport/pyimport_main.py  --multi --splitfile --autosplit 10 --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --poolsize 4 ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
 	@rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
 	@poetry run python pyimport/dbop.py --drop PYIM.imported
 
@@ -102,18 +99,16 @@ test_small_multi:
 	head -n 5000 ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > yellow_tripdata_2015-01-06-5k.csv
 	poetry run python pyimport/splitfile.py --autosplit 2 yellow_tripdata_2015-01-06-5k.csv
 	poetry run python pyimport/pyimport_main.py --genfieldfile yellow_tripdata_2015-01-06-5k.csv #> /dev/null
-	poetry run python pyimport/pymultiimport_main.py --database SMALL --collection yellowcab --fieldfile yellow_tripdata_2015-01-06-5k.tff --poolsize 2 yellow_tripdata_2015-01-06-5k.csv.*  > /dev/null
-	rm yellow_tripdata_2015-01-06-5k.csv.*
-	rm yellow_tripdata_2015-01-06-5k.tff
+	poetry run python pyimport/pyimport_main.py --database SMALL --collection yellowcab --splitfile --autosplit 2 --fieldfile yellow_tripdata_2015-01-06-5k.tff --poolsize 2 yellow_tripdata_2015-01-06-5k.csv  > /dev/null
+	rm yellow_tripdata_2015-01-06-5k.tff yellow_tripdata_2015-01-06-5k.csv
 	poetry run python pyimport/dbop.py --drop SMALL.yellowcab
-
 
 
 genfieldfile:
 	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
 	rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
 
-test_all: pytest test_scripts test_multi test_small_multi test_yellowtrip test_yellowtrip_async test_auto_split test_data
+test_all: pytest test_scripts test_multi test_small_multi test_yellowtrip test_yellowtrip_async test_data
 
 pytest:
 	(cd test/test_command && poetry run pytest)

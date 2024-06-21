@@ -135,9 +135,10 @@ def pyimport_main(input_args=None):
     except KeyboardInterrupt:
         log.error("Keyboard interrupt... exiting")
     finally:
-        for filename, _ in splits:
-            os.unlink(filename)
-        log.info(f"Deleted split files: {[filename for filename, _ in splits]}")
+        if len(splits) > 0:
+            for filename, _ in splits:
+                os.unlink(filename)
+            log.info(f"Deleted split files: {[filename for filename, _ in splits]}")
 
     return 1
 
