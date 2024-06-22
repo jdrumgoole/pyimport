@@ -171,7 +171,10 @@ def process_one_file(log, args, filename):
     try:
         loop_timer = timer.Timer(start_now=True)
         for i, doc in enumerate(reader, 1):
-            d = parser.enrich_doc(doc, i)
+            if args.noenrich:
+                d = doc
+            else:
+                d = parser.enrich_doc(doc, i)
             buffer.append(d)
             if len(buffer) >= args.batchsize:
                 collection.insert_many(buffer)

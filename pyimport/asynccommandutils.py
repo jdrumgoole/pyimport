@@ -54,10 +54,13 @@ async def async_prep_import(log, args: argparse.Namespace, filename: str, field_
     return collection, reader, parser
 
 
-async def get_csv_doc(q: asyncio.Queue, p: EnrichTypes, async_reader: AsyncCSVReader):
+async def get_csv_doc(q: asyncio.Queue, p: EnrichTypes, async_reader: AsyncCSVReader, no_enrich=False):
 
     async for i, doc in aenumerate(async_reader, 1):
-        d = p.enrich_doc(doc, i)
+        if no_enrich:
+            d = doc
+        else:
+            d = p.enrich_doc(doc, i)
         await q.put(d)
     await q.put(None)
     return i
@@ -110,7 +113,7 @@ async def process_one_file(log, args, audit, filename):
     collection, async_reader, parser = await async_prep_import(log, args, filename, field_file)
     try:
         async with TaskGroup() as tg:
-            t1 = tg.create_task(get_csv_doc(q, parser, async_reader))
+            t1 = tg.create_task(get_csv_doc(q, parser, async_reader, args.noenrich))
             t2 = tg.create_task(put_db_doc(args, log, q, collection, filename))
 
         total_documents_processed = t1.result()

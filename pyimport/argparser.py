@@ -56,7 +56,7 @@ def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
     parser.add_argument('--audit', action="store_true", default=False, help="Capture audit records for an upload")
     parser.add_argument('--info', default="", help="Info string to be added to audit record")
     # parser.add_argument('--tag', default=False, action="store_true", help="Tag each record with filename:<record number>")
-
+    parser.add_argument('--noenrich', default=False, action="store_true", help="Don't enrich records with type info from field file")
     parser.add_argument("--fieldinfo", default=None, type=str,
                         help="Report field info from a named field file e.g. --fieldinfo <filename>.tff")
     parser.add_argument("--limit", default=0, type=int,
@@ -99,6 +99,7 @@ def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
     parser.add_argument('--input', default=False, action="store_true",
                         help="Generate output for another program (list of args)")
     parser.add_argument("--threads", default=1, type=int, help="Number of threads to use for processing")
+
     #
     # Also try ISO-8859-1
     #
