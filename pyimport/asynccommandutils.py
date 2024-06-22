@@ -101,7 +101,7 @@ async def put_db_doc(args, log, queue: asyncio.Queue, collection: AsyncIOMotorCo
     return total_written, elapsed_time
 
 
-async def process_file(log, args, audit, filename):
+async def process_one_file(log, args, audit, filename):
 
     total_written = 0
     q = asyncio.Queue()
@@ -160,7 +160,7 @@ async def process_files(log, args, audit):
                 if not os.path.isfile(filename):
                     log.warning(f"No such file: '{i}' ignoring")
                     continue
-                task = tg.create_task(process_file(log, args, audit, filename))
+                task = tg.create_task(process_one_file(log, args, audit, filename))
                 tasks.append(task)
 
         for task in tasks:

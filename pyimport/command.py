@@ -35,19 +35,7 @@ def input_prompt(prompt: str, response: list[str], default: str = None) -> str |
 
 class Command:
 
-    def __init__(self, audit=None):
-        pass
-
-    def name(self):
-        return self._name
-
-    def pre_execute(self, args):
-        pass
-
-    def execute(self, args):
-        pass
-
-    def post_execute(self, args):
+    def __init__(self, audit=None, args=None):
         pass
 
     def run(self, args):

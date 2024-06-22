@@ -4,10 +4,10 @@ pwc - python word thread_id
 =======================================
 Created on 27 Aug 2017
 
-A program to thread_id lines as opposed to \n characters. The *wc* program will often miss
+A program to count lines as opposed to \n characters. The *wc* program will often miss
 the last line of programs that do not terminate their last line with a \n.
 
-This uses the Python readline() function to thread_id lines correctly and opens files
+This uses the Python readline() function to count lines correctly and opens files
 in universal mode.
 
 @author: jdrumgoole

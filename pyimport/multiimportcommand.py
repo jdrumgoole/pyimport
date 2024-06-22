@@ -3,7 +3,6 @@ import logging
 import multiprocessing
 import os
 import time
-from datetime import datetime, timezone
 from multiprocessing import Process
 
 from pyimport import commandutils, asynccommandutils
@@ -19,9 +18,6 @@ class MultiImportCommand:
         self._audit = audit
         self._args = args
         self._log = logging.getLogger(__name__)
-        self._total_written: int = 0
-        self._field_filename = args.fieldfile
-        self._field_file: FieldFile = None
 
         commandutils.print_args(self._log, args)
         self._log.info(f"Pool size        : {args.poolsize}")
@@ -29,17 +25,18 @@ class MultiImportCommand:
 
     def async_processor(self, q: multiprocessing.Queue, filename: str):
         total_written, elapsed = asyncio.run(
-            asynccommandutils.process_file(self._log, self._args, self._audit, filename))
+            asynccommandutils.process_one_file(self._log, self._args, self._audit, filename))
         results = ImportResults(total_written, elapsed, filename)
         q.put(results)
 
     def sync_processor(self, q: multiprocessing.Queue, filename: str):
-        total_written, elapsed = commandutils.process_file(self._log, self._args, filename)
+        total_written, elapsed = commandutils.process_one_file(self._log, self._args, filename)
         results = ImportResults(total_written, elapsed, filename)
         q.put(results)
 
     def run(self) -> [int, float]:
         proc_list = []
+        total_written = 0
         try:
             time_start = time.time()
             output_q = multiprocessing.Queue()
@@ -61,24 +58,23 @@ class MultiImportCommand:
                 for p in proc_list:
                     p.join()
 
-            results = None
             while not output_q.empty():
                 r = output_q.get()
                 self._log.info(f"imported file: '{r.filename}' ({r.total_written} rows)")
                 self._log.info(f"Total elapsed time to upload '{r.filename}' : {seconds_to_duration(r.elapsed_time)}")
-                self._total_written += r.total_written
+                total_written += r.total_written
 
             time_finish = time.time()
             elapsed_time = time_finish - time_start
             self._log.info(f"Total elapsed time to upload all files : {seconds_to_duration(elapsed_time)}")
-            self._log.info(f"Average upload rate per second: {round(self._total_written / elapsed_time)}")
+            self._log.info(f"Average upload rate per second: {round(total_written / elapsed_time)}")
 
         except KeyboardInterrupt:
             self._log.error(f"Keyboard interrupt... exiting")
             for p in proc_list:
                 p.kill()
 
-        return self._total_written, elapsed_time
+        return total_written, elapsed_time
 
     def total_written(self):
         return self._total_written

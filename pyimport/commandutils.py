@@ -39,10 +39,14 @@ class ImportResults:
         self._total_written = total_written
         self._elapsed_time = elapsed_time
         self._error = error
+        self._timestamp = datetime.now(timezone.utc)
 
     @classmethod
     def error(cls, filename, error):
         return cls(None, None, filename, error)
+
+    def __bool__(self):
+        return not self._error
 
     def __str__(self):
         return f"Total written:{self.total_written}, Elapsed time:{seconds_to_duration(self.elapsed_time)}"
@@ -67,6 +71,20 @@ class ImportResults:
             return None
         else:
             return self._filename
+
+    @property
+    def timestamp(self):
+        return self._timestamp
+
+    @property
+    def error(self):
+        return self._error
+
+    def __repr__(self):
+        if self._error:
+            return f"ImportResults( None, None, {self.filename}, {self.error})"
+        else:
+            return f"ImportResults({self.total_written}, {self.elapsed_time}, {self.filename})"
 
 
 def print_args(log, args):
@@ -140,7 +158,7 @@ def prep_import(log, args: argparse.Namespace, filename: str, field_info: FieldF
     return collection, reader, parser
 
 
-def process_file(log, args, filename):
+def process_one_file(log, args, filename):
     # time_start = time.time()
     time_period = 1.0
     buffer = []
@@ -193,7 +211,7 @@ def process_files(log, args, audit):
     for filename in args.filenames:
         log.info(f"Processing:'{filename}'")
         try:
-            total_written_this_file, elapsed_time = process_file(log, args, filename)
+            total_written_this_file, elapsed_time = process_one_file(log, args, filename)
             total_written = total_written + total_written_this_file
             if audit:
                 audit_doc = {"command": "import", "filename": filename, "elapsed_time": elapsed_time,

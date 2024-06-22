@@ -83,7 +83,7 @@ async def test_async_one_file(setup_async):
     field_info = commandutils.prep_field_file(args.ns)
     col = asynccommandutils.async_prep_collection(args.ns)
     start_size = await col.count_documents({})
-    total_inserted, elapsed_time = await asynccommandutils.process_file(log, args.ns, audit=None, filename=files[0])
+    total_inserted, elapsed_time = await asynccommandutils.process_one_file(log, args.ns, audit=None, filename=files[0])
     end_size = await col.count_documents({})
     assert total_inserted == size_120
     assert size_120 == (end_size - start_size)
