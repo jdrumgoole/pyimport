@@ -19,6 +19,33 @@ from pyimport.importcommand import ImportCommand
 from pyimport.argparser import ArgMgr
 import pytest
 
+from test.mongodbtestresource import MongoDBTestResource
+
+
+def test_generate_fieldfile():
+    with MongoDBTestResource() as tr:
+        FieldFile.generate_field_file("inventory.csv", ext="testff")
+        assert os.path.exists("inventory.testff")
+        start_count = tr.test_col.count_documents({})
+        args = tr.args.add_arguments(filenames=["inventory.csv"], fieldfile="inventory.testff", hasheader=True)
+        results = ImportCommand(args=args.ns).run()
+        result = results.filename_results("inventory.csv")
+        line_count = LineCounter.count_now("inventory.csv")
+        new_inserted_count = tr.test_col.count_documents({}) - start_count
+        assert new_inserted_count == result.total_written
+        assert new_inserted_count == (line_count - 1) # header must be subtracted
+        os.unlink("inventory.testff")
+
+
+def test_delimiter_header():
+    with MongoDBTestResource() as tr:
+        args = tr.args.add_arguments(filenames=["AandEData_300.csv"], fieldfile="AandE_Data_2011-04-10.tff", hasheader=True)
+        results = ImportCommand(args=args.ns).run()
+        assert results.total_errors == 1
+        assert results.total_results == 0
+
+
+
 
 class TestFieldFile(unittest.TestCase):
 
@@ -57,29 +84,27 @@ class TestFieldFile(unittest.TestCase):
     def test_delimiter_no_header(self):
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["10k.txt"], delimiter="|", hasheader=False)
-        total_written, elapsed = ImportCommand(args=args.ns).run()
-        self.assertEqual(self._col.count_documents({}) - start_count, total_written)
+        results = ImportCommand(args=args.ns).run()
+        self.assertEqual(self._col.count_documents({}) - start_count, results.total_written)
 
     def test_fieldfile_nomatch(self):
         args = self._args.add_arguments(filenames=["inventory.csv"], fieldfile="AandE_Data_2011-04-10.tff")
-        total_written, elapsed = ImportCommand(args=args.ns).run()
-        assert total_written == 0
+        results = ImportCommand(args=args.ns).run()
+        assert results.total_errors > 0
+        assert results.total_results == 0
+        assert results.total_written is None
 
     def test_new_delimiter_and_timeformat_header(self):
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["mot_test_set_small.csv"], fieldfile="mot.tff", hasheader=False, delimiter="|")
-        total_written, elapsed = ImportCommand(args=args.ns).run()
-        lines = LineCounter('mot_test_set_small.csv').line_count
+        results = ImportCommand(args=args.ns).run()
+        lines = LineCounter.count_now('mot_test_set_small.csv')
+        result = results.filename_results("mot_test_set_small.csv")
         inserted_count = self._col.count_documents({}) - start_count
-        self.assertEqual(inserted_count, total_written)
+        self.assertEqual(inserted_count, result.total_written)
         self.assertEqual(inserted_count, lines)
 
-    def test_delimiter_header(self):
-        start_count = self._col.count_documents({})
-        args = self._args.add_arguments(filenames=["AandE_Data_2011-04-10.csv"], fieldfile="AandE_Data_2011-04-10.tff", hasheader=True)
-        total_written, elapsed = ImportCommand(args=args.ns).run()
-        self.assertEqual(self._col.count_documents({}) - start_count, 300)
-        self.assertEqual(self._col.count_documents({}) - start_count, total_written)
+
 
     def test_simple_generate(self):
         gfc = FieldFile.generate_field_file('inventory.csv', ext="xx")
@@ -120,26 +145,17 @@ class TestFieldFile(unittest.TestCase):
         self.assertEqual(list(fc.field_dict.values()), list(fc_new.field_dict.values()))
         os.unlink("2018_Yellow_Taxi_Trip_Data_1000.tff")
 
-    def test_generate_fieldfile(self):
-        FieldFile.generate_field_file("inventory.csv", ext="testff")
-        self.assertTrue(os.path.exists("inventory.testff"))
-        start_count = self._col.count_documents({})
-        args = self._args.add_arguments(filenames=["inventory.csv"], fieldfile="inventory.testff", hasheader=True)
-        total_written, elapsed = ImportCommand(args=args.ns).run()
-        line_count = LineCounter("inventory.csv").line_count
-        new_inserted_count = self._col.count_documents({}) - start_count
-        self.assertEqual(new_inserted_count, total_written)  # header must be subtracted
-        self.assertEqual(new_inserted_count, line_count - 1)  # header must be subtracted
-        os.unlink("inventory.testff")
+
 
     def test_date(self):
         start_count = self._col.count_documents({})
         args= self._args.add_arguments(filenames=["inventory.csv"], fieldfile="inventory_dates.tff", hasheader=True)
-        total_written, elapsed = ImportCommand(args=args.ns).run()
-        lines_count = LineCounter("inventory.csv").line_count - 1  # header
+        results = ImportCommand(args=args.ns).run()
+        result = results.filename_results("inventory.csv")
+        lines_count = LineCounter.count_now("inventory.csv") - 1  # header
         end_count = self._col.count_documents({})
         self.assertEqual(end_count - start_count, lines_count)
-        self.assertEqual(lines_count, total_written)
+        self.assertEqual(lines_count, result.total_written)
 
         nuts_doc = self._col.find_one({"Last Order": dateutil.parser.parse("29-Feb-2016")})
         self.assertTrue(nuts_doc)

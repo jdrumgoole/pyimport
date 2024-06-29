@@ -14,72 +14,75 @@ from pyimport.argparser import ArgMgr
 from pyimport.csvreader import CSVReader
 from pyimport.filesplitter import LineCounter
 from pyimport.importcommand import ImportCommand
+import pytest
+
+from test.mongodbtestresource import MongoDBTestResource
 
 
-class Test(unittest.TestCase):
-
-    def setUp(self):
-        self._client = pymongo.MongoClient(host="mongodb://localhost:27017")
-        self._database = self._client["TEST_FP"]
-        self._col = self._database["test_fp"]
-        self._args = ArgMgr.default_args()
-        self._args.add_arguments(host="mongodb://localhost:27017", database="TEST_FP", collection="test_fp")
-
-    def tearDown(self):
-        self._client.drop_database(self._database)
-
-    def test_sniff(self):
-        self.assertFalse(CSVReader.sniff_header("uk_property_prices.csv"))
-        self.assertFalse(CSVReader.sniff_header("10k.txt"))
-        self.assertTrue(CSVReader.sniff_header("AandE_Data_2011-04-10.csv"))
-        self.assertFalse(CSVReader.sniff_header("gdelt.tsv"))
-
-    def test_property_prices(self):
-
-        start_count = self._col.count_documents({})
-        args = self._args.add_arguments(filenames=["uk_property_prices.csv"], delimiter=",", hasheader=True)
-        ImportCommand(args=args.ns).run()
-        lines = LineCounter("uk_property_prices.csv").line_count - 1
-        self.assertEqual(lines, self._col.count_documents({}) - start_count)
-        self.assertTrue(self._col.find_one({"Postcode": "NG10 5NN"}))
-
-    def test_mot_data(self):
-
-        start_count = self._col.count_documents({})
-        args = self._args.add_arguments(filenames=["10k.txt"], delimiter="|", hasheader=True)
-        ImportCommand(args=args.ns).run()
-        lines = LineCounter("10k.txt").line_count - 1
-        self.assertEqual(lines, self._col.count_documents({}) - start_count)
-        self.assertTrue(self._col.find_one({"test_id": 114624}))
-
-    def test_date_format(self):
-
-        start_count = self._col.count_documents({})
-        args = self._args.add_arguments(filenames=["mot_time_format_test.txt"], delimiter="|", hasheader=True)
-        ImportCommand(args=args.ns).run()
-        lines = LineCounter("mot_time_format_test.txt").line_count - 1
-        self.assertEqual(lines, self._col.count_documents({}) - start_count)
-        self.assertTrue(self._col.find_one({"test_id": 1077}))
-
-    def test_A_and_E_data(self):
-
-        start_count = self._col.count_documents({})
-        args = self._args.add_arguments(filenames=["AandE_Data_2011-04-10.csv"], delimiter=",", hasheader=True)
-        ImportCommand(args=args.ns).run()
-        lines = LineCounter("AandE_Data_2011-04-10.csv").line_count - 1
-        self.assertEqual(lines, self._col.count_documents({}) - start_count)
-        self.assertTrue(self._col.find_one({"Code": "RA4"}))
-
-    def test_gdelt_data(self):
-        start_count = self._col.count_documents({})
-        args = self._args.add_arguments(filenames=["gdelt.tsv"], fieldfile="GDELT_columns.tff", delimiter="tab", hasheader=False)
-        ImportCommand(args=args.ns).run()
-        lines = LineCounter("gdelt.tsv").line_count
-        self.assertEqual(lines, self._col.count_documents({}) - start_count)
-        self.assertTrue(self._col.find_one(
-            {"SOURCEURL": "https://www.standardspeaker.com/news/dream-factory-director-retiring-1.2467094"}))
+def test_a_and_e_data():
+    with MongoDBTestResource() as tr:
+        start_count = tr.test_col.count_documents({})
+        args = tr.args.add_arguments(filenames=["AandE_Data_2011-04-10-300.csv"],
+                                     fieldfile="AandE_Data_2011-04-10.tff",
+                                     delimiter=",", hasheader=True)
+        results = ImportCommand(args=args.ns).run()
+        assert results.total_errors == 0
+        assert results.total_results == 1
+        lines = LineCounter.count_now("AandE_Data_2011-04-10-300.csv") - 1
+        assert lines == (tr.test_col.count_documents({}) - start_count)
+        assert tr.test_col.find_one({"Code": "RA4"})
+        assert results.total_written == lines
 
 
-if __name__ == "__main__":
-    # import sys;sys.argv = ['', 'Test.test_fileprocessor']
-    unittest.main()
+def test_sniff():
+    assert CSVReader.sniff_header("uk_property_prices.csv") is False
+    assert CSVReader.sniff_header("10k.txt") is False
+    assert CSVReader.sniff_header("AandE_Data_2011-04-10-300.csv") is True
+    assert CSVReader.sniff_header("gdelt.tsv") is False
+
+
+def test_property_prices():
+
+    with MongoDBTestResource() as tr:
+        start_count = tr.test_col.count_documents({})
+        args = tr.args.add_arguments(filenames=["uk_property_prices.csv"], delimiter=",", hasheader=True)
+        results = ImportCommand(args=args.ns).run()
+        lines = LineCounter.count_now("uk_property_prices.csv") - 1
+        assert lines == tr.test_col.count_documents({}) - start_count
+        assert tr.test_col.find_one({"Postcode": "NG10 5NN"})
+
+
+def test_mot_data():
+
+    with MongoDBTestResource() as tr:
+        start_count = tr.test_col.count_documents({})
+        args = tr.args.add_arguments(filenames=["10k.txt"], delimiter="|", hasheader=True)
+        result = ImportCommand(args=args.ns).run()
+        lines = LineCounter.count_now("10k.txt") - 1
+        assert lines == tr.test_col.count_documents({}) - start_count
+        assert lines == result.total_written
+        assert tr.test_col.find_one({"test_id": 114624})
+
+
+def test_date_format():
+
+    with MongoDBTestResource() as tr:
+        start_count = tr.test_col.count_documents({})
+        args = tr.args.add_arguments(filenames=["mot_time_format_test.txt"], delimiter="|", hasheader=True)
+        result=ImportCommand(args=args.ns).run()
+        lines = LineCounter.count_now("mot_time_format_test.txt") - 1
+        assert lines == tr.test_col.count_documents({}) - start_count
+        assert tr.test_col.find_one({"test_id": 1077})
+        assert lines == result.total_written
+
+
+def test_gdelt_data():
+    with MongoDBTestResource() as tr:
+        start_count = tr.test_col.count_documents({})
+        args = tr.args.add_arguments(filenames=["gdelt.tsv"], fieldfile="GDELT_columns.tff", delimiter="tab", hasheader=False)
+        result = ImportCommand(args=args.ns).run()
+        lines = LineCounter.count_now("gdelt.tsv")
+        assert lines == tr.test_col.count_documents({}) - start_count
+        assert result.total_written == lines
+        assert tr.test_col.find_one({"SOURCEURL": "https://www.standardspeaker.com/news/dream-factory-director-retiring-1.2467094"})
+

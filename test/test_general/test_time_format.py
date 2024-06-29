@@ -4,7 +4,6 @@ from csv import DictReader
 
 import pymongo
 
-from pyimport import commandutils
 from pyimport.argparser import ArgMgr
 from pyimport.importcommand import ImportCommand
 
@@ -26,7 +25,7 @@ class Test(unittest.TestCase):
 
         # MOT delimiter=| fieldfile=mot_time_format_test.tff filenames=mot_time_format_test.txt
         args = ArgMgr.default_args().add_arguments(filenames=["mot_time_format_test.txt"])
-        fc = commandutils.prep_field_file(args.ns)
+        fc = ImportCommand.prep_field_file(args.ns)
         fmt = fc.format_value("test_date")
         self.assertEqual(fmt, "%Y-%m-%d")
         self.assertTrue(fc)

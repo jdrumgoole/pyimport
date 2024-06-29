@@ -85,8 +85,6 @@ class FieldFile(object):
         self._fields = list(self._field_dict.keys())
         self._id_field = id_field
 
-
-
     @staticmethod
     def make_default_tff_name(name):
         return f"{os.path.splitext(name)[0]}{FieldFile.DEFAULT_EXTENSION}"
@@ -94,24 +92,6 @@ class FieldFile(object):
     @property
     def field_filename(self):
         return None
-
-    # @staticmethod
-    # def clean_kv( k: str, v: str) -> [str, str]:
-    #     if v.startswith('"'):  # strip out quotes if they exist
-    #         v = v.strip('"')
-    #         if v == "":
-    #             v = "blank"
-    #     if v.startswith("'"):
-    #         v = v.strip("'")
-    #     k = k.replace('$', '_')  # not valid keys for mongodb
-    #     k = k.replace('.', '_')  # not valid keys for mongodb
-    #     return (k.strip(), v.strip())  # remove any white space inside quotes
-    #
-    # @staticmethod
-    # def clean_field_name(k: str) -> str:
-    #     k = k.replace('$', '_')  # not valid keys for mongodb
-    #     k = k.replace('.', '_')  # not valid keys for mongodb
-    #     return k.strip()
 
     @staticmethod
     def clean_data_fields(v:str) -> str:

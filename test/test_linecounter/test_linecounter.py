@@ -9,7 +9,7 @@ class MyTestCase(unittest.TestCase):
 
     def _test_file(self, count, doseol=False,filename="liner.txt", unlink=True):
         f = make_line_file(count=count, doseol=doseol, filename=filename)
-        self.assertEqual(count, LineCounter(f).line_count)
+        self.assertEqual(count, LineCounter.count_now(f))
         if unlink:
             os.unlink(f)
 

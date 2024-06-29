@@ -14,6 +14,7 @@ in universal mode.
 """
 
 import argparse
+import os
 import sys
 
 from pyimport.filesplitter import LineCounter
@@ -29,11 +30,12 @@ def pwc(*argv):
     if args.filenames:
         print("lines\tbytes\tfilename")
     for filename in args.filenames:
-        counter = LineCounter(filename)
-        total_count = total_count + counter.line_count
-        total_size = total_size + counter.file_size()
+        lines_this_file = LineCounter.count_now(filename)
+        size_this_file = os.path.getsize(filename)
+        total_count = total_count + lines_this_file
+        total_size = total_size + size_this_file
 
-        print("%i\t%i\t%s" % (counter.line_count, counter.file_size(), filename))
+        print("%i\t%i\t%s" % (lines_this_file, size_this_file, filename))
     if len(args.filenames) > 1:
         print("%i\t%i\ttotal" % (total_count, total_size))
 

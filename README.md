@@ -18,6 +18,8 @@ Well `pyimport` does a few things that mongoimport doesn't do (yet).
 - Automatic `fieldfile` generation with the option **--genfieldfile**.
 - Ability to stop and restart an import.
 - Supports several options to handle "dirty" data: fail, warning or ignore.
+- `--multi` option to allow multiple files to be imported in parallel.
+- `--spiltfiles` option to split a large file into smaller files for parallel import.
 
 On the other hand [mongoimport](https://docs.mongodb.com/manual/reference/program/mongoimport/) supports the richer 
 security options of the [MongoDB Enterprise Advanced](https://www.mongodb.com/products/mongodb-enterprise-advanced)

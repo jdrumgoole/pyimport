@@ -7,17 +7,15 @@ Created on 19 Feb 2016
 """
 
 import argparse
+import logging
 import os
 import sys
-from multiprocessing import Process
-import logging
-
-import pymongo
-from requests import exceptions
+import time
 
 from pyimport.argparser import add_standard_args
 from pyimport.asyncimport import AsyncImportCommand
 from pyimport.audit import Audit
+from pyimport.command import seconds_to_duration
 from pyimport.filesplitter import split_files
 from pyimport.generatefieldfilecommand import GenerateFieldfileCommand
 from pyimport.dropcollectioncommand import DropCollectionCommand
@@ -57,10 +55,13 @@ def pyimport_main(input_args=None):
     python pyimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
     """
 
+    audithost = os.getenv("AUDITHOST", "mongodb://localhost:27017")
+    mdbhost = os.getenv("MDB_HOST", "mongodb://localhost:27017")
     parser = argparse.ArgumentParser(usage=usage_message)
-    parser = add_standard_args(parser)
+    parser = add_standard_args(parser, mdbhost=mdbhost,  audithost=audithost)
     splits = []
 
+    log = logging.getLogger(__name__)
     if input_args:
         cmd = input_args
         args = parser.parse_args(cmd)
@@ -69,6 +70,7 @@ def pyimport_main(input_args=None):
         args = parser.parse_args(cmd)
 
     log = Logger(args.logname, args.loglevel).log()
+    log.addHandler(logging.StreamHandler(sys.stdout))
 
     if not args.silent:
         Logger.add_stream_handler(args.logname)
@@ -79,25 +81,18 @@ def pyimport_main(input_args=None):
                 for line in input_file.readlines():
                     args.filenames.append(line)
         except OSError as e:
-            log.error(f"{e}")
+            log.import_error(f"{e}")
 
     try:
         if args.filenames is None:
             log.info("No input files: Nothing to do")
             return 0
 
-        if args.audit:
-            audit = Audit(client=client["PYIMPORT_AUDIT"])
-            batch_id = audit.start_batch({"command line": input_args})
-        else:
-            audit = None
-            batch_id = None
-
         if args.drop:
             if args.restart:
                 log.info("Warning --restart overrides --drop ignoring drop commmand")
             else:
-                DropCollectionCommand(audit=audit, args=args).run()
+                DropCollectionCommand(args=args).run()
 
         if args.fieldinfo:
             cfg = FieldFile(args.fieldinfo)
@@ -112,31 +107,30 @@ def pyimport_main(input_args=None):
         if args.genfieldfile:
             args.has_header = True
             log.info('Forcing has_header true for --genfieldfile')
-            GenerateFieldfileCommand(audit=args.audit, args=args).run()
+            GenerateFieldfileCommand(args=args).run()
 
         if not args.genfieldfile:
             if args.filenames:
+                start_time = time.time()
                 if args.splitfile:
                     args.filenames = split_files_list  # use the split files for processing
-                if audit:
-                    info = {"command": sys.argv}
-                    audit.add_batch_info( batch_id=audit.current_batch_id, info=info)
-
                 if args.multi:
-                    MultiImportCommand(audit, args).run()
-                elif args.asyncpro:
-                    AsyncImportCommand(audit, args).run()
+                    results = MultiImportCommand(args).run()
                 elif args.threads:
-                    ThreadImportCommand(audit, args).run()
+                    results = ThreadImportCommand(args).run()
+                elif args.asyncpro:
+                    results = AsyncImportCommand(args).run()
                 else:
-                    ImportCommand(audit, args).run()
-
-                if args.audit:
-                    audit.end_batch(batch_id)
+                    results = ImportCommand(args).run()
+                end_time = time.time()
+                elapsed = end_time - start_time
+                log.info(f"Total elapsed time to upload all files : {seconds_to_duration(elapsed)} seconds")
+                log.info(f"Average upload rate per second: {round(results.total_written / elapsed)}")
+                log.info(f"Total records written: {results.total_written}")
             else:
-                log.info("No input files: Nothing to do")
+                log.warning("No input files: Nothing to do")
     except KeyboardInterrupt:
-        log.error("Keyboard interrupt... exiting")
+        log.import_error("Keyboard interrupt... exiting")
     finally:
         if len(splits) > 0:
             for filename, _ in splits:

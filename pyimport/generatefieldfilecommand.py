@@ -6,8 +6,8 @@ from pyimport.fieldfile import FieldFile
 
 class GenerateFieldfileCommand:
 
-    def __init__(self, audit=None, args=None):
-        self._audit = audit
+    def __init__(self, args=None):
+
         self._name = "generate"
         self._log = logging.getLogger(__name__)
         self._field_files: list[str] = []

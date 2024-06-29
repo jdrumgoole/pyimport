@@ -1,30 +1,55 @@
-import csv
+
 import os
-import pprint
 import unittest
-from typing import Dict
-from datetime import datetime
+
 
 import pymongo
 import dateutil
+import pytest
 
+from dotenv import load_dotenv
 from pyimport.argparser import ArgMgr
 from pyimport.fieldfile import FieldFile, FieldNames
-from pyimport.filesplitter import LineCounter, split_files
+from pyimport.filesplitter import LineCounter, split_files, FileSplitter
 from pyimport.importcommand import ImportCommand
 from pyimport.multiimportcommand import MultiImportCommand
+from test.mongodbtestresource import MongoDBTestResource
 
 
-def test_multi_split():
+# take environment variables from .env.
+@pytest.fixture
+def setup(scope="module"):
+    client = pymongo.MongoClient()
+    db = client["E2E_TEST"]
+    col = db["TEST"]
+    args = ArgMgr.default_args().add_arguments(host="mongodb://localhost:27017", database="E2E_TEST", collection="TEST")
+    yield col
+    client.drop_database("E2E_TEST")
+
+
+def test_multi_split(setup):
     #  --splitfile --multi --poolsize 2   --delimiter '|' --fieldfile ./test/test_mot/10k.tff ./test/test_mot/10k.txt
-    args = ArgMgr.default_args().add_arguments(filenames=["10k.txt"], delimiter="|", fieldfile="10k.tff", splitfile=True, multi=True, poolsize=2)
-    files = split_files(args.ns)
-    split_files_list = [split[0] for split in files]
-    args.add_arguments(filenames=split_files_list)
-    MultiImportCommand(args=args.ns).run()
-    for i, _ in files:
-        assert os.path.isfile(i) is True
-        os.unlink(i)
+    with MongoDBTestResource() as tr:
+        args = tr.args.add_arguments(filenames=["10k.txt"], delimiter="|", fieldfile="10k.tff", splitfile=True, multi=True, poolsize=2)
+        files = split_files(args.ns)
+        split_files_list = [split[0] for split in files]
+        args.add_arguments(filenames=split_files_list)
+        MultiImportCommand(args=args.ns).run()
+        assert FileSplitter.compare_concatenated_files("10k.txt", split_files_list) is True
+        for i in split_files_list:
+            assert os.path.isfile(i) is True
+            os.unlink(i)
+
+
+def test_std_with_audit():
+    home = os.getenv("HOME")
+    assert os.path.isfile(f"{home}/GIT/pyimport/.env")
+    load_dotenv(f"{home}/GIT/pyimport/.env")
+    assert os.getenv("AUDITHOST") is not None
+    audithost = os.getenv("AUDITHOST")
+    args = ArgMgr.default_args().add_arguments(filenames=["10lines.txt"], audithost=audithost, audit=True, delimiter="|", fieldfile="10k.tff")
+    ImportCommand(args=args.ns).run()
+
 
 class TestEndToEnd(unittest.TestCase):
     def setUp(self):
@@ -53,7 +78,7 @@ class TestEndToEnd(unittest.TestCase):
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["mot.txt"], delimiter="|", fieldfile="mot.tff", has_header=False)
         ImportCommand(args=args.ns).run()
-        file_size = LineCounter("mot.txt").line_count
+        file_size = LineCounter.count_now("mot.txt")
         end_count = self._col.count_documents({})
 
         self.assertEqual(end_count - start_count, file_size)
@@ -79,7 +104,7 @@ class TestEndToEnd(unittest.TestCase):
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["AandEData.csv"], delimiter=",", fieldfile="AandEData.tff", hasheader=True)
         ImportCommand(args=args.ns).run()
-        file_size = LineCounter("AandEData.csv").line_count - 1
+        file_size = LineCounter.count_now("AandEData.csv") - 1
         end_count = self._col.count_documents({})
         self.assertEqual(end_count - start_count, file_size)
 

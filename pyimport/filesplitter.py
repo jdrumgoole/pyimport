@@ -23,7 +23,9 @@ There is also a **count_lines** function to thread_id the lines in a file.
 
 """
 import os
+import shutil
 from enum import Enum
+from typing import Generator, Tuple
 
 
 class BlockReader(object):
@@ -81,7 +83,7 @@ class CounterException(Exception):
     pass
 
 
-class LineCounter(object):
+class LineCounter:
     """
     Count the lines in a file efficiently by reading in a block
     at a time and counting '\n' chars. Blocks are large by
@@ -96,7 +98,7 @@ class LineCounter(object):
         self._filename = filename
 
         if count_now and filename:
-            self.count_now(self._filename)
+            LineCounter.count_now(self._filename)
 
     @property
     def line_count(self):
@@ -111,21 +113,19 @@ class LineCounter(object):
     def file_size(self):
         return self._file_size
 
-    def count_now(self, filename=None):
+    @staticmethod
+    def count_lines_in_file(file_path:str) -> int:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            return sum(1 for _ in f)
 
-        if filename:
-            count_filename = filename
-        else:
-            count_filename = self._filename
-        count = 0
-
-        with open(count_filename, "r") as input_file:
-            for count,line in enumerate(input_file, 1):
-                #print(f"{filename}:{line}:{cls._line_count}")
-                pass
-
-        self._line_count = count
-        return os.path.getsize(filename), self._line_count
+    def count_now(*args):
+        total_lines = 0
+        for file_path in args:
+            if os.path.isfile(file_path):
+                total_lines += LineCounter.count_lines_in_file(file_path)
+            else:
+                raise FileNotFoundError(file_path)
+        return total_lines
 
 
     @staticmethod
@@ -170,77 +170,109 @@ class FileSplitter:
         self._has_header = has_header
         self._line_count = None
         self._header_line = ""  # Not none so len does something sensible when has_header is false
-        if self._has_header:
-            self._header_line = self.get_header(self._input_filename)
+
+        self._header_line, self._file_type = self.get_file_type_and_header(filename=self._input_filename,
+                                                                             has_header=has_header)
         # cls._data_lines_count = 0
         self._size_threshold = 1024 * 10
         self._split_size = None
-        self._file_type = None
-        self._autosplits = None
+        self._auto_splits = None
         self._splits = None
-
-        self._check_file_type()
 
     @property
     def line_count(self):
         if self._line_count is None:
-            self._line_count = LineCounter(self._input_filename).line_count
+            self._line_count = LineCounter.count_now(self._input_filename)
             return self._line_count
         else:
             return self._line_count
 
-    def count_now(self):
-        self._line_count = LineCounter(self._input_filename).line_count
-        return self._line_count
+    @staticmethod
+    def compare_files(lhs:str, rhs:str) -> bool:
+        lhs_file = rhs_file = None
+        try:
+            lhs_file = open(lhs, 'r', encoding='utf-8')
+            rhs_file = open(rhs, 'r', encoding='utf-8')
 
-    def get_header(self, filename):
+            for line1, line2 in zip(lhs_file, rhs_file):
+                if line1 != line2:
+                    return False
+
+            # Ensure both files have reached EOF
+            if lhs_file.read(1) or rhs_file.read(1):
+                return False
+        finally:
+            if lhs_file:
+                lhs_file.close()
+            if rhs_file:
+                rhs_file.close()
+
+        return True
+
+    @staticmethod
+    def compare_concatenated_files(original_filename:str, list_of_filenames:list[str]) -> bool:
+        # Create a temporary file to store the concatenated content
+        temp_filename = 'temp_concatenated_file.txt'
+
+        try:
+            with open(temp_filename, 'w', encoding='utf-8') as temp_file:
+                # Concatenate the contents of the files in the list
+                for filename in list_of_filenames:
+                    with open(filename, 'r', encoding='utf-8') as f:
+                        shutil.copyfileobj(f, temp_file)
+
+            return FileSplitter.compare_files(original_filename, temp_filename)
+        finally:
+            os.unlink(temp_filename)
+
+    @staticmethod
+    def get_header(filename):
         with open(filename, "r") as f:
             header = f.readline()
-        return header #.rstrip()
+        return header                  #.rstrip()
 
-    def _check_file_type(self):
+    @staticmethod
+    def get_file_type_and_header(filename:str, has_header:bool) -> [str|None, FileType]:
         line = ""
-        with open(self._input_filename, "r") as f:
-            line = f.readline()
+        header_line = None
+        with open(filename, "r") as f:
+            if has_header:
+                header_line = f.readline()
             if f.newlines and f.newlines == '\r\n':
-                self._file_type = FileType.DOS
+                file_type = FileType.DOS
             else:
-                self._file_type = FileType.UNIX
-        return line
+                file_type = FileType.UNIX
+        return header_line, file_type
 
-    def new_file(self, filename, ext):
+    @staticmethod
+    def new_file(filename, ext):
         basename = os.path.basename(filename)
         filename = f"{basename}.{ext}"
-        # cls._files[filename] = 0
+
         newfile = open(filename, "w")
-        return (newfile, filename)
+        return newfile, filename
 
-    def wc(self):
-        return self._line_count, os.path.getsize(self._input_filename)
-
-    def copy_file(self, rhs, ignore_header=True):
+    @staticmethod
+    def copy_file(lhs, rhs, ignore_header=True) -> Tuple[str, int]:
         """
         Copy the input file to the file ;param rhs. If :param
         ignore_header is true the strip the header during copying.
+        :param lhs:
         :param rhs:
-        :param has_header:
+        :param ignore_header:
         :return:
         """
 
-        lhs = self._input_filename
-
-        self._line_count = 0
-        with open(lhs, "r" ) as input_file:
-
+        line_count = 0
+        with open(lhs, "r") as input_file:
             if ignore_header:
-                self._header_line = input_file.readline()
-
+                _ = input_file.readline()
             with open(rhs, "w") as output_file:
                 for i in input_file:
-                    self._line_count = self._line_count + 1
+                    line_count = line_count + 1
                     output_file.write(i)
 
-        return rhs, self._line_count
+        return rhs, line_count
 
     @property
     def has_header(self):
@@ -250,19 +282,6 @@ class FileSplitter:
         return self._header_line
 
     def no_header_size(self):
-        # """
-        # For DOS files the line endings have an extra character.
-        # :return:
-        # """
-        #
-        # if cls._has_header:
-        #     if cls._file_type == FileType.DOS:
-        #         adjustment = cls._line_count + len(cls._header_line)  # tryout
-        #     else:
-        #         adjustment = len(cls._header_line)
-        # else:
-        #     adjustment = 0
-
         return self._size - len(self._header_line)
 
     def output_files(self):
@@ -271,63 +290,48 @@ class FileSplitter:
     # def data_lines_count(cls):
     #     return cls._data_lines_count
 
-    def splitfile(self, split_size: int = 0) -> (str, int):
-        """
-        Split file in a number of discrete parts of size split_size
-        The last split may be less than split_size in size.
-        This is a generator function that yields each split as it is
-        created.
+    @staticmethod
+    def split_file(filename: str, split_size, has_header=False) -> Generator:
 
-        :param split_size:
-        :return: a generator of tuples (filename, split_size)
-        Where split_size is the os_size of the split in bytes.
-        """
-
-        self._line_count = 0
+        file_is_open = False
         if split_size < 1:
-            yield self.copy_file(self._input_filename + ".1")
+            yield FileSplitter.copy_file(filename, filename + ".1", ignore_header=has_header)
         else:
-            with open(self._input_filename, "r") as input_file:
-                current_split_size = 0
-                file_count = 0
-                filename = None
-                output_file = None
+            with (open(filename, 'r', encoding='utf-8') as file):
+                try:
+                    part_num = 1
+                    lines_in_part = 0
 
-                if self._has_header:  # we strip the header from output files
-                    self._header_line = input_file.readline()
-                    self._line_count = self._line_count+ 1
+                    for line_num, line in enumerate(file, start=1):
+                        if not file_is_open:
+                            part_file = open(f"{filename}.{part_num}", 'w', encoding='utf-8')
+                            file_is_open = True
+                        if line_num == 1 and has_header:
+                            continue
+                        else:
+                            part_file.write(line)
+                            lines_in_part += 1
+                            if lines_in_part == split_size:
+                                part_file.close()
+                                file_is_open = False
+                                yield part_file.name, lines_in_part
+                                part_num += 1
+                                lines_in_part = 0
 
-                for line in input_file:
-                    self._line_count = self._line_count + 1
-                    # print( "Line type:%s" % repr(input_file.newlines))
-                    if current_split_size < split_size:
-                        if current_split_size == 0:
-                            file_count = file_count + 1
-                            (output_file, filename) = self.new_file(self._input_filename, file_count)
-                            # print( "init open:%s" % filename)
-                    else:
-                        assert current_split_size == split_size
-                        output_file.close()
-                        # print( "std close:%s" % filename)
-                        yield (filename, current_split_size)
-                        current_split_size = 0
-                        file_count = file_count + 1
-                        (output_file, filename) = self.new_file(self._input_filename, file_count)
-                        # print("std open:%s" % filename)
-                    output_file.write(line)
-                    current_split_size = current_split_size + 1
+                    if lines_in_part > 0:
+                        part_file.close()
+                        file_is_open = False
+                        yield part_file.name, lines_in_part
 
-            if current_split_size > 0:  # if its zero we just closed the file and did a yield
-                output_file.close()
-                # print("final close:%s" % filename)
-                yield (filename, current_split_size)
-
-            # print("Exited: current_split_size: %i split_size: %i" % (current_split_size, split_size))
+                finally:
+                    if file_is_open:
+                        part_file.close()
 
     def file_type(self):
         return self._file_type
 
-    def get_average_line_size(self, sample_size=10):
+    @staticmethod
+    def get_average_line_size(filename, has_header:bool=None, sample_size=10):
         """
         Read the first sample_size lines of a file (ignoring the header). Use these lines to estimate the
         average line os_size.
@@ -337,49 +341,51 @@ class FileSplitter:
         line_sample = 10
         count = 0
         line = None
+        sample_lines =[]
+        with open(filename, "r") as f:
+            for i, line in enumerate(f, start=1):
+                if i == 1 and has_header:
+                    continue
+                if i <= sample_size:
+                    sample_lines.append(line)
+                else:
+                    break
+        if has_header:
+            i = i-1
 
-        with open(self._input_filename, "r") as f:
-            if self._has_header:
-                line = f.readline()
-                self._header_line = line
-
-            line = f.readline()
-            while line and count < line_sample:
-                count = count + 1
-                line = f.readline()
-                sample_size = sample_size + len(line)
-
-        if count > 0:
-            return int(round(sample_size / count))
+        if i >= 1:
+            if i < sample_size:
+                sample_size = i
+            avg_line_size = int(round((sum(len(line) for line in sample_lines) / sample_size)))
         else:
-            return 0
+            avg_line_size = 0
+
+        return avg_line_size
 
     @staticmethod
     def shim_names(g):
         for i in g:
             yield i[0]
 
-    def split_size(self):
-        return self._split_size
+    @staticmethod
+    def autosplit(filename, has_header, split_count):
 
-    def autosplit(self, split_count):
-
-        average_line_size = self.get_average_line_size()
+        average_line_size = FileSplitter.get_average_line_size(filename, has_header)
 
         if average_line_size > 0:
             if split_count > 0:
-                file_size = os.path.getsize(self._input_filename)
+                file_size = os.path.getsize(filename)
 
                 total_lines = int(round(file_size / average_line_size))
                 # print( "total lines : %i"  % total_lines )
 
-                self._split_size = int(round(total_lines / split_count))
+                split_size = int(round(total_lines / split_count))
             else:
-                self._split_size = 0
+                split_size = 0
 
             # print("Splitting '%s' into at least %i pieces of os_size %i" % (
             # cls._input_filename, split_count + 1, cls._split_size))
-            yield from self.splitfile(self._split_size)
+            yield from FileSplitter.split_file(filename, split_size, has_header)
 
 
 def split_files(args) -> [(str, int)]:
@@ -395,12 +401,12 @@ def split_files(args) -> [(str, int)]:
         if args.autosplit or args.splitsize == 0:
             if args.verbose and not args.input:
                 print(f"Autosplitting: '{filename}' into approximately {args.autosplit} parts")
-            for name, size in splitter.autosplit(args.autosplit):
+            for name, size in FileSplitter.autosplit(filename, args.hasheader, args.autosplit):
                 files.append((name, size))
         else:
             if args.verbose and not args.input:
                 print(f"Splitting '{filename}' using {args.splitsize}")
-            for name, size in splitter.splitfile(args.splitsize):
+            for name, size in splitter.split_file(args.splitsize):
                 files.append((name, size))
 
         count = 1

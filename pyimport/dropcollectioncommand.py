@@ -1,23 +1,19 @@
 import argparse
 import logging
 
-import pymongo
-
-from pyimport import commandutils
-from pyimport.command import Command
+from pyimport.importcommand import ImportCommand
 
 
 class DropCollectionCommand:
 
-    def __init__(self, args: argparse.Namespace, audit=None):
-        self._audit = audit
+    def __init__(self, args: argparse.Namespace):
         self._name = "drop"
         self._args = args
         self._log = logging.getLogger(__name__)
 
     def run(self):
 
-        database = commandutils.prep_database(self._args)
+        database = ImportCommand.prep_database(self._args)
         self._log.info(f"Dropping collection '{self._args.collection}'")
         result = database.drop_collection(self._args.collection)
         if result["ok"] == 1:

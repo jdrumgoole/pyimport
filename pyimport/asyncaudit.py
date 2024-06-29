@@ -48,7 +48,6 @@ class AsyncAudit(object):
     def __init__(self, database: Database, collection_name: str = "audit"):
 
         self._database = database
-        self._lock = Lock()
         options = CodecOptions(tz_aware=True)
         self._col = database.get_collection(collection_name, options)
         self._open_batch_count = 0
@@ -116,8 +115,7 @@ class AsyncAudit(object):
         return end_doc
 
     def in_batch(self):
-        with self._lock:
-            return self._open_batch_count > 0
+        return self._open_batch_count > 0
 
     async def get_batch(self, batch_id: MonotonicID):
         batch = await self._col.find_one({"batch_id": batch_id.id})

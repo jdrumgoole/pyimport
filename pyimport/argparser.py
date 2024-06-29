@@ -9,16 +9,21 @@ import multiprocessing
 from configargparse import ArgumentParser
 
 from pyimport.doctimestamp import DocTimeStamp
-from pyimport.enrichtypes import ErrorResponse
+from pyimport.enricher import ErrorResponse
 from pyimport.logger import Logger
 from pyimport.version import __VERSION__
 
 
-def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+def add_standard_args(parser: argparse.ArgumentParser, mdbhost=None, audithost=None) -> argparse.ArgumentParser:
     """
     Construct parser for pyimport return it as a list suitable for passing to the parents
     argument of the next parser
     """
+
+    if audithost is None:
+        audithost = "mongodb://localhost:27017"
+    if mdbhost is None:
+        mdbhost = "mongodb://localhost:27017"
 
     parser.add_argument('-v", ''--version', action='version', version='%(prog)s ' + __VERSION__)
 
@@ -54,6 +59,9 @@ def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
     parser.add_argument('--silent', default=False, action="store_true",
                         help="Suspend output except for log file [default: %(default)s]")
     parser.add_argument('--audit', action="store_true", default=False, help="Capture audit records for an upload")
+    parser.add_argument('--audithost', default=audithost, help="Host for audit records [default: %(default)s]")
+    parser.add_argument('--auditcollection', default="audit", help="Collection for audit records [default: %(default)s]")
+    parser.add_argument('--auditdatabase', default="PYIMPORT_AUDIT", help="Database for audit records [default: %(default)s]")
     parser.add_argument('--info', default="", help="Info string to be added to audit record")
     # parser.add_argument('--tag', default=False, action="store_true", help="Tag each record with filename:<record number>")
     parser.add_argument('--noenrich', default=False, action="store_true", help="Don't enrich records with type info from field file")
@@ -67,7 +75,7 @@ def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
     parser.add_argument('--database', default="PYIM", help='specify the database filename [default: %(default)s]')
     parser.add_argument('--collection', default="imported",
                         help='specify the collection filename [default: %(default)s]')
-    parser.add_argument('--host', default="mongodb://localhost:27017/test", help='mongodb URI. [default: %(default)s]')
+    parser.add_argument('--host', default=mdbhost, help='mongodb URI. [default: %(default)s]')
     parser.add_argument('--writeconcern', default=0, type=int,
                         help="specify write concern for a write operation [default: %(default)s]")
     parser.add_argument('--journal', default=False, action="store_true",
@@ -93,12 +101,12 @@ def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
     parser.add_argument("--splitfile", default=False, action="store_true", help="Split file into chunks")
     parser.add_argument("--autosplit", default=2, type=int,
                         help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
-    parser.add_argument("--splitsize", default=1024*1024, type=int, help="Split file into chunks of this size")
+    parser.add_argument("--splitsize", default=1024*10, type=int, help="Split file into chunks of this size [default: %(default)s (10k)]")
     parser.add_argument('--verbose', default=False, action="store_true",
                         help="Print out what is happening")
     parser.add_argument('--input', default=False, action="store_true",
                         help="Generate output for another program (list of args)")
-    parser.add_argument("--threads", default=1, type=int, help="Number of threads to use for processing")
+    parser.add_argument("--threads", default=False, action="store_true",  help="Use threads to process the data --poolsize sets the no of threads")
 
     #
     # Also try ISO-8859-1

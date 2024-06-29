@@ -135,15 +135,15 @@ class Converter(object):
         return datetime.fromisoformat(v)
 
     @staticmethod
-    def to_datetime(v, format=None) -> datetime:
+    def to_datetime(v, fmt=None) -> datetime:
         if v == "NULL":
             return None
         if v == "":
             return None
-        if format is None:
+        if fmt is None:
             return date_parse(v)  # much slower than strptime, avoid for large jobs
         else:
-            return datetime.strptime(v, format)
+            return datetime.strptime(v, fmt)
 
     @staticmethod
     def to_timestamp(v) -> datetime:

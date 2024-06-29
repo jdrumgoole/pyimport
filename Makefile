@@ -8,8 +8,12 @@
 PYPIUSERNAME="jdrumgoole"
 ROOT=${HOME}/GIT/pyimport
 PYTHONPATH=${ROOT}
+PATH=/bin:/usr/bin:/usr/local/mongodb/bin:/Users/jdrumgoole/.pyenv/shims/
 #
 # Hack the right PYTHONPATH into make subshells.
+
+testenv:
+	@echo "AUDITHOST" is: "$(AUDITHOST)"
 
 
 SHELL:=PYTHONPATH=${ROOT} ${SHELL}
@@ -25,7 +29,7 @@ publish: build
 	poetry publish
 
 path:
-	@echo PATH=${PATH}
+	@echo AUDITHOST=${AUDITHOST}
 
 
 pythonpath:
@@ -43,18 +47,46 @@ python_bin:
 # Just test that these scripts run
 #
 
-quicktest:
+
+
+quick_test : std_quicktest async_quicktest thread_quicktest multi_quicktest
+
+std_quicktest:
 	poetry run python pyimport/pyimport_main.py --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
+	poetry run python pyimport/pyimport_main.py --audit --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
 	@poetry run python pyimport/dbop.py --count PYIM.imported
 	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null
 
+audit_quicktest:
+	poetry run python pyimport/pyimport_main.py --audit --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt
+	@poetry run python pyimport/dbop.py --count PYIM.imported
+	poetry run python pyimport/dbop.py --drop PYIM.imported
+
 async_quicktest:
+	poetry run python pyimport/pyimport_main.py --audit --asyncpro --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
 	poetry run python pyimport/pyimport_main.py --asyncpro --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
 	@poetry run python pyimport/dbop.py --count PYIM.imported
 	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null
 
+thread_quicktest:
+	poetry run python pyimport/pyimport_main.py --audit --thread --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
+	poetry run python pyimport/pyimport_main.py --asyncpro --thread --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
+	@poetry run python pyimport/dbop.py --count PYIM.imported
+	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null
+
 multi_quicktest:
-	poetry run python pyimport/pyimport_main.py --splitfile --multi --poolsize 2   --delimiter '|' --fieldfile ./test/test_mot/10k.tff ./test/test_mot/10k.txt > /dev/null
+	poetry run python pyimport/pyimport_main.py --splitfile --multi --poolsize 2   --delimiter '|' --fieldfile ./test/test_mot/10k.tff ./test/test_command/120lines.txt > /dev/null
+	poetry run python pyimport/pyimport_main.py --splitfile --multi --poolsize 2   --audit --delimiter '|' --fieldfile ./test/test_mot/10k.tff ./test/test_command/120lines.txt > /dev/null
+	@poetry run python pyimport/dbop.py --count PYIM.imported
+	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null
+
+test_audit:
+	poetry run python pyimport/pyimport_main.py --audit --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
+	poetry run python pyimport/pyimport_main.py --audit --asyncpro --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
+	poetry run python pyimport/pyimport_main.py --audit --multi --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
+	poetry run python pyimport/pyimport_main.py --audit --asyncpro --multi --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
+	poetry run python pyimport/pyimport_main.py --audit --threads --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
+	poetry run python pyimport/pyimport_main.py --audit --threads --asyncpro --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
 	@poetry run python pyimport/dbop.py --count PYIM.imported
 	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null
 
@@ -77,14 +109,11 @@ split_file:
 
 
 test_yellowtrip:
-	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
-	poetry run python pyimport/pyimport_main.py --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
-	poetry run python pyimport/dbop.py --drop PYIM.imported
-	rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
-
-test_yellowtrip_async:
-	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
-	poetry run python pyimport/pyimport_main.py --asyncpro --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --async ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
+	poetry run python pyimport/pyimport_main.py --audit --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
+	poetry run python pyimport/pyimport_main.py --audit --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
+	poetry run python pyimport/pyimport_main.py --audit --asyncpro --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --async ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
+	poetry run python pyimport/pyimport_main.py --audit --asyncpro --splitfile --multi  --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --async ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
+	poetry run python pyimport/pyimport_main.py --audit --asyncpro --splitfile --threads  --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv
 	@poetry run python pyimport/dbop.py --drop PYIM.imported
 	@rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
 
@@ -96,9 +125,7 @@ test_multi:
 	@poetry run python pyimport/dbop.py --drop PYIM.imported
 
 test_threads:
-	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
-	poetry run python pyimport/pyimport_main.py  --threads 4 --splitfile --autosplit 10 --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
-	@rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
+	poetry run python pyimport/pyimport_main.py   --asyncpro --threads --poolsize 8 --splitfile --autosplit 10 --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
 	@poetry run python pyimport/dbop.py --drop PYIM.imported
 
 test_small_multi:
@@ -111,11 +138,17 @@ test_small_multi:
 
 genfieldfile:
 	poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv > /dev/null
-	rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
+	#rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff
 
-test_all_scripts: test_scripts test_multi test_small_multi test_yellowtrip test_yellowtrip_async test_data
+mongoimport:
+	mongoimport --db test --collection yellowcab --type csv --columnsHaveTypes --fieldFile test/test_mongoimport/yellow_trip_data_10.mff  --file test/test_mongoimport/yellow_tripdata_200_noheader.csv
+	poetry run python pyimport/pyimport_main.py --asyncpro --threads --splitfile --autosplit 10 --poolsize 8 --fieldfile ./test/test_command/yellow_trip.tff ./test/test_command/yellow_tripdata_2015-01-06-200k.csv
+	poetry run python pyimport/dbop.py --drop PYIM.imported
+	poetry run python pyimport/dbop.py --drop test.yellowcab
 
-test_all: pytest test_scripts test_multi test_small_multi test_yellowtrip test_yellowtrip_async test_data
+test_all_scripts: test_scripts test_audit test_multi test_small_multi test_yellowtrip test_data
+
+test_all: pytest test_all_scripts
 
 pytest:
 	(cd test/test_command && poetry run pytest)
