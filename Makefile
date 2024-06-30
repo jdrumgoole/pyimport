@@ -142,7 +142,7 @@ genfieldfile:
 
 mongoimport:
 	mongoimport --db test --collection yellowcab --type csv --columnsHaveTypes --numInsertionWorkers=8 --fieldFile test/test_mongoimport/yellow_trip_data_10.mff  --file test/test_mongoimport/yellow_tripdata_200_noheader.csv
-	poetry run python pyimport/pyimport_main.py --hasheader --asyncpro --multi --splitfile --autosplit 10 --poolsize 8 --fieldfile ./test/test_command/yellow_trip.tff ./test/test_command/yellow_tripdata_2015-01-06-200k.csv
+	poetry run python pyimport/pyimport_main.py --hasheader --forkmethod spawn --asyncpro --multi --splitfile --autosplit 10 --poolsize 8 --fieldfile ./test/test_command/yellow_trip.tff ./test/test_command/yellow_tripdata_2015-01-06-200k.csv
 	poetry run python pyimport/dbop.py --drop PYIM.imported
 	poetry run python pyimport/dbop.py --drop test.yellowcab
 
@@ -170,19 +170,12 @@ pytest:
 test_top:
 	(cd test && poetry run pytest)
 
-test_install:
-	pip install --extra-index-url=https://pypi.org/ -i https://test.pypi.org/simple/ pyimport
 
 clean:
 	rm -rf build dist
 
-pkgs:
-	pipenv install pymongo keyring twine nose semvermanager
+poetry_build:
+	poetry build
 
-init: pkgs
-	keyring set https://test.pypi.org/legacy/ ${USERNAME}
-	keyring set https://upload.pypi.org/legacy/ ${USERNAME}
-
-collect:
-	python pyimport
-
+poetry_publish:
+	poetry publish
