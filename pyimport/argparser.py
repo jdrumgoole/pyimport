@@ -107,6 +107,7 @@ def add_standard_args(parser: argparse.ArgumentParser, mdbhost=None, audithost=N
     parser.add_argument('--input', default=False, action="store_true",
                         help="Generate output for another program (list of args)")
     parser.add_argument("--threads", default=False, action="store_true",  help="Use threads to process the data --poolsize sets the no of threads")
+    parser.add_argument("--keepsplits", default=False, action="store_true", help="Keep the split files after processing")
 
     #
     # Also try ISO-8859-1

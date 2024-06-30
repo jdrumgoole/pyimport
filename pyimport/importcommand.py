@@ -32,7 +32,7 @@ class ImportCommand:
             self._audit = Audit(args.audithost, database_name=args.auditdatabase, collection_name=args.auditcollection)
         else:
             self._audit = None
-        self.print_args(args)
+
 
     def print_args(self, args):
         self._log.info(f"Using host       :'{args.host}'")
@@ -196,6 +196,7 @@ class ImportCommand:
     def process_files(self) -> ImportResults:
 
         results: list = []
+        self.print_args(self._args)
         for filename in self._args.filenames:
             self._log.info(f"Processing:'{filename}'")
             try:

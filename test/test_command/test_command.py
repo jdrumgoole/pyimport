@@ -131,6 +131,13 @@ def test_generate_fieldfile_command():
     os.unlink("test_generate_ff.csv")
 
 
+def test_generate_nyc_200k():
+    with MongoDBTestResource() as tr:
+        args = tr.args.add_arguments(delimiter=",", fieldfile="yellow_trip.tff", filenames=["yellow_tripdata_2015-01-06-200k.csv"])
+        results = ImportCommand(args=args.ns).run()
+        assert results.total_errors == 0
+
+
 def test_import_command_nyc():
     with MongoDBTestResource() as tr:
 
@@ -180,39 +187,3 @@ async def test_import_command_nyc_async():
         assert size_test == result.total_written
 
 
-class Test(unittest.TestCase):
-
-    def setUp(self):
-        self._client = pymongo.MongoClient()
-        self._database = self._client["TEST_CMD"]
-        self._collection = self._database["test"]
-        self._collection.insert_one({"hello": "world"})
-        self._default_args = ArgMgr.default_args()
-        self._default_args.add_arguments(database="TEST_CMD", collection="import_test")
-
-    def tearDown(self):
-        self._client.drop_database("TEST_CMD")
-
-
-
-
-
-
-
-    def test_Import_Command_NYC_async(self):
-        collection = self._database["nyc_test"]
-
-        start_size = collection.count_documents({})
-        size_test = LineCounter.count_now("yellow_trip_data_10.csv") - 1
-        args = self._default_args.add_arguments(fieldfile="yellow_trip_data_10.tff",
-                                                asyncpro=True,
-                                                collection="nyc_test",
-                                                filenames=["yellow_trip_data_10.csv"], hasheader=True)
-        ImportCommand(args=args.ns).run()
-        new_size = collection.count_documents({})
-        self.assertEqual(size_test, new_size - start_size)
-
-
-if __name__ == "__main__":
-    # import sys;sys.argv = ['', 'Test.test_FieldConfig']
-    unittest.main()

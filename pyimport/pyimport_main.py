@@ -70,7 +70,7 @@ def pyimport_main(input_args=None):
         args = parser.parse_args(cmd)
 
     log = Logger(args.logname, args.loglevel).log()
-    log.addHandler(logging.StreamHandler(sys.stdout))
+    #log.addHandler(logging.StreamHandler(sys.stdout))
 
     if not args.silent:
         Logger.add_stream_handler(args.logname)
@@ -114,6 +114,7 @@ def pyimport_main(input_args=None):
                 start_time = time.time()
                 if args.splitfile:
                     args.filenames = split_files_list  # use the split files for processing
+                    args.hasheader = False
                 if args.multi:
                     results = MultiImportCommand(args).run()
                 elif args.threads:
@@ -132,7 +133,7 @@ def pyimport_main(input_args=None):
     except KeyboardInterrupt:
         log.import_error("Keyboard interrupt... exiting")
     finally:
-        if len(splits) > 0:
+        if len(splits) > 0 and args.keepsplits is False:
             for filename, _ in splits:
                 os.unlink(filename)
             log.info(f"Deleted split files: {[filename for filename, _ in splits]}")

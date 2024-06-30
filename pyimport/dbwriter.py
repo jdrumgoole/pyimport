@@ -2,6 +2,7 @@ import functools
 
 import pymongo
 
+from pyimport.argparser import ArgMgr
 from pyimport.timer import Timer
 
 
@@ -14,6 +15,7 @@ def auto_start_generator(func):
             next(gen)
         return gen
     return wrapper
+
 
 class DBWriter:
     def __init__(self, args, time_period=1.0):
@@ -28,6 +30,7 @@ class DBWriter:
         self._args = args
         self._time_period = time_period
         self._docs_per_second = 0
+        self._writer = self._write_gen()
 
     @property
     def collection(self):
@@ -42,8 +45,10 @@ class DBWriter:
         return self._docs_per_second
 
     def write(self, doc):
-        writer = self._write_gen()
-        return writer.send(doc)
+        try:
+            self._writer.send(doc)
+        except StopIteration:
+            pass
 
     @auto_start_generator
     def _write_gen(self):
@@ -72,5 +77,13 @@ class DBWriter:
 
     def drop(self):
         return self._client.drop_database(self._args.database)
+
+
+if __name__ == "__main__":
+    args = ArgMgr.default_args().add_arguments(database="TEST_WRITE", collection="test")
+    writer = DBWriter(args=args.ns)
+    writer.write({"hello": "world"})
+    writer.write({"goodbye": "world"})
+    writer.write(None)
 
 

@@ -19,6 +19,9 @@ class MultiImportCommand(ParallelImportCommand):
 
     def process_files(self) -> ImportResults:
 
+        self.print_args(self._args)
+        self._log.info("Using multiprocessing")
+        self._log.info(f"Pool size        : {self._args.poolsize}")
         with multiprocessing.Pool(self._args.poolsize) as pool:
             try:
                 if self._args.asyncpro:

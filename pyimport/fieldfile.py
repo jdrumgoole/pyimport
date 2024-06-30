@@ -12,7 +12,7 @@ from enum import Enum
 from datetime import datetime, timezone, date
 
 from pyimport.linereader import RemoteLineReader,LocalLineReader, is_url
-from pyimport.type_converter import Converter
+from pyimport.type_converter import guess_type
 
 
 class FieldFileException(Exception):
@@ -155,7 +155,7 @@ class FieldFile(object):
                 # TODO: write a test for multiple ID fields
                 field_names = FieldFile.clean_field_names(field_names)
                 data_fields = [FieldFile.clean_data_fields(f) for f in data_fields]
-                data_field_types = [Converter.guess_type(v) for v in data_fields]  # generates a list of tuples
+                data_field_types = [guess_type(v) for v in data_fields]  # generates a list of tuples
                 toml_dict = {k: {"type": v, "name": k, "format": f} for k, (v, f) in zip(field_names, data_field_types)}
 
 

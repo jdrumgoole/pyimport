@@ -28,10 +28,8 @@ class AsyncImportCommand(ImportCommand):
     def __init__(self, args=None):
 
         super().__init__(args)
-        self._args = args
         self._log = logging.getLogger(__name__)
         self._q = asyncio.Queue()
-        self._log.info("Using --asyncpro")
 
     @staticmethod
     def async_prep_collection(args):
@@ -141,6 +139,8 @@ class AsyncImportCommand(ImportCommand):
     async def process_files(self) -> ImportResults:
         tasks = []
         results : list = []
+        self.print_args(self._args)
+        self._log.info("Using asyncpro")
         try:
             async with TaskGroup() as tg:
                 for filename in self._args.filenames:

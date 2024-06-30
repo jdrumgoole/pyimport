@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyimport"
-version = "1.8.1"
+version = "1.8.2"
 description = "A CSV importer for MongoDB"
 authors = ["Joe Drumgoole"]
 license = "Apache-2.0"

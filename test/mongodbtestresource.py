@@ -12,7 +12,7 @@ class MongoDBTestResource:
     TEST_DB_NAME = "TEST_DB"
     TEST_COLLECTION_NAME = "test"
 
-    def __init__(self, client=None, uri="mongodb://localhost:27017", db_name=None, collection_name=None):
+    def __init__(self, client=None, uri="mongodb://localhost:27017", db_name=None, collection_name=None, drop_db=True):
         self._uri = uri
         if client:
             self._client = client
@@ -24,6 +24,7 @@ class MongoDBTestResource:
         self._init_collection_name = collection_name
         self._args = ArgMgr.default_args().add_arguments(database=self.TEST_DB_NAME,
                                                          collection=self.TEST_COLLECTION_NAME)
+        self._drop_db = drop_db
 
     def __enter__(self):
         self.create_database(self.TEST_DB_NAME)
@@ -41,8 +42,9 @@ class MongoDBTestResource:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        for k in self._databases.keys():
-            self._client.drop_database(k)
+        if self._drop_db:
+            for k in self._databases.keys():
+                self._client.drop_database(k)
 
     @property
     def test_db_name(self):
@@ -112,7 +114,7 @@ class AsyncMongoDBTestResource(MongoDBTestResource):
             self._client.close()
 
     async def create_collection(self, db_name, collection_name):
-        options = CodecOptions(tz_aware=True)
+        #options = CodecOptions(tz_aware=True)
 
         if db_name not in self._databases:
             raise Exception(f"Database '{db_name}' does not exist.")

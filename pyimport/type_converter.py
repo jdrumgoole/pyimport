@@ -91,130 +91,108 @@ def generate_format(date_str: str, format_list=None, dt: DateType = DateType.EU)
 # print(generate_format_string(date_str1))  # Output: "%Y-%m-%d"
 # print(generate_format_string(date_str2))  # Output: "%d-%m-%Y %H:%M:%S"
 # print(generate_format_string(date_str3))  # Output: "%Y/%m/%d"
-# print(generate_format_string(date_str4))  # Output: "%Y-%m-%dT%H:%M:%S"
+# print(generate_format_string(date_str4))  # Output: "%Y-%m-%dT%H:%M:%S
 
-class Converter(object):
-    type_fields = ["int", "float", "str", "datetime", "date", "timestamp"]
 
-    def __init__(self, log=None, utctime=False):
+def to_int(v:str, fmt=None) -> int:
+    try:
+        v = int(v)
+    except ValueError:
+        v = float(v)
+    return v
 
-        self._log = log
-        self._utctime = utctime
 
-        self._converter = {
-            "int": Converter.to_int,
-            "float": Converter.to_float,
-            "str": Converter.to_str,
-            "datetime": self.to_datetime,
-            "date": self.to_datetime,
-            "isodate": self.iso_to_datetime,
-            "timestamp": Converter.to_timestamp
-        }
+def to_float(v:str, fmt=None) -> float:
+    return float(v)
 
-        if self._utctime:
-            self._converter["timestamp"] = Converter.to_timestamp_utc
 
-    @staticmethod
-    def to_int(v:str) -> int:
-        try:
-            v = int(v)
-        except ValueError:
-            v = float(v)
-        return v
+def to_str(v, fmt=None)->str:
+    return str(v)
 
-    @staticmethod
-    def to_float(v:str) -> float:
-        return float(v)
 
-    @staticmethod
-    def to_str(v)->str:
-        return str(v)
+def iso_to_datetime(v, fmt=None) -> datetime:
+    return datetime.fromisoformat(v)
 
-    @staticmethod
-    def iso_to_datetime(v) -> datetime:
-        return datetime.fromisoformat(v)
 
-    @staticmethod
-    def to_datetime(v, fmt=None) -> datetime:
-        if v == "NULL":
-            return None
-        if v == "":
-            return None
-        if fmt is None:
-            return date_parse(v)  # much slower than strptime, avoid for large jobs
+def to_datetime(v, fmt=None) -> datetime:
+    if v == "NULL":
+        return None
+    if v == "":
+        return None
+    if fmt is None:
+        return date_parse(v)  # much slower than strptime, avoid for large jobs
+    else:
+        return datetime.strptime(v, fmt)
+
+
+def to_timestamp(v, fmt=None) -> datetime:
+    return datetime.fromtimestamp(int(v))
+
+
+def to_timestamp_utc(v, fmt=None) -> datetime:
+    return datetime.fromtimestamp(int(v), tz=timezone.utc)
+
+
+def guess_type(s: str) -> [str, str]:
+    """
+    Try and convert a string s to an object. Start with float, then try int
+    and if that doesn't work return the string.
+
+    Returns a tuple:
+       The value itself
+       The type of the value as a string
+    """
+
+    if type(s) is not str:
+        raise ValueError(f"guess_type expects a string parameter value: type({s}) is '{type(s)}'")
+
+    try:
+        _ = int(s)
+        return "int", ""
+    except ValueError:
+        pass
+
+    try:
+        _ = float(s)
+        return "float", ""
+    except ValueError:
+        pass
+
+    try:
+        d = date_parse(s)
+        if d.hour == 0 and d.minute == 0 and d.second == 0 and d.microsecond == 0:
+            fmt = generate_format(s)
+            return "date", fmt
         else:
-            return datetime.strptime(v, fmt)
+            fmt = generate_format(s)
+            return "datetime", fmt
 
-    @staticmethod
-    def to_timestamp(v) -> datetime:
-        return datetime.fromtimestamp(int(v))
+    except ParserError:
+        pass
 
-    @staticmethod
-    def to_timestamp_utc(v) -> datetime:
-        return datetime.fromtimestamp(int(v), tz=timezone.utc)
+    return "str", ""
 
-    @staticmethod
-    def convert(t, v, fmt=None) -> str | int | float | datetime:
-        """
-        Use type entry for the field in the fieldConfig file (.ff) to determine what type
-        conversion to use.
-        """
 
-        try:
-            if t == "datetime":
-                return Converter.to_datetime(v, fmt)
-            elif t == "timestamp":
-                return Converter.to_timestamp(v)
-            elif t == "date":
-                return Converter.to_datetime(v, fmt)
-            elif t == "isodate":
-                return Converter.iso_to_datetime(v)
-            elif t == "float":
-                return Converter.to_float(v)
-            elif t == "int":
-                return Converter.to_int(v)
-            elif t == "str":
-                return Converter.to_str(v)
+converter = {
+    "int": to_int,
+    "float": to_float,
+    "str": to_str,
+    "datetime": to_datetime,
+    "date": to_datetime,
+    "isodate": iso_to_datetime,
+    "timestamp": to_timestamp
+}
 
-        except ValueError:
-            return v
 
-    @staticmethod
-    def guess_type(s: str) -> [str, str]:
-        """
-        Try and convert a string s to an object. Start with float, then try int
-        and if that doesn't work return the string.
+def convert_it(t, v, fmt=None, utc_time=False) -> str | int | float | datetime:
+    """
+    Use type entry for the field in the fieldConfig file (.ff) to determine what type
+    conversion to use.
+    """
 
-        Returns a tuple:
-           The value itself
-           The type of the value as a string
-        """
-
-        if type(s) is not str:
-            raise ValueError(f"guess_type expects a string parameter value: type({s}) is '{type(s)}'")
-
-        try:
-            _ = int(s)
-            return "int", ""
-        except ValueError:
-            pass
-
-        try:
-            _ = float(s)
-            return "float", ""
-        except ValueError:
-            pass
-
-        try:
-            d = date_parse(s)
-            if d.hour == 0 and d.minute == 0 and d.second == 0 and d.microsecond == 0:
-                fmt = generate_format(s)
-                return "date", fmt
-            else:
-                fmt = generate_format(s)
-                return "datetime", fmt
-
-        except ParserError:
-            pass
-
-        return "str", ""
+    if utc_time:
+        converter["timestamp"] = Converter.to_timestamp_utc
+    try:
+        return converter[t](v, fmt)
+    except ValueError:
+        return v

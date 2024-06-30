@@ -1,11 +1,14 @@
-
+import pprint
 from enum import Enum
 import logging
 from typing import List, Callable
 
-from pyimport.fieldfile import FieldFile
-from pyimport.type_converter import Converter
+from pyimport.fieldfile import FieldFile, FieldNames
+from pyimport.type_converter import convert_it
 
+
+class EnricherException(Exception):
+    pass
 
 
 class ErrorResponse(Enum):
@@ -33,7 +36,7 @@ class Enricher:
         self._timestamp = None
         self._idField = None  # section on which filename == _id
         self._log = logging.getLogger(__name__)
-        self._converter = Converter(self._log)
+        #self._converter = Converter(self._log)
         self._field_file = field_file
         self._locator = locator
         if timestamp_func is None:
@@ -45,15 +48,8 @@ class Enricher:
         else:
             self._filename = filename
 
-    def enrich_value(self, k, v, line_number: int, line: str) -> str:
+    def enrich_value(self, k, v) -> str:
         new_doc = {}
-        if v is None:
-            msg = f"Value for field '{k}' at line {line_number}:{self._filename} is '{v}' which is not valid\n"
-            msg = f"{msg}\t\t\tline:{line_number}:'{line}'"
-            if self._onerror == ErrorResponse.Fail:
-                if self._log:
-                    self._log.error(msg)
-                raise ValueError(msg)
 
         if k.startswith("blank-") and self._onerror == ErrorResponse.Warn:  # ignore blank- columns
             if self._log:
@@ -62,23 +58,25 @@ class Enricher:
 
         # try:
         t = self._field_file.type_value(k)
-        try:
-            return self._converter.convert(t, v, self._field_file.format_value(k))
 
-        except ValueError:
+        try:
+            return convert_it(t, v, self._field_file.format_value(k))
+
+        except ValueError as e:
             if self._onerror == ErrorResponse.Fail:
                 if self._log:
-                    self._log.error(f"Parse failure at line {line_number}:{self._filename} at field '{k}'\n"
+                    self._log.error(f"Parse failure at field '{k}'\n"
                                     f"type conversion error: Cannot convert '{v}' to type {type_field}")
-                raise
+                raise EnricherException(f"Parse failure at field '{k}'\n"
+                                        f"type conversion error: Cannot convert '{v}' to type {type_field}")
             elif self._onerror == ErrorResponse.Warn:
-                self._log.warning(f"Parse failure at line {line_number}:{self._filename} at field '{k}'\n"
+                self._log.warning(f"Parse failure  at field '{k}'\n"
                                   f"type conversion error: Cannot convert '{v}' to type {t} using string type instead")
                 new_doc[k] = str(v)
             elif self._onerror == ErrorResponse.Ignore:
                 new_doc[k] = str(v)
             else:
-                raise ValueError(f"Invalid value for onerror: {self._onerror}")
+                raise EnricherException(f"Invalid value for onerror: {self._onerror}")
 
     def enrich_doc(self, csv_doc: dict, line_number: int = None) -> dict:
         """
@@ -93,21 +91,13 @@ class Enricher:
         TODO: Need to get the filename being parsed in at this level to allow use to report the right fil
         when an error occurs.
         """
-
         if line_number is None:
             line_number = "Unknown"
-        try:
-            # TODO : move this to the point of the error so we don't incur the cost unless their is an error
-            line = ",".join(csv_doc.values())
-        except TypeError as e:
-            self._logger.error(f"TypeError: {e}")
-            self._logger.error(f"At line: {line_number}:{self._filename}")
-            self._logger.error(f"Does the fieldfile match the csv file content?")
-            raise
 
         fields = self._field_file.fields()
 
         if len(csv_doc) == 1:
+            line = ",".join(csv_doc.values())
             self._logger.warning("Warning: only one field in "
                                  "input line. Do you have the "
                                  "right delimiter set ?")
@@ -119,7 +109,7 @@ class Enricher:
                              f"don't match in length")
             raise ValueError
 
-        new_doc = {k: self.enrich_value(k, v, line_number, line) for k, v in csv_doc.items()}
+        new_doc = {k: self.enrich_value(k, v) for k, v in csv_doc.items()}
 
         if self._locator:
             new_doc['locator'] = {"line": line_number}
