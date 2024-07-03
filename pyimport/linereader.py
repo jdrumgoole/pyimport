@@ -45,6 +45,10 @@ class LocalLineReader:
                 continue
             yield line.strip()
 
+    @property
+    def filename(self):
+        return self._file.name
+
     @staticmethod
     def read_first_lines(filename: str, limit: int = 10) -> str:
         lines = []
@@ -63,6 +67,10 @@ class RemoteLineReader:
         self.url = url
         self._skip_lines = skip_lines
         self._block_size = block_size
+
+    @property
+    def filename(self):
+        return self.url
 
     def __iter__(self):
         with requests.get(self.url, stream=True) as r:

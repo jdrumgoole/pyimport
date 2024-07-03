@@ -5,25 +5,24 @@ Created on 12 Aug 2017
 """
 import argparse
 import multiprocessing
+import os
 
 from configargparse import ArgumentParser
 
 from pyimport.doctimestamp import DocTimeStamp
 from pyimport.enricher import ErrorResponse
-from pyimport.logger import Logger
+from pyimport.logger import Log
 from pyimport.version import __VERSION__
 
 
-def add_standard_args(parser: argparse.ArgumentParser, mdbhost=None, audithost=None) -> argparse.ArgumentParser:
+def add_standard_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     """
     Construct parser for pyimport return it as a list suitable for passing to the parents
     argument of the next parser
     """
 
-    if audithost is None:
-        audithost = "mongodb://localhost:27017"
-    if mdbhost is None:
-        mdbhost = "mongodb://localhost:27017"
+    audithost = os.getenv("AUDITHOST", "mongodb://localhost:27017")
+    mdbhost = os.getenv("MDB_HOST", "mongodb://localhost:27017")
 
     parser.add_argument('-v", ''--version', action='version', version='%(prog)s ' + __VERSION__)
 
@@ -52,8 +51,8 @@ def add_standard_args(parser: argparse.ArgumentParser, mdbhost=None, audithost=N
                         help="Generate a fieldfile from the data file, we set has_header to true [default: %(default)s]")
     parser.add_argument('--onerror', type=ErrorResponse, default=ErrorResponse.Warn, choices=list(ErrorResponse),
                         help="What to do when we hit an error parsing a csv file [default: %(default)s]")
-    parser.add_argument('--logname', default=Logger.LOGGER_NAME,
-                        help="Logfile to write output to [default: %(default)s]")
+    # parser.add_argument('--logname', default=Log.LOGGER_NAME,
+    #                     help="Logfile to write output to [default: %(default)s]")
     parser.add_argument('--loglevel', default="INFO", choices=["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"],
                         help='Logging level [default: %(default)s]')
     parser.add_argument('--silent', default=False, action="store_true",

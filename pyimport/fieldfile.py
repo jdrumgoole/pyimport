@@ -4,6 +4,7 @@ Created on 2 Mar 2016
 @author: jdrumgoole
 """
 import itertools
+import logging
 import os
 import pprint
 
@@ -12,6 +13,7 @@ from enum import Enum
 from datetime import datetime, timezone, date
 
 from pyimport.linereader import RemoteLineReader,LocalLineReader, is_url
+from pyimport.logger import Log
 from pyimport.type_converter import guess_type
 
 
@@ -76,14 +78,18 @@ class FieldFile(object):
 
     DEFAULT_EXTENSION = ".tff"
 
-    def __init__(self, field_dict:dict, id_field=None):
+    def __init__(self, field_dict:dict, delimiter=",", has_header=True, id_field=None):
 
         if type(field_dict) is not dict:
             raise TypeError(f"FieldFile expects a dict type for the field_dict parameter, not {type(field_dict)}")
         self._fields = None
-        self._field_dict = field_dict
+        self._field_dict = {key: value for key, value in field_dict.items() if key != "DEFAULTS_SECTION"}
+        self._full_dict = field_dict
         self._fields = list(self._field_dict.keys())
+        self._delimiter = delimiter
+        self._has_header = has_header
         self._id_field = id_field
+        self._log = Log().log
 
     @staticmethod
     def make_default_tff_name(name):
@@ -134,7 +140,7 @@ class FieldFile(object):
         return new_fn
 
     @staticmethod
-    def create_toml_dict(reader: LocalLineReader | RemoteLineReader, delimiter) -> dict:
+    def create_toml_dict(reader: LocalLineReader | RemoteLineReader, delimiter:str, has_header:bool=True) -> dict:
         for i, line in enumerate(reader,1):
             if i > 2:
                 break
@@ -157,6 +163,12 @@ class FieldFile(object):
                 data_fields = [FieldFile.clean_data_fields(f) for f in data_fields]
                 data_field_types = [guess_type(v) for v in data_fields]  # generates a list of tuples
                 toml_dict = {k: {"type": v, "name": k, "format": f} for k, (v, f) in zip(field_names, data_field_types)}
+                if "DEFAULTS_SECTION" in toml_dict:
+                    raise FieldFileException("Error: DEFAULTS_SECTION is a reserved section name and cannot be a columm name in the CSV files")
+                else:
+                    toml_dict["DEFAULTS_SECTION"] = {"delimiter"  : delimiter,
+                                                     "has_header" : has_header,
+                                                     "CSV File"   : reader.filename}
 
 
         return toml_dict
@@ -183,7 +195,7 @@ class FieldFile(object):
             return FieldFile(toml_dict)
 
     @staticmethod
-    def generate_field_file(csv_filename, ff_filename=None, ext=DEFAULT_EXTENSION, delimiter=","):
+    def generate_field_file(csv_filename, ff_filename=None, ext=DEFAULT_EXTENSION, delimiter=",", has_header=True):
 
         toml_dict: dict = {}
         if not ext.startswith("."):
@@ -193,7 +205,7 @@ class FieldFile(object):
             delimiter = "\t"
 
         if is_url(csv_filename):
-            toml_dict = FieldFile.create_toml_dict(RemoteLineReader(csv_filename), delimiter)
+            toml_dict = FieldFile.create_toml_dict(RemoteLineReader(csv_filename), delimiter, has_header)
         else:
             with open(csv_filename) as csv_file:
                 toml_dict = FieldFile.create_toml_dict(LocalLineReader(csv_file), delimiter)
@@ -203,7 +215,9 @@ class FieldFile(object):
     @staticmethod
     def load(filename: str) -> "FieldFile":
 
-        toml_dict = {}
+        log = Log().log
+        delimiter = ","
+        has_header = True
 
         if not os.path.exists(filename):
             raise OSError(f"No such file: '{filename}'")
@@ -214,6 +228,13 @@ class FieldFile(object):
                                      f"TOML Decode Error : {e}")
         # result = cls._cfg.read(filename)
 
+        if "DEFAULTS_SECTION" not in toml_dict:
+            log.warning(f"Warning: No DEFAULTS_SECTION in field file: '{filename}'")
+        else:
+            delimiter = toml_dict["DEFAULTS_SECTION"]["delimiter"]
+            has_header = toml_dict["DEFAULTS_SECTION"]["has_header"]
+            _ = toml_dict["DEFAULTS_SECTION"]["CSV File"]
+            del toml_dict["DEFAULTS_SECTION"]
         #print(toml_dict
         id_field = None
         for column_name, column_value in toml_dict.items():
@@ -236,7 +257,7 @@ class FieldFile(object):
             # format is optional for datetime input fields. It is used if present.
             #
 
-        return FieldFile(toml_dict, id_field)
+        return FieldFile(toml_dict, delimiter, has_header, id_field)
 
     @property
     def field_dict(self):
@@ -246,6 +267,7 @@ class FieldFile(object):
             return self._field_dict
 
     def fields(self):
+
         return self._fields
 
     def __len__(self):

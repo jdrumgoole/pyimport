@@ -57,7 +57,6 @@ std_quicktest:
 	@poetry run python pyimport/dbop.py --count PYIM.imported
 	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null
 
-long_test:
 
 audit_quicktest:
 	poetry run python pyimport/pyimport_main.py --audit --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt

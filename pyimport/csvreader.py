@@ -71,7 +71,7 @@ class CSVReader:
                 if len(self._field_file.fields()) != len(row):
                     self._log.error(f"Row {i} has {len(row)} fields but field file has {len(self._field_file.fields())}")
                     self._log.error(f"Are you using the right fieldfile and delimiter?")
-                    raise ValueError("CSVReader error")
+                    raise ValueError("CSVReader error - reading the CSV file failed")
                 yield {k: v for k, v in zip(self._field_file.fields(), row)}
 
     @staticmethod
@@ -116,5 +116,5 @@ class AsyncCSVReader(CSVReader):
                 if len(self._field_file.fields()) != len(row):
                     self._log.error(f"Row {i} has {len(row)} fields but field file has {len(self._field_file.fields())}")
                     self._log.error(f"Are you using the right fieldfile and delimiter?")
-                    raise ValueError("CSVReader error")
+                    raise ValueError("CSVReader error - reading the CSV file failed")
                 yield {k: v for k, v in zip(self._field_file.fields(), row)}

@@ -24,7 +24,7 @@ class GenerateFieldfileCommand:
                     field_filename = FieldFile.make_default_tff_name(i)
                 else:
                     field_filename = self._args.fieldfile
-                FieldFile.generate_field_file(csv_filename=i, ff_filename=field_filename, delimiter=self._args.delimiter)
+                FieldFile.generate_field_file(csv_filename=i, ff_filename=field_filename, delimiter=self._args.delimiter,has_header=self._args.hasheader)
                 self._field_files.append(field_filename)
             field_list = ",".join([f"'{i}'" for i in self._field_files])
             self._log.info(f"Created field filename(s) {field_list} from {self._args.filenames}")

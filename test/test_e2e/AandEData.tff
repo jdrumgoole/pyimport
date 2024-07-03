@@ -1,6 +1,6 @@
 #
 # Created 'AandEData.tff'
-# at UTC: 2024-07-03 11:10:30.351249+00:00 by class pyimport.fieldfile
+# at UTC: 2024-07-03 16:29:01.627370+00:00 by class pyimport.fieldfile
 # Parameters:
 #    csv        : 'AandEData.csv'
 #    delimiter  : ','
@@ -104,4 +104,9 @@ format = ""
 type = "int"
 name = "Number of patients spending >12 hours from decision to admit to admission"
 format = ""
+
+[DEFAULTS_SECTION]
+delimiter = ","
+has_header = true
+"CSV File" = "AandEData.csv"
 #end

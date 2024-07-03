@@ -20,6 +20,7 @@ from pyimport.enricher import Enricher
 from pyimport.fieldfile import FieldFileException, FieldFile
 from pyimport.importresult import ImportResult, ImportResults
 from pyimport.linereader import is_url, RemoteLineReader
+from pyimport.logger import Log
 from pyimport.version import __VERSION__
 
 
@@ -28,12 +29,11 @@ class ImportCommand:
     def __init__(self, args):
 
         self._args = args
-        self._log = logging.getLogger(__name__)
+        self._log = Log().log
         if args.audit:
             self._audit = Audit(args.audithost, database_name=args.auditdatabase, collection_name=args.auditcollection)
         else:
             self._audit = None
-
 
     def print_args(self, args):
         self._log.info(f"Using host       :'{args.host}'")
@@ -183,9 +183,7 @@ class ImportCommand:
         time_finish = time.time()
         elapsed_time = time_finish - time_start
         import_result = ImportResult(writer.total_written, elapsed_time, filename)
-        log.info(f"imported file: '{filename}' ({import_result.total_written} rows)")
-        log.info(f"Total elapsed time to upload '{filename}' : {import_result.elapsed_duration}")
-        log.info(f"Average upload rate per second: {round(import_result.avg_records_per_sec)}")
+
         return import_result
 
     def process_files(self) -> ImportResults:
@@ -196,6 +194,9 @@ class ImportCommand:
             self._log.info(f"Processing:'{filename}'")
             try:
                 result = ImportCommand.process_one_file(self._args, self._log, filename)
+                self._log.info(f"imported file: '{filename}' ({result.total_written} rows)")
+                self._log.info(f"Total elapsed time to upload '{filename}' : {result.elapsed_duration}")
+                self._log.info(f"Average upload rate per second: {round(result.avg_records_per_sec)}")
             except OSError as e:
                 self._log.error(f"{e}")
                 result = ImportResult.import_error(filename, e)

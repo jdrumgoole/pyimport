@@ -14,7 +14,7 @@ import dateutil
 
 from pyimport.fieldfile import FieldFile, FieldFileException
 from pyimport.filesplitter import LineCounter
-from pyimport.logger import Logger
+from pyimport.logger import Log
 from pyimport.importcommand import ImportCommand
 from pyimport.argparser import ArgMgr
 import pytest
@@ -45,13 +45,11 @@ def test_delimiter_header():
         assert results.total_results == 0
 
 
-
-
 class TestFieldFile(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super(TestFieldFile, self).__init__(*args, **kwargs)
-        Logger.add_null_hander()
+        Log.add_null_hander()
 
     def setUp(self):
         self._client = pymongo.MongoClient(host="mongodb://localhost:27017")
