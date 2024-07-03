@@ -1,24 +1,25 @@
+import asyncio
 import functools
+import time
 
 import pymongo
+import pytest
+import pytest_asyncio
+from motor import motor_asyncio
 
 from pyimport.argparser import ArgMgr
-from pyimport.timer import Timer
 
 
-def auto_start_generator(func):
+def start_generator(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         gen = func(*args, **kwargs)
-        # Ensure it's a generator
-        if not isinstance(gen, (list, tuple)) and callable(getattr(gen, 'send', None)):
-            next(gen)
+        next(gen)  # Initialize the generator
         return gen
+
     return wrapper
-
-
 class DBWriter:
-    def __init__(self, args, time_period=1.0):
+    def __init__(self, args):
 
         if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
             self._client = pymongo.MongoClient(args.host, w=args.writeconcern)
@@ -28,9 +29,10 @@ class DBWriter:
         self._database = self._client[args.database]
         self._collection = self._database[args.collection]
         self._args = args
-        self._time_period = time_period
-        self._docs_per_second = 0
-        self._writer = self._write_gen()
+        self._writer = self.write_generator()
+        self._total_written = 0
+        self._buffer = []
+        self._batchsize = args.batchsize
 
     @property
     def collection(self):
@@ -41,49 +43,142 @@ class DBWriter:
         return self._database
 
     @property
-    def docs_per_second(self):
-        return self._docs_per_second
+    def buffer_len(self):
+        return len(self._buffer)
+
+    @property
+    def batch_size(self):
+        return self._args.batchsize
 
     def write(self, doc):
         try:
             self._writer.send(doc)
+            self._total_written += 1
+            return self._total_written
         except StopIteration:
-            pass
+            return self._total_written
 
-    @auto_start_generator
-    def _write_gen(self):
-        buffer = []
-        total_written = 0
-        inserted_this_quantum = 0
-        loop_timer = Timer(start_now=True)
-        while True:
-            doc = (yield)
-            if doc is None:
-                break
-            buffer.append(doc)
-            if len(buffer) >= self._args.batchsize:
-                self._collection.insert_many(buffer)
-                total_written = total_written + len(buffer)
-                inserted_this_quantum = inserted_this_quantum + len(buffer)
-                buffer = []
-                elapsed = loop_timer.elapsed()
-                if elapsed >= self._time_period:
-                    self._docs_per_second = inserted_this_quantum / elapsed
-                    loop_timer.reset()
-                    inserted_this_quantum = 0
+    @property
+    def total_written(self):
+        return self._total_written
 
-        if len(buffer) > 0:
-            self._collection.insert_many(buffer)
+    def close(self):
+        self.write(None)
 
     def drop(self):
         return self._client.drop_database(self._args.database)
 
+    @start_generator
+    def write_generator(self):
+        buffer = []
+        while True:
+            doc = yield
+            if doc is None:
+                break
+
+            buffer.append(doc)
+            len_buffer = len(buffer)
+            if len_buffer >= 1000:
+                self._collection.insert_many(buffer)
+                buffer = []
+
+        if len(buffer) > 0:
+            self._collection.insert_many(buffer)
+
+
+def start_coroutine(func):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        gen = func(*args, **kwargs)
+        await gen.asend(None)  # Initialize the generator
+        return gen
+
+    return wrapper
+
+
+class AsyncDBWriter:
+
+    def __init__(self, args):
+        if not hasattr(self, '_initialized'):
+            raise RuntimeError("Use the `create` class method to create an instance.")
+
+        if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
+            self._client = motor_asyncio.AsyncIOMotorClient(args.host, w=args.writeconcern)
+        else:
+            self._client = motor_asyncio.AsyncIOMotorClient(args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal)
+
+        self._database = self._client[args.database]
+        self._collection = self._database[args.collection]
+        self._args = args
+        self._total_written = 0
+        self._buffer = []
+        self._batch_size = args.batchsize
+        self._first_time = True
+        self._writer = None
+
+    @classmethod
+    async def create(cls, args):
+        self = cls.__new__(cls)
+        self._initialized = True
+        self.__init__(args)
+        self._writer = await self.writer_generator()
+        self._total_written = 0
+        return self
+
+    async def write(self, doc):
+
+        try:
+            await self._writer.asend(doc)
+            self._total_written += 1
+            return self._total_written
+        except StopAsyncIteration:
+            return self._total_written
+
+    async def close(self):
+        try:
+            await self._writer.asend(None)
+        except StopAsyncIteration:
+            pass
+
+    @start_coroutine
+    async def writer_generator(self):
+        buffer = []
+        i=1
+        while True:
+            doc = (yield)
+            if doc is None:
+                break
+
+            buffer.append(doc)
+            len_buffer = len(buffer)
+            if len_buffer >= 1000:
+                await self._collection.insert_many(buffer)
+                buffer = []
+
+        if len(buffer) > 0:
+            await self._collection.insert_many(buffer)
+
 
 if __name__ == "__main__":
-    args = ArgMgr.default_args().add_arguments(database="TEST_WRITE", collection="test")
-    writer = DBWriter(args=args.ns)
-    writer.write({"hello": "world"})
-    writer.write({"goodbye": "world"})
-    writer.write(None)
+
+    args = ArgMgr.default_args()
+
+    async def runner(args):
+
+        async_db_writer = await AsyncDBWriter.create(args)
+        total_written = await async_db_writer.write({"name": "John", "age": 25})
+        print(f"Total written: {total_written}")
+        total_written = await async_db_writer.write({"name": "Jane", "age": 30})
+        print(f"Total written: {total_written}")
+        await async_db_writer.close()
+        print(f"Total written: {total_written}")
+
+    asyncio.run(runner(args.ns))
+
+    # sync_db_writer = DBWriter(args.ns)
+    # total_written = sync_db_writer.write({"name": "John", "age": 25})
+    # total_written = sync_db_writer.write({"name": "John", "age": 25})
+    # total_written = sync_db_writer.write({"name": "John", "age": 25})
+    # print(f"Total written sync : {total_written}")
 
 

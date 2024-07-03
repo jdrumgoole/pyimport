@@ -14,6 +14,7 @@ from pyimport import timer
 from pyimport.audit import Audit
 from pyimport.command import seconds_to_duration
 from pyimport.csvreader import CSVReader
+from pyimport.dbwriter import DBWriter
 from pyimport.doctimestamp import DocTimeStamp
 from pyimport.enricher import Enricher
 from pyimport.fieldfile import FieldFileException, FieldFile
@@ -153,41 +154,35 @@ class ImportCommand:
         field_file = ImportCommand.prep_field_file(args)
         collection, reader, parser = ImportCommand.prep_import(args, filename, field_file)
         time_start = time.time()
+        writer = DBWriter(args)
         try:
-            loop_timer = timer.Timer(start_now=True)
+            loop_timer = timer.QuantumTimer(start_now=True, quantum=time_period)
             for i, doc in enumerate(reader, 1):
                 if args.noenrich:
                     d = doc
                 else:
                     d = parser.enrich_doc(doc, i)
-                buffer.append(d)
-                if len(buffer) >= args.batchsize:
-                    collection.insert_many(buffer)
-                    inserted_this_quantum = inserted_this_quantum + len(buffer)
-                    total_written = total_written + len(buffer)
-                    buffer = []
-                    elapsed = loop_timer.elapsed()
-                    if elapsed >= time_period:
-                        docs_per_second = inserted_this_quantum / elapsed
-                        loop_timer.reset()
-                        inserted_this_quantum = 0
-                        log.info(
-                            f"Input:'{filename}': docs per sec:{docs_per_second:7.0f}, total docs:{total_written:>10}")
+
+                writer.write(d)
+                elapsed, docs_per_second = loop_timer.elapsed_quantum(writer.total_written)
+                if elapsed:
+                    log.info(f"Input:'{filename}': docs per sec:{docs_per_second:7.0f}, total docs:{writer.total_written:>10}")
         finally:
+            writer.close()
             if not is_url(filename):
                 reader.file.close()
-        if len(buffer) > 0:
-            try:
-                collection.insert_many(buffer)
-                total_written = total_written + len(buffer)
-                log.info("Read: '%s' : Inserted %i records", filename, total_written)
-            except errors.BulkWriteError as e:
-                log.critical(f"pymongo.errors.BulkWriteError: {e.details}")
-                log.critical(f"Aborting due to database write errors...")
-                sys.exit(1)
+
+        # if writer.buffer_len > 0:
+        #     try:
+        #         total_written = writer.insert_residue()
+        #         log.info("Read: '%s' : Inserted %i records", filename, total_written)
+        #     except errors.BulkWriteError as e:
+        #         log.critical(f"pymongo.errors.BulkWriteError: {e.details}")
+        #         log.critical(f"Aborting due to database write errors...")
+        #         sys.exit(1)
         time_finish = time.time()
         elapsed_time = time_finish - time_start
-        import_result = ImportResult(total_written, elapsed_time, filename)
+        import_result = ImportResult(writer.total_written, elapsed_time, filename)
         log.info(f"imported file: '{filename}' ({import_result.total_written} rows)")
         log.info(f"Total elapsed time to upload '{filename}' : {import_result.elapsed_duration}")
         log.info(f"Average upload rate per second: {round(import_result.avg_records_per_sec)}")

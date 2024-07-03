@@ -125,13 +125,14 @@ def pyimport_main(input_args=None):
                     results = ImportCommand(args).run()
                 end_time = time.time()
                 elapsed = end_time - start_time
-                log.info(f"Total elapsed time to upload all files : {seconds_to_duration(elapsed)} seconds")
-                log.info(f"Average upload rate per second: {round(results.total_written / elapsed)}")
-                log.info(f"Total records written: {results.total_written}")
+                if len(args.filenames) > 1:
+                    log.info(f"Total elapsed time to upload all files : {seconds_to_duration(elapsed)} seconds")
+                    log.info(f"Average upload rate per second: {round(results.total_written / elapsed)}")
+                    log.info(f"Total records written: {results.total_written}")
             else:
                 log.warning("No input files: Nothing to do")
     except KeyboardInterrupt:
-        log.import_error("Keyboard interrupt... exiting")
+        log.error("Keyboard interrupt... exiting")
     finally:
         if len(splits) > 0 and args.keepsplits is False:
             for filename, _ in splits:

@@ -16,14 +16,14 @@ that is available for free in the standard MongoDB [community download](https://
 Well `pyimport` does a few things that mongoimport doesn't do (yet).
 
 - Automatic `fieldfile` generation with the option **--genfieldfile**.
-- Ability to stop and restart an import.
 - Supports several options to handle "dirty" data: fail, warning or ignore.
 - `--multi` option to allow multiple files to be imported in parallel.
+- `--asyncpro` an option to use asyncio to parallelize the import.
 - `--spiltfiles` option to split a large file into smaller files for parallel import.
 
 On the other hand [mongoimport](https://docs.mongodb.com/manual/reference/program/mongoimport/) supports the richer 
 security options of the [MongoDB Enterprise Advanced](https://www.mongodb.com/products/mongodb-enterprise-advanced)
-product and because it is written in Go it can use threads more effectively and is generally faster.
+product. It is also allows importing of JSON files. 
 
 
 ## Examples
@@ -84,31 +84,6 @@ server (reduces server round trips). [default: *500*].
 
 For larger documents you may find a smaller *batchsize* is more efficient.
 
-**--restart**
-
-`pyimport` also has the ability to restart an upload from the
-point where it stopped previously. Import metadata are recorded in a collection `restartlog` in the current database. And audit record is
-stored for each upload in progress and each completed upload. Thus the
-audit collection gives you a record of all uploads by filename and
-date time.
-
-The restart log record format is :
-
-```
-{ 
-  "name"       : <name of file being uploaded>, 
-  "timestamp"  : <datetime that this doc was inserted>,
-  "batch_size" : <the batchsize specified by --batchsize>,
-  "count"      : <the total number of documents inserted from <name>>,
-  "doc_id"     : <The mongodb _id field for the last record inserted in this batch>
-}
-```
-
-The restart log is keyed of the filename so each filename must be unique otherwise
-imports that are running in parallel will overwrite each others restart logs.
-Use record count insert to restart at last write also enable restart logfile [default: False]
-
-
 **--drop**
 
 drop collection before loading [default: False]
@@ -162,15 +137,12 @@ contents of the CSV file you plan to upload.
 If a fieldfile is not explicitly passed in the program will look for a
 fieldfile corresponding to the file name with the extension replaced
 by `.ff`. So for an input file `inventory.csv` the corresponding field
-file would be `inventory.ff`.
+file would be `inventory.tff`.
 
 If there is no corresponding field file the upload will fail.
 
-Field files (normally expected to have the extension `.ff`) define the names of columns and their
-types for the importer. A field file is formatted line a
-[python config file](https://docs.python.org/2/library/configparser.html)
-with each section defined by a name inside square brackets ( `[` and `]` ) and values for
-the section defined by `key=value` pairs.
+Field files (normally expected to have the extension `.tff`) define the names of columns and their
+types for the importer. A field file isa TOML formatted line.
 
 For a csv file [inventory.csv](https://github.com/jdrumgoole/pymongo_import/blob/master/test/inventory.csv) defined by the following format,
 

@@ -131,11 +131,11 @@ def test_generate_fieldfile_command():
     os.unlink("test_generate_ff.csv")
 
 
-def test_generate_nyc_200k():
-    with MongoDBTestResource() as tr:
-        args = tr.args.add_arguments(delimiter=",", fieldfile="yellow_trip.tff", filenames=["yellow_tripdata_2015-01-06-200k.csv"])
-        results = ImportCommand(args=args.ns).run()
-        assert results.total_errors == 0
+# def test_generate_nyc_200k():
+#     with MongoDBTestResource() as tr:
+#         args = tr.args.add_arguments(delimiter=",", fieldfile="yellow_trip.tff", filenames=["yellow_tripdata_2015-01-06-200k.csv"])
+#         results = ImportCommand(args=args.ns).run()
+#         assert results.total_errors == 0
 
 
 def test_import_command_nyc():

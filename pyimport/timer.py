@@ -6,6 +6,7 @@ Created on 17 Nov 2010
 
 import time
 import math
+from typing import Tuple
 
 
 def int_remainder(s, factor):
@@ -78,6 +79,7 @@ class Timer:
         self._start = 0
         self._stop = 0
         self._timer_on = False
+
         if start_now:
             self.start()
 
@@ -109,10 +111,40 @@ class Timer:
             seconds = self._stop - self._start
         return seconds
 
+    def quantum(self):
+        if self._timer_on:
+            elapsed = time.time() - self._start
+
     def __repr__(self):
         mins, secs, hundredths = mins_secs_hundredths(self.elapsed())
         return time_format(mins, secs, hundredths)
 
     def __str__(self):
         return self.__repr__()
+
+
+class QuantumTimer(Timer):
+
+    def __init__(self, start_now=False, quantum=None):
+        super().__init__(start_now=start_now)
+        if quantum:
+            self._quantum = quantum
+        else:
+            self._quantum = 1.0
+        self._quantum_written = 0
+        self._last_total = 0
+
+    def elapsed_quantum(self, total_written=0) -> Tuple[float, float]:
+
+        elapsed = self.elapsed()
+        if elapsed >= self._quantum:
+            self._quantum_written = total_written - self._last_total
+            self._last_total = total_written
+            self.reset()
+            docs_per_second = self._quantum_written / elapsed
+            #print(f"Quantum: {elapsed} secs, docs per sec: {docs_per_second}, last total : {self._last_total}, total written : {total_written}, quatum written: {self._quantum_written}")
+            return elapsed, docs_per_second
+        else:
+            return 0.0, 0.0
+
 

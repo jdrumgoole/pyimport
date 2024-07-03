@@ -39,23 +39,17 @@ class Enricher:
         #self._converter = Converter(self._log)
         self._field_file = field_file
         self._locator = locator
-        if timestamp_func is None:
-            self._timestamp_func = lambda d : d
-        else:
-            self._timestamp_func = timestamp_func
+        self._timestamp_func = timestamp_func
         if filename is None:
             self._filename = "Unknown"
         else:
             self._filename = filename
 
     def enrich_value(self, k, v) -> str:
-        new_doc = {}
 
-        if k.startswith("blank-") and self._onerror == ErrorResponse.Warn:  # ignore blank- columns
-            if self._log:
-                self._log.info(f"Field {k} is blank [blank-] : ignoring")
+        if k.startswith("blank-") and self._onerror == ErrorResponse.Warn:
+            self._log.info(f"Field {k} is blank [blank-] : ignoring")
             return None
-
         # try:
         t = self._field_file.type_value(k)
 
@@ -64,19 +58,17 @@ class Enricher:
 
         except ValueError as e:
             if self._onerror == ErrorResponse.Fail:
-                if self._log:
-                    self._log.error(f"Parse failure at field '{k}'\n"
-                                    f"type conversion error: Cannot convert '{v}' to type {type_field}")
-                raise EnricherException(f"Parse failure at field '{k}'\n"
-                                        f"type conversion error: Cannot convert '{v}' to type {type_field}")
+                error_msg = f"Parse failure at field '{k}'\ntype conversion error: Cannot convert '{v}' to type {t}"
+                self._log.error(error_msg)
+                raise EnricherException(error_msg)
             elif self._onerror == ErrorResponse.Warn:
                 self._log.warning(f"Parse failure  at field '{k}'\n"
                                   f"type conversion error: Cannot convert '{v}' to type {t} using string type instead")
-                new_doc[k] = str(v)
             elif self._onerror == ErrorResponse.Ignore:
-                new_doc[k] = str(v)
+                pass
             else:
                 raise EnricherException(f"Invalid value for onerror: {self._onerror}")
+        return v
 
     def enrich_doc(self, csv_doc: dict, line_number: int = None) -> dict:
         """
@@ -95,17 +87,18 @@ class Enricher:
             line_number = "Unknown"
 
         fields = self._field_file.fields()
+        len_csv_doc = len(csv_doc)
 
-        if len(csv_doc) == 1:
+        if len_csv_doc == 1:
             line = ",".join(csv_doc.values())
             self._logger.warning("Warning: only one field in "
                                  "input line. Do you have the "
                                  "right delimiter set ?")
             self._logger.warning(f"input line : {line}")
 
-        if len(csv_doc) != len(self._field_file):
-            self._logger.error(f"\nrecord: at line {line_number}:{line}(len={len(csv_doc)}) and fields required\n"
-                             f"{self._field_file.fields()}(len={len(fields)})"
+        if len_csv_doc != len(self._field_file):
+            self._logger.error(f"\nrecord: at line {line_number}:{line}(len={len_csv_doc}) and fields required\n"
+                             f"{fields}(len={len(fields)})"
                              f"don't match in length")
             raise ValueError
 
@@ -114,5 +107,6 @@ class Enricher:
         if self._locator:
             new_doc['locator'] = {"line": line_number}
 
-        return self._timestamp_func(new_doc)
+        return self._timestamp_func(new_doc) if self._timestamp_func else new_doc
+
 

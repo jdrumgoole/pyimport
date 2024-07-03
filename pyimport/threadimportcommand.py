@@ -14,7 +14,6 @@ class ThreadImportCommand(ParallelImportCommand):
 
     def __init__(self, args):
         super().__init__(args)
-        self._log.info(f"Thread count     : {args.poolsize}")
 
     def process_files(self) -> ImportResults:
 
@@ -23,6 +22,7 @@ class ThreadImportCommand(ParallelImportCommand):
         tasks = [(self._args, self._log, filename) for filename in self._args.filenames]
         self._log.info("Using Threading")
         self._log.info(f"Pool size        : {self._args.poolsize}")
+        self._log.info(f"Thread count     : {self._args.poolsize}")
         try:
             with ThreadPoolExecutor(max_workers=self._args.poolsize) as executor:
                 # Submit the tasks to the thread pool

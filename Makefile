@@ -57,13 +57,15 @@ std_quicktest:
 	@poetry run python pyimport/dbop.py --count PYIM.imported
 	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null
 
+long_test:
+
 audit_quicktest:
 	poetry run python pyimport/pyimport_main.py --audit --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt
 	@poetry run python pyimport/dbop.py --count PYIM.imported
 	poetry run python pyimport/dbop.py --drop PYIM.imported
 
 async_quicktest:
-	poetry run python pyimport/pyimport_main.py --audit --asyncpro --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
+	poetry run python pyimport/pyimport_main.py --audit --asyncpro --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt # > /dev/null
 	poetry run python pyimport/pyimport_main.py --asyncpro --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
 	@poetry run python pyimport/dbop.py --count PYIM.imported
 	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null
@@ -142,9 +144,10 @@ genfieldfile:
 
 mongoimport:
 	mongoimport --db test --collection yellowcab --type csv --columnsHaveTypes --numInsertionWorkers=8 --fieldFile test/test_mongoimport/yellow_trip_data_10.mff  --file test/test_mongoimport/yellow_tripdata_200_noheader.csv
-	poetry run python pyimport/pyimport_main.py --hasheader --forkmethod spawn --asyncpro --multi --splitfile --autosplit 10 --poolsize 8 --fieldfile ./test/test_command/yellow_trip.tff ./test/test_command/yellow_tripdata_2015-01-06-200k.csv
+	poetry run python pyimport/pyimport_main.py --hasheader --forkmethod spawn --asyncpro --multi --splitfile --autosplit 10 --poolsize 8  --fieldfile ./test/test_command/yellow_trip.tff ./test/test_command/yellow_tripdata_2015-01-06-200k.csv
 	poetry run python pyimport/dbop.py --drop PYIM.imported
 	poetry run python pyimport/dbop.py --drop test.yellowcab
+
 
 missing_records:
 	poetry run python pyimport/pyimport_main.py --keepsplits --splitfile --autosplit 10 --hasheader --fieldfile ./test/test_command/yellow_trip.tff ./test/test_command/yellow_tripdata_2015-01-06-200k.csv
