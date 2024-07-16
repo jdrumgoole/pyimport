@@ -46,6 +46,4 @@ class ThreadImportCommand(ParallelImportCommand):
         self.report_process_files(self._args, import_results)
         return import_results
 
-    def run(self) -> ImportResults:
-        return self.process_files()
 

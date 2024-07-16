@@ -3,7 +3,7 @@ import os
 
 from pyimport.asyncimport import AsyncImportCommand
 from pyimport.importcommand import ImportCommand
-from pyimport.importresult import ImportResult
+from pyimport.importresult import ImportResult, ImportResults
 
 
 class ParallelImportCommand(ImportCommand):
@@ -27,5 +27,3 @@ class ParallelImportCommand(ImportCommand):
         else:
             return ImportCommand.process_one_file(args, log, filename)
 
-    def run(self):
-        pass

@@ -1,23 +1,13 @@
-import pprint
-from enum import Enum
 import logging
-from typing import List, Callable
+from typing import Callable
 
-from pyimport.fieldfile import FieldFile, FieldNames
+from pyimport.fieldfile import FieldFile
+from pyimport.logger import ErrorResponse, ErrorHandler
 from pyimport.type_converter import convert_it
 
 
 class EnricherException(Exception):
     pass
-
-
-class ErrorResponse(Enum):
-    Ignore = "ignore"
-    Warn   = "warn"
-    Fail   = "fail"
-
-    def __str__(self):
-        return self.value
 
 
 class Enricher:
@@ -32,6 +22,7 @@ class Enricher:
         self._logger = logging.getLogger(__name__)
 
         self._onerror = onerror
+        self._eh = ErrorHandler(onerror)
         self._line_count = 0
         self._timestamp = None
         self._idField = None  # section on which filename == _id
@@ -47,8 +38,8 @@ class Enricher:
 
     def enrich_value(self, k, v) -> str:
 
-        if k.startswith("blank-") and self._onerror == ErrorResponse.Warn:
-            self._log.info(f"Field {k} is blank [blank-] : ignoring")
+        if k.startswith("blank-"):
+            self._eh.warning(f"Field {k} is blank [blank-] : ignoring")
             return None
         # try:
         t = self._field_file.type_value(k)
@@ -57,18 +48,7 @@ class Enricher:
             return convert_it(t, v, self._field_file.format_value(k))
 
         except ValueError as e:
-            if self._onerror == ErrorResponse.Fail:
-                error_msg = f"Parse failure at field '{k}'\ntype conversion error: Cannot convert '{v}' to type {t}"
-                self._log.error(error_msg)
-                raise EnricherException(error_msg)
-            elif self._onerror == ErrorResponse.Warn:
-                self._log.warning(f"Parse failure  at field '{k}'\n"
-                                  f"type conversion error: Cannot convert '{v}' to type {t} using string type instead")
-            elif self._onerror == ErrorResponse.Ignore:
-                pass
-            else:
-                raise EnricherException(f"Invalid value for onerror: {self._onerror}")
-        return v
+            self._eh.error(f"Parse failure at field '{k}'\ntype conversion error: Cannot convert '{v}' to type {t}")
 
     def enrich_doc(self, csv_doc: dict, line_number: int = None) -> dict:
         """
@@ -91,16 +71,12 @@ class Enricher:
 
         if len_csv_doc == 1:
             line = ",".join(csv_doc.values())
-            self._logger.warning("Warning: only one field in "
-                                 "input line. Do you have the "
-                                 "right delimiter set ?")
-            self._logger.warning(f"input line : {line}")
+            self._eh.warning(f"Warning: only one field in input line. Do you have the right delimiter set ?")
+            self._eh.warning(f"input line : {line}")
 
         if len_csv_doc != len(self._field_file):
-            self._logger.error(f"\nrecord: at line {line_number}:{line}(len={len_csv_doc}) and fields required\n"
-                             f"{fields}(len={len(fields)})"
-                             f"don't match in length")
-            raise ValueError
+            self._eh.fatal(f"\nrecord: at line {line_number}:{line}(len={len_csv_doc}) and fields required\n"
+                           f"{fields}(len={len(fields)} don't match in length")
 
         new_doc = {k: self.enrich_value(k, v) for k, v in csv_doc.items()}
 

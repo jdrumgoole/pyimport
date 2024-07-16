@@ -5,6 +5,16 @@ Created on 28 Jun 2017
 """
 
 import logging
+from enum import Enum
+
+
+class ErrorResponse(Enum):
+    Ignore = "ignore"
+    Warn = "warn"
+    Fail = "fail"
+
+    def __str__(self):
+        return self.value
 
 
 class Log:
@@ -12,6 +22,7 @@ class Log:
 
     LOGGER_NAME = "pyimport"
     FORMAT_STRING = "%(message)s"
+    log = logging.getLogger(LOGGER_NAME)
 
     def __init__(self, log_level=None):
         self._log = logging.getLogger(Log.LOGGER_NAME)
@@ -49,7 +60,7 @@ class Log:
         return log
 
     @staticmethod
-    def add_file_handler( log_filename=None, log_level=None):
+    def add_file_handler(log_filename=None, log_level=None):
 
         if log_filename is None:
             log_filename = Log.LOGGER_NAME + ".log"
@@ -88,18 +99,52 @@ class Log:
 
         return loglevel
 
-    # def setup_custom_logger(self, name, log_level=None):
-    #     formatter = self.formatter()
-    #
-    #     handler = logging.StreamHandler()
-    #     handler.setFormatter(formatter)
-    #
-    #     logger = logging.getLogger(name)
-    #     if log_level:
-    #         logger.setLevel(log_level)
-    #     else:
-    #         logger.setLevel(logging.INFO)
-    #     logger.setLevel(logging.DEBUG)
-    #
-    #     logger.addHandler(handler)
-    #     return logger
+
+class ExitException(Exception):
+    pass
+
+
+def raise_exit_exception(msg):
+    raise ExitException(msg)
+
+
+class ErrorHandler:
+
+    def __init__(self, error_handling=ErrorResponse.Warn):
+        self._log = logging.getLogger(Log.LOGGER_NAME)
+        self._handling = error_handling
+
+        self._warn_handler = {
+            ErrorResponse.Warn: self._log.warning,
+            ErrorResponse.Fail: lambda msg: raise_exit_exception,
+            ErrorResponse.Ignore: lambda: None,
+        }
+
+        self._error_handler = {
+            ErrorResponse.Warn: self._log.error,
+            ErrorResponse.Fail: lambda msg: raise_exit_exception,
+            ErrorResponse.Ignore: lambda: None,
+        }
+
+        self._fatal_handler = {
+            ErrorResponse.Warn: lambda msg: raise_exit_exception,
+            ErrorResponse.Fail: lambda msg: raise_exit_exception,
+            ErrorResponse.Ignore: lambda msg: raise_exit_exception
+        }
+
+    def info(self, msg):
+        self._log.info(msg)
+
+    def warning(self, msg):
+        self._warn_handler[self._handling](msg)
+
+    def error(self, msg):
+        self._error_handler[self._handling](msg)
+
+    def fatal(self, msg):
+        self._fatal_handler[self._handling](msg)
+
+
+eh = ErrorHandler(ErrorResponse.Warn)
+ehf = ErrorHandler(ErrorResponse.Fail)
+

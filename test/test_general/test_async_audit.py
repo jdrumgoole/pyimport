@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 import pytz
 
 from pyimport.asyncaudit import AsyncAudit
-from test.mongodbtestresource import AsyncMongoDBTestResource
+from test.mdbtest import AsyncMDBTestDB
 import pytest
 
 
@@ -32,7 +32,7 @@ def audit(audit_db):
 
 @pytest.mark.asyncio
 async def xtest_offset_aware(audit):
-    async with AsyncMongoDBTestResource() as tr:
+    async with AsyncMDBTestDB() as tr:
         test_start_time = datetime.now(tz=timezone.utc)
         await tr.test_col.insert_one({"test_time": test_start_time, "id": 1})
         d = await tr.test_col.find_one({'id': 1})

@@ -69,7 +69,7 @@ class ImportResult:
 
     def __repr__(self):
         if self._error:
-            return f"ImportResults( None, None, {self.filename}, {self.import_error})"
+            return f"import_error({self.filename}, {self.import_error})"
         else:
             return f"ImportResults({self.total_written}, {self.elapsed_time}, {self.filename})"
 
@@ -118,6 +118,12 @@ class ImportResults:
         else:
             return candidates[0]
 
+    def filename_errors(self, filename):
+        candidates = [r for r in self.errors if r.filename == filename]
+        if len(candidates) == 0:
+            return None
+        else:
+            return candidates[0]
     @property
     def total_written(self):
         return self._total_written

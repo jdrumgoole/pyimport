@@ -5,15 +5,15 @@ from pyimport.argparser import ArgMgr
 def test_args():
     a = ArgMgr.default_args()
     assert a is not None
-    assert "host" in a
-    assert "database" in a
-    assert "collection" in a
+    assert "mdburi" in a.ns
+    assert "database" in a.ns
+    assert "collection" in a.ns
 
 
 def test_add():
     am = ArgMgr.default_args()
-    am.add_arguments(host="mongodb://localhost:27017/testy", database="testy", collection="testy")
-    assert am.d["host"] == "mongodb://localhost:27017/testy"
+    am.add_arguments(mdburi="mongodb://localhost:27017/testy", database="testy", collection="testy")
+    assert am.d["mdburi"] == "mongodb://localhost:27017/testy"
     assert am.d["database"] == "testy"
     assert am.d["collection"] == "testy"
 
@@ -21,7 +21,7 @@ def test_add():
 def test_length():
     am = ArgMgr.default_args()
     original_length = len(am)
-    am.add_arguments(host="mongodb://localhost:27017/testy", database="testy", collection="testy")
+    am.add_arguments(mdburi="mongodb://localmdburi:27017/testy", database="testy", collection="testy")
     new_length = len(am)
     assert new_length == original_length
     am.add_arguments(bingo="bongo")
@@ -30,7 +30,7 @@ def test_length():
 
 def test_merge_namespaces():
     am1 = ArgMgr.default_args()
-    assert "host" in am1.d
+    assert "mdburi" in am1.d
     def_len = len(am1)
     am2 = ArgMgr.default_args()
     am3 = ArgMgr.default_args()
@@ -40,10 +40,10 @@ def test_merge_namespaces():
     assert len(am3) == len(am1) + 3
     am2.merge(am3)
     assert len(am2) == len(am1) + 5
-    assert am1.d["host"] == "mongodb://localhost:27017/test"
+    assert am1.d["mdburi"] == "mongodb://localhost:27017"
     assert am1.d["database"] == "PYIM"
     assert am1.d["collection"] == "imported"
-    assert am2.d["host"] == "mongodb://localhost:27017/test"
+    assert am2.d["mdburi"] == "mongodb://localhost:27017"
     assert am2.d["new_arg"] == "is a test"
     assert am2.d["listof"] == ["1", "2", "3"]
     assert am2.d["a"] == 50

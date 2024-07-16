@@ -9,8 +9,12 @@ PYPIUSERNAME="jdrumgoole"
 ROOT=${HOME}/GIT/pyimport
 PYTHONPATH=${ROOT}
 PATH=/bin:/usr/bin:/usr/local/mongodb/bin:/Users/jdrumgoole/.pyenv/shims/
+
+include ${ROOT}/.env
 #
 # Hack the right PYTHONPATH into make subshells.
+
+
 
 testenv:
 	@echo "AUDITHOST" is: "$(AUDITHOST)"
@@ -52,6 +56,7 @@ python_bin:
 quick_test : std_quicktest async_quicktest thread_quicktest multi_quicktest
 
 std_quicktest:
+	poetry run python pyimport/dbop.py --drop PYIM.imported > /dev/null
 	poetry run python pyimport/pyimport_main.py --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
 	poetry run python pyimport/pyimport_main.py --audit --delimiter '|' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt > /dev/null
 	@poetry run python pyimport/dbop.py --count PYIM.imported
@@ -168,6 +173,10 @@ pytest:
 	(cd test/test_mot && poetry run pytest)
 	(cd test/test_splitfile && poetry run pytest)
 	(cd test/test_general && poetry run pytest)
+	(cd test/test_dbwriter && poetry run pytest)
+	(cd test/test_formats && poetry run pytest)
+
+
 
 test_top:
 	(cd test && poetry run pytest)

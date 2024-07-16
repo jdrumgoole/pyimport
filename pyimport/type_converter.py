@@ -5,8 +5,9 @@ from enum import Enum
 from dateutil.parser import parse as date_parse
 from dateutil.parser import ParserError
 
-from pyimport.dateformats import EU_Date_formats, EU_datetime_formats, US_Date_formats, US_datetime_formats
-
+from pyimport.compounddateformats import EU_Formats, US_Formats, All_Formats
+from pyimport.logger import Log
+import pydateinfer
 
 
 class DateType(Enum):
@@ -14,13 +15,24 @@ class DateType(Enum):
     US = 2
 
 
-def generate_format(date_str: str, format_list=None, dt: DateType = DateType.EU) -> str:
+def infer_format(date_strs: list[str], dt: DateType = None) -> str:
+    if dt == DateType.EU:
+        return pydateinfer.infer(date_strs, date_order="DMY")
+    elif dt == DateType.US:
+        return pydateinfer.infer(date_strs, date_order="MDY")
+    else:
+        return pydateinfer.infer(date_strs)
+
+
+def generate_format(date_str: str, format_list=None, dt: DateType = None) -> str:
     # Common date
     if format_list is None:
         if dt == DateType.EU:
-            format_list = EU_Date_formats + EU_datetime_formats
+            format_list = EU_Formats
+        elif dt == DateType.US:
+            format_list = US_Formats
         else:
-            format_list = US_Date_formats + US_datetime_formats
+            format_list = All_Formats
 
     for fmt in format_list:
         try:
@@ -28,7 +40,8 @@ def generate_format(date_str: str, format_list=None, dt: DateType = DateType.EU)
             return fmt
         except ValueError:
             continue
-    return ""
+    Log().log.warning(f"Could not generate format for date string: {date_str} using any of the formats in {format_list}")
+    return None
 
 
 # # Example usage:
@@ -110,10 +123,10 @@ def guess_type(s: str) -> [str, str]:
     try:
         d = date_parse(s)
         if d.hour == 0 and d.minute == 0 and d.second == 0 and d.microsecond == 0:
-            fmt = generate_format(s)
+            fmt = infer_format([s])
             return "date", fmt
         else:
-            fmt = generate_format(s)
+            fmt = infer_format([s])
             return "datetime", fmt
 
     except ParserError:
@@ -140,7 +153,7 @@ def convert_it(t, v, fmt=None, utc_time=False) -> str | int | float | datetime:
     """
 
     if utc_time:
-        converter["timestamp"] = Converter.to_timestamp_utc
+        converter["timestamp"] = to_timestamp_utc
     try:
         return converter[t](v, fmt)
     except ValueError:

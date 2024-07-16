@@ -1,6 +1,6 @@
 #
 # Created 'inventory.tff'
-# at UTC: 2024-07-03 16:06:48.443089+00:00 by class pyimport.fieldfile
+# at UTC: 2024-07-04 19:45:15.464832+00:00 by class pyimport.fieldfile
 # Parameters:
 #    csv        : 'inventory.csv'
 #    delimiter  : ','
@@ -18,7 +18,7 @@ format = ""
 [" Last Order"]
 type = "date"
 name = " Last Order"
-format = ""
+format = "%d-%b-%Y"
 
 [DEFAULTS_SECTION]
 delimiter = ","

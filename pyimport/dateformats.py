@@ -1,324 +1,162 @@
-EU_Date_formats = [
-    # Day-Month-Year formats
-    "%d-%m-%Y",        # 1
-    "%-d-%-m-%Y",      # 2
-    "%d/%m/%Y",        # 3
-    "%-d/%-m/%Y",      # 4
-    "%d.%m.%Y",        # 5
-    "%-d.%-m.%Y",      # 6
-    "%d %B %Y",        # 7
-    "%-d %B %Y",       # 8
-    "%d %b %Y",        # 9
-    "%-d %b %Y",       # 10
+import itertools
+import pprint
+import calendar
+from datetime import datetime
+from itertools import combinations
+from typing import Callable, Generator
 
-    # Day-Month-Year with weekday formats
-    "%A, %d %B %Y",    # 11
-    "%A, %-d %B %Y",   # 12
-    "%a, %d %b %Y",    # 13
-    "%a, %-d %b %Y",   # 14
-
-    # Day-Month-Year short year formats
-    "%d-%m-%y",        # 15
-    "%-d-%-m-%y",      # 16
-    "%d/%m/%y",        # 17
-    "%-d/%-m/%y",      # 18
-    "%d.%m.%y",        # 19
-    "%-d.%-m.%y",      # 20
-    "%d %B %y",        # 21
-    "%-d %B %y",       # 22
-    "%d %b %y",        # 23
-    "%-d %b %y",       # 24
-
-    # Year-Month-Day formats
-    "%Y-%m-%d",        # 25
-    "%Y/%m/%d",        # 26
-
-    # Day-Month-Year with comma formats
-    "%d-%m-%Y,",       # 27
-    "%-d-%-m-%Y,",     # 28
-    "%d/%m/%Y,",       # 29
-    "%-d/%-m/%Y,",     # 30
-    "%d.%m.%Y,",       # 31
-    "%-d.%-m.%Y,",     # 32
-    "%d-%m-%y,",       # 33
-    "%-d-%-m-%y,",     # 34
-    "%d/%m/%y,",       # 35
-    "%-d/%-m/%y,",     # 36
-    "%d.%m.%y,",       # 37
-    "%-d.%-m.%y,",     # 38
-
-    # Additional variations
-    "%d. %B %Y",       # 39
-    "%d. %b %Y",       # 40
-    "%d. %B %y",       # 41
-    "%d. %b %y",       # 42
-    "%d %B, %Y",       # 43
-    "%d %b, %Y",       # 44
-    "%d %B, %y",       # 45
-    "%d %b, %y",       # 46
-
-    # Month-Day-Year formats
-    "%m-%d-%Y",        # 47
-    "%m/%d/%Y",        # 48
-    "%m.%d.%Y",        # 49
-    "%m-%d-%y",        # 50
-    "%m/%d/%y",        # 51
-    "%m.%d.%y",        # 52
-
-    # Variations with month name
-    "%B %d, %Y",       # 53
-    "%b %d, %Y",       # 54
-    "%B %d, %y",       # 55
-    "%b %d, %y",       # 56
-]
-
-US_Date_formats = [
-    # Month-Day-Year formats
-    "%m-%d-%Y",        # 1
-    "%m/%d/%Y",        # 2
-    "%m.%d.%Y",        # 3
-    "%-m-%-d-%Y",      # 4
-    "%-m/%-d/%Y",      # 5
-    "%-m.%-d.%Y",      # 6
-    "%m-%d-%y",        # 7
-    "%m/%d/%y",        # 8
-    "%m.%d.%y",        # 9
-    "%-m-%-d-%y",      # 10
-    "%-m/%-d/%y",      # 11
-    "%-m.%-d.%y",      # 12
-
-    # Month Day, Year formats
-    "%B %d, %Y",       # 13
-    "%b %d, %Y",       # 14
-    "%B %-d, %Y",      # 15
-    "%b %-d, %Y",      # 16
-    "%B %d, %y",       # 17
-    "%b %d, %y",       # 18
-    "%B %-d, %y",      # 19
-    "%b %-d, %y",      # 20
-
-    # Weekday, Month Day, Year formats
-    "%A, %B %d, %Y",   # 21
-    "%A, %b %d, %Y",   # 22
-    "%A, %B %-d, %Y",  # 23
-    "%A, %b %-d, %Y",  # 24
-    "%A, %B %d, %y",   # 25
-    "%A, %b %d, %y",   # 26
-    "%A, %B %-d, %y",  # 27
-    "%A, %b %-d, %y",  # 28
-    "%a, %B %d, %Y",   # 29
-    "%a, %b %d, %Y",   # 30
-    "%a, %B %-d, %Y",  # 31
-    "%a, %b %-d, %Y",  # 32
-    "%a, %B %d, %y",   # 33
-    "%a, %b %d, %y",   # 34
-    "%a, %B %-d, %y",  # 35
-    "%a, %b %-d, %y",  # 36
-
-    # Year-Month-Day formats
-    "%Y-%m-%d",        # 37
-    "%Y/%m/%d",        # 38
-
-    # Month-Day-Year with comma formats
-    "%m-%d-%Y,",       # 39
-    "%m/%d/%Y,",       # 40
-    "%m.%d.%Y,",       # 41
-    "%-m-%-d-%Y,",     # 42
-    "%-m/%-d/%Y,",     # 43
-    "%-m.%-d.%Y,",     # 44
-    "%m-%d-%y,",       # 45
-    "%m/%d/%y,",       # 46
-    "%m.%d.%y,",       # 47
-    "%-m-%-d-%y,",     # 48
-    "%-m/%-d/%y,",     # 49
-    "%-m.%-d.%y,",     # 50
-
-    # Month Day, Year with comma formats
-    "%B %d, %Y,",      # 51
-    "%b %d, %Y,",      # 52
-    "%B %-d, %Y,",     # 53
-    "%b %-d, %Y,",     # 54
-    "%B %d, %y,",      # 55
-    "%b %d, %y,",      # 56
-    "%B %-d, %y,",     # 57
-    "%b %-d, %y,",     # 58
-
-    # Weekday, Month Day, Year with comma formats
-    "%A, %B %d, %Y,",  # 59
-    "%A, %b %d, %Y,",  # 60
-    "%A, %B %-d, %Y,", # 61
-    "%A, %b %-d, %Y,", # 62
-    "%A, %B %d, %y,",  # 63
-    "%A, %b %d, %y,",  # 64
-    "%A, %B %-d, %y,", # 65
-    "%A, %b %-d, %y,", # 66
-    "%a, %B %d, %Y,",  # 67
-    "%a, %b %d, %Y,",  # 68
-    "%a, %B %-d, %Y,", # 69
-    "%a, %b %-d, %Y,", # 70
-    "%a, %B %d, %y,",  # 71
-    "%a, %b %d, %y,",  # 72
-    "%a, %B %-d, %y,", # 73
-    "%a, %b %-d, %y,", # 74
-]
-
-EU_datetime_formats = [
-    "%d-%m-%Y %H:%M",
-    "%-d-%-m-%Y %H:%M",
-    "%d/%m/%Y %H:%M",
-    "%-d/%-m/%Y %H:%M",
-    "%d.%m.%Y %H:%M",
-    "%-d.%-m.%Y %H:%M",
-    "%d %B %Y %H:%M",
-    "%-d %B %Y %H:%M",
-    "%d %b %Y %H:%M",
-    "%-d %b %Y %H:%M",
-    "%d-%m-%Y %H:%M:%S",
-    "%-d-%-m-%Y %H:%M:%S",
-    "%d/%m/%Y %H:%M:%S",
-    "%-d/%-m/%Y %H:%M:%S",
-    "%d.%m.%Y %H:%M:%S",
-    "%-d.%-m.%Y %H:%M:%S",
-    "%d %B %Y %H:%M:%S",
-    "%-d %B %Y %H:%M:%S",
-    "%d %b %Y %H:%M:%S",
-    "%-d %b %Y %H:%M:%S",
-    "%A, %d %B %Y %H:%M:%S",
-    "%A, %-d %B %Y %H:%M:%S",
-    "%a, %d %b %Y %H:%M:%S",
-    "%a, %-d %b %Y %H:%M:%S",
-    "%A, %d %B %Y %H:%M",
-    "%A, %-d %B %Y %H:%M",
-    "%a, %d %b %Y %H:%M",
-    "%a, %-d %b %Y %H:%M",
-    "%d-%m-%y %H:%M",       # 29
-    "%-d-%-m-%y %H:%M",     # 30
-    "%d/%m/%y %H:%M",       # 31
-    "%-d/%-m/%y %H:%M",     # 32
-    "%d.%m.%y %H:%M",       # 33
-    "%-d.%-m.%y %H:%M",     # 34
-    "%d %B %y %H:%M",       # 35
-    "%-d %B %y %H:%M",      # 36
-    "%d %b %y %H:%M",       # 37
-    "%-d %b %y %H:%M",      # 38
-    "%d-%m-%y %H:%M:%S",    # 39
-    "%-d-%-m-%y %H:%M:%S",  # 40
-    "%d/%m/%y %H:%M:%S",    # 41
-    "%-d/%-m/%y %H:%M:%S",  # 42
-    "%d.%m.%y %H:%M:%S",    # 43
-    "%-d.%-m.%y %H:%M:%S",  # 44
-    "%d %B %y %H:%M:%S",    # 45
-    "%-d %B %y %H:%M:%S",   # 46
-    "%d %b %y %H:%M:%S",    # 47
-    "%-d %b %y %H:%M:%S",   # 48
-    "%Y-%m-%d %H:%M:%S",    # 49
-    "%Y-%m-%d %H:%M",       # 50
-    "%Y/%m/%d %H:%M:%S",    # 51
-    "%Y/%m/%d %H:%M",       # 52
-    "%d-%m-%Y, %H:%M:%S",   # 53
-    "%-d-%-m-%Y, %H:%M:%S", # 54
-    "%d/%m/%Y, %H:%M:%S",   # 55
-    "%-d/%-m/%Y, %H:%M:%S", # 56
-    "%d.%m.%Y, %H:%M:%S",   # 57
-    "%-d.%-m.%Y, %H:%M:%S", # 58
-    "%d-%m-%y, %H:%M:%S",   # 59
-    "%-d-%-m-%y, %H:%M:%S", # 60
-    "%d/%m/%y, %H:%M:%S",   # 61
-    "%-d/%-m/%y, %H:%M:%S", # 62
-    "%d.%m.%y, %H:%M:%S",   # 63
-    "%-d.%-m.%y, %H:%M:%S", # 64
-    "%d %B %Y %I:%M %p",    # 65
-    "%-d %B %Y %I:%M %p",   # 66
-    "%d %b %Y %I:%M %p",    # 67
-    "%-d %b %Y %I:%M %p",   # 68
-    "%d %B %y %I:%M %p",    # 69
-    "%-d %B %y %I:%M %p",   # 70
-    "%d %b %y %I:%M %p",    # 71
-    "%-d %b %y %I:%M %p",   # 72
-    "%d %B %Y %I:%M:%S %p", # 73
-    "%-d %B %Y %I:%M:%S %p",# 74
-    "%d %b %Y %I:%M:%S %p", # 75
-    "%-d %b %Y %I:%M:%S %p",# 76
-    "%d %B %y %I:%M:%S %p", # 77
-    "%-d %B %y %I:%M:%S %p",# 78
-    "%d %b %y %I:%M:%S %p", # 79
-    "%-d %b %y %I:%M:%S %p",# 80
-    "%A, %d %B %Y %H:%M %p",# 81
-    "%A, %-d %B %Y %H:%M %p", # 82
-    "%a, %d %b %Y %H:%M %p",  # 83
-    "%a, %-d %b %Y %H:%M %p", # 84
-    "%A, %d %B %y %H:%M %p",  # 85
-    "%A, %-d %B %y %H:%M %p", # 86
-    "%a, %d %b %y %H:%M %p",  # 87
-    "%a, %-d %b %y %H:%M %p"  # 88
-]
-
-US_datetime_formats = [
-    "%m/%d/%Y %I:%M %p",
-    "%-m/%-d/%Y %I:%M %p",
-    "%m-%d-%Y %I:%M %p",
-    "%-m-%-d-%Y %I:%M %p",
-    "%B %d, %Y %I:%M %p",
-    "%b %d, %Y %I:%M %p",
-    "%B %-d, %Y %I:%M %p",
-    "%b %-d, %Y %I:%M %p",
-    "%m/%d/%Y %H:%M:%S",
-    "%-m/%-d/%Y %H:%M:%S",
-    "%m-%d-%Y %H:%M:%S",
-    "%-m-%-d-%Y %H:%M:%S",
-    "%B %d, %Y %H:%M:%S",
-    "%b %d, %Y %H:%M:%S",
-    "%B %-d, %Y %H:%M:%S",
-    "%b %-d, %Y %H:%M:%S",
-    "%m/%d/%Y %H:%M",
-    "%-m/%-d/%Y %H:%M",
-    "%m-%d-%Y %H:%M",
-    "%-m-%-d-%Y %H:%M",
-    "%A, %B %d, %Y %H:%M:%S",
-    "%A, %B %-d, %Y %H:%M:%S",
-    "%a, %b %d, %Y %H:%M:%S",
-    "%a, %b %-d, %Y %H:%M:%S",
-    "%A, %B %d, %Y %I:%M %p",
-    "%A, %B %-d, %Y %I:%M %p",
-    "%a, %b %d, %Y %I:%M %p",
-    "%a, %b %-d, %Y %I:%M %p",
-    "%m/%d/%y %I:%M %p",  # 29
-    "%-m/%-d/%y %I:%M %p",  # 30
-    "%m-%d-%y %I:%M %p",  # 31
-    "%-m-%-d-%y %I:%M %p",  # 32
-    "%m/%d/%y %H:%M:%S",  # 33
-    "%-m/%-d/%y %H:%M:%S",  # 34
-    "%m-%d-%y %H:%M:%S",  # 35
-    "%-m-%-d-%y %H:%M:%S",  # 36
-    "%m/%d/%y %H:%M",  # 37
-    "%-m/%-d/%y %H:%M",  # 38
-    "%m-%d-%y %H:%M",  # 39
-    "%-m-%-d-%y %H:%M",  # 40
-    "%A, %b %d, %Y %H:%M",  # 41
-    "%A, %b %-d, %Y %H:%M",  # 42
-    "%a, %b %d, %Y %H:%M",  # 43
-    "%a, %b %-d, %Y %H:%M",  # 44
-    "%A, %B %d, %Y %H:%M",  # 45
-    "%A, %B %-d, %Y %H:%M",  # 46
-    "%a, %B %d, %Y %H:%M",  # 47
-    "%a, %B %-d, %Y %H:%M",  # 48
-    "%Y-%m-%d %H:%M:%S",  # 49
-    "%Y-%m-%d %I:%M %p",  # 50
-    "%Y/%m/%d %H:%M:%S",  # 51
-    "%Y/%m/%d %I:%M %p",  # 52
-    "%m/%d/%Y, %H:%M:%S",  # 53
-    "%-m/%-d/%Y, %H:%M:%S",  # 54
-    "%m-%d-%Y, %H:%M:%S",  # 55
-    "%-m-%-d-%Y, %H:%M:%S",  # 56
-    "%m/%d/%y, %H:%M:%S",  # 57
-    "%-m/%-d/%y, %H:%M:%S",  # 58
-    "%m-%d-%y, %H:%M:%S",  # 59
-    "%-m-%-d-%y, %H:%M:%S",  # 60
-]
+format_dict = {
+    "%a": "Weekday as locale’s abbreviated name.",
+    "%A": "Weekday as locale’s full name.",
+    "%w": "Weekday as a decimal number, where 0 is Sunday and 6 is Saturday.",
+    "%d": "Day of the month as a zero-padded decimal number.",
+    "%b": "Month as locale’s abbreviated name.",
+    "%B": "Month as locale’s full name.",
+    "%m": "Month as a zero-padded decimal number.",
+    "%y": "Year without century as a zero-padded decimal number.",
+    "%Y": "Year with century as a decimal number.",
+    "%H": "Hour (24-hour clock) as a zero-padded decimal number.",
+    "%I": "Hour (12-hour clock) as a zero-padded decimal number.",
+    "%p": "Locale’s equivalent of either AM or PM.",
+    "%M": "Minute as a zero-padded decimal number.",
+    "%S": "Second as a zero-padded decimal number.",
+    "%f": "Microsecond as a decimal number, zero-padded to 6 digits.",
+    "%z": "UTC offset in the form ±HHMM[SS[.ffffff]] (empty string if the object is naive).",
+    "%Z": "Time zone name (empty string if the object is naive).",
+    "%j": "Day of the year as a zero-padded decimal number.",
+    "%U": "Week number of the year (Sunday as the first day of the week) as a zero-padded decimal number.",
+    "%W": "Week number of the year (Monday as the first day of the week) as a zero-padded decimal number.",
+    "%c": "Locale’s appropriate date and time representation.",
+    "%x": "Locale’s appropriate date representation.",
+    "%X": "Locale’s appropriate time representation.",
+    "%%": "A literal '%' character."
+}
 
 
-EU_Formats = EU_Date_formats + EU_datetime_formats
+def time_range(start, finish, zfill=None) -> Generator[str, None, None]:
+    if zfill:
+        return (str(x).zfill(zfill) for x in range(start, finish + 1))
+    else:
+        return (str(x) for x in range(start, finish+1))
 
-US_Formats = US_Date_formats + US_datetime_formats
 
-All_Formats = EU_Formats + US_Formats
+#
+# Leave out all locale specific formats for this iteration
+#
+
+second_formats = {
+    "%S": time_range(0, 59, zfill=True),
+    "%f": time_range(0, 999999, zfill=6)  # "Microsecond as a decimal number, zero-padded to 6 digits."
+}
+
+minute_formats = {
+    "%M": time_range(0, 59, zfill=2),   # Minute as a zero-padded decimal number.
+}
+
+hour_formats = {
+    "%H":  time_range(0, 59, zfill=2),    # "hour, using a 24-hour clock (00 to 23)",
+    "%I":  time_range(1, 12, zfill=2),    # "hour, using a 12-hour clock (01 to 12)",
+    "%p": ["AM", "PM"]   # "either am or pm according to the given time value",
+}
+
+day_formats = {
+    "%a": "Weekday as locale’s abbreviated name.",
+    "%A": "Weekday as locale’s full name.",
+    "%w": time_range(0, 6, zfill=0),    # "Weekday as a decimal number, where 0 is Sunday and 6 is Saturday.",
+    "%d": time_range(1, 31, zfill=0),   # "day of the month (01 to 31)",
+    "%e": time_range(1, 31, zfill=0),   # "day of the month (1 to 31)",
+    "%j": time_range(0, 366, zfill=3),  # "Day of the year as a zero-padded decimal number."
+    "%u": time_range(1, 7, zfill=0)     # ISO 8601 weekday as a decimal number where 1 is Monday.
+}
+
+week_formats = {
+    "%U": time_range(0, 53, zfill=True),   #  week number of the current year, starting with the first Sunday as the first day of the first week
+    "%W": time_range(0, 53, zfill=True),   #  week number of the current year, starting with the first Monday as the first day of the first week
+    "%V": time_range(1, 53, zfill=2)       #  ISO 8601 week as a decimal number with Monday as the first day of the week. Week 01 is the week containing Jan 4
+}
+
+month_formats = {
+    "%b": [calendar.month_abbr[i] for i in range(1, 13)],  #"abbreviated month name",
+    "%B": [calendar.month_name[i] for i in range(1, 13)],  # "full month name",
+    "%m": time_range(1, 12, zfill=True),  # "month (01 to 12)",
+}
+
+year_formats = {
+    "%y": time_range(0, 99, zfill=2),  #"Year without century as a zero-padded decimal number.",
+    "%Y": time_range(0, 9999, zfill=4), # "Year with century as a decimal number.",
+    "%G": time_range(0, 9999, zfill=4),  #"ISO 8601 year with century representing the year that contains the greater part of the ISO week (%V).",
+}
+
+
+separators_dict = {
+    "": "no separator",
+    "-": "hyphen",
+    "/": "forward slash",
+    ".": "period",
+    ",": "comma",
+    " ": "space",
+    ":": "colon",
+}
+
+format_charts_dict = {
+    "%%": "a literal % character",
+    "%t": "tab character",
+    "%n": "newline character",
+}
+
+
+
+format_results_d1 = {}
+format_results_d2 = {}
+
+
+def str_join(i):
+    return ("".join(x) for x in i)
+
+
+def permute(d: dict, n: int, predicate: Callable | None = None):
+    if predicate is None:
+        def predicate(x): return x and False
+    return str_join(itertools.filterfalse(predicate, combinations(d.keys(), n)))
+
+
+def get_percent_fmts(perms):
+    return (x for x in perms if "%" in x)
+
+
+# for x in combinations(date_format_dict.keys(), 2):
+#     print(x)
+
+# for i in permute(format_dict, 2):
+#     print(i)
+#
+# hrs_mins_formats = itertools.product(hour_formats, minute_formats)
+# for h,m in hrs_mins_formats:
+#     for sep in separators_dict:
+#         print(f"{h}{sep}{m}")
+#
+#
+# hrs_mins_secs_formats = itertools.product(hour_formats, minute_formats, second_formats)
+# for h,m, s in hrs_mins_secs_formats:
+#     for sep in separators_dict:
+#         print(f"{h}{sep}{m}{sep}{s}")
+# def try_strptime(s:str, fmt:str) -> datetime:
+#     try:
+#         return datetime.strptime(s, fmt)
+#     except ValueError:
+#         return None
+#
+#
+# for i in range(60):
+#     for j in range(60):
+#         for k, v in format_dict.items():
+#             d1 = try_strptime(str(i), k)
+#             d2 = try_strptime(f"{i}:{j}", k)
+#             if d1:
+#                 format_results_d1[k] = f" {i} :  {v}"
+#             if d2:
+#                 format_results_d2[k] = f" {i}:{j} :  {v}"
+#
+# pprint.pprint(format_results_d1)
+# print("\n")
+# pprint.pprint(format_results_d2)

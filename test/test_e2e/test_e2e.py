@@ -13,7 +13,7 @@ from pyimport.fieldfile import FieldFile, FieldNames
 from pyimport.filesplitter import LineCounter, split_files, FileSplitter
 from pyimport.importcommand import ImportCommand
 from pyimport.multiimportcommand import MultiImportCommand
-from test.mongodbtestresource import MongoDBTestResource
+from test.mdbtest import MDBTestDB
 
 
 # take environment variables from .env.
@@ -29,7 +29,7 @@ def setup(scope="module"):
 
 def test_multi_split(setup):
     #  --splitfile --multi --poolsize 2   --delimiter '|' --fieldfile ./test/test_mot/10k.tff ./test/test_mot/10k.txt
-    with MongoDBTestResource() as tr:
+    with MDBTestDB() as tr:
         args = tr.args.add_arguments(filenames=["10k.txt"], delimiter="|", fieldfile="10k.tff", splitfile=True, multi=True, poolsize=2)
         files = split_files(args.ns)
         split_files_list = [split[0] for split in files]

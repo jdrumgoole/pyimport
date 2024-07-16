@@ -1,6 +1,6 @@
 """
 =======================================
-pwc - python word thread_id
+pwc - python word count
 =======================================
 Created on 27 Aug 2017
 

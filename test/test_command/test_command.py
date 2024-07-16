@@ -1,25 +1,20 @@
-import logging
+
 import os
 import shutil
-import unittest
+import random
 
 import pymongo
-from motor.motor_asyncio import AsyncIOMotorClient
+import pytest
 
 from pyimport.argparser import ArgMgr
-from pyimport.asyncaudit import AsyncAudit
 from pyimport.generatefieldfilecommand import GenerateFieldfileCommand
 from pyimport.dropcollectioncommand import DropCollectionCommand
 from pyimport.asyncimport import AsyncImportCommand
 from pyimport.enricher import Enricher
 from pyimport.importcommand import ImportCommand
-from pyimport.fieldfile import FieldFile
+from pyimport.fieldfile import FieldFile, FieldFileException
 from pyimport.filesplitter import LineCounter
-from test.mongodbtestresource import MongoDBTestResource, AsyncMongoDBTestResource
-import pytest
-import pytest_asyncio
-
-import random
+from test.mdbtest import MDBTestDB, AsyncMDBTestDB
 
 
 def get_random_line(file_path: str) -> str:
@@ -49,7 +44,7 @@ def get_random_field(csvfile: str, ff: FieldFile, delimiter: str) -> [str, str]:
 
 @pytest.mark.asyncio
 async def test_async_one_file():
-    async with AsyncMongoDBTestResource() as tr:
+    async with AsyncMDBTestDB() as tr:
         size_120 = LineCounter.count_now("120lines.txt")
         files = ["120lines.txt"]
         args = tr.args.add_arguments(fieldfile="10k.tff", filenames=files, delimiter="|")
@@ -69,7 +64,7 @@ async def test_async_one_file():
 
 @pytest.mark.asyncio
 async def test_async_import_command():
-    async with AsyncMongoDBTestResource() as tr:
+    async with AsyncMDBTestDB() as tr:
         size_10k = LineCounter.count_now("10k.txt")
         size_120 = LineCounter.count_now("120lines.txt")
         files = ["10k.txt", "120lines.txt"]
@@ -87,7 +82,7 @@ async def test_async_import_command():
 
 
 def test_import_command_small():
-    with MongoDBTestResource() as tr:
+    with MDBTestDB() as tr:
         start_size = tr.test_col.count_documents({})
         size_test = LineCounter.count_now("test_date_data.csv") - 1
         args = tr.args.add_arguments(fieldfile="10k.tff",
@@ -104,7 +99,8 @@ def test_import_command_small():
 def test_drop_command():
 
     c = pymongo.MongoClient()
-    assert "TEST_DROP_CMD" not in c.list_database_names()
+    if "TEST_DROP_CMD" in c.list_database_names():
+        c.drop_database("TEST_DROP_CMD")
     db = c["TEST_DROP_CMD"]
     assert "testx" not in db.list_collection_names()
     col = db["testx"]
@@ -132,14 +128,14 @@ def test_generate_fieldfile_command():
 
 
 # def test_generate_nyc_200k():
-#     with MongoDBTestResource() as tr:
+#     with MDBTestDB() as tr:
 #         args = tr.args.add_arguments(delimiter=",", fieldfile="yellow_trip.tff", filenames=["yellow_tripdata_2015-01-06-200k.csv"])
 #         results = ImportCommand(args=args.ns).run()
 #         assert results.total_errors == 0
 
 
 def test_import_command_nyc():
-    with MongoDBTestResource() as tr:
+    with MDBTestDB() as tr:
 
         start_size = tr.test_col.count_documents({})
         size_test = LineCounter.count_now("yellow_trip_data_10.csv") - 1
@@ -151,18 +147,24 @@ def test_import_command_nyc():
 
 
 def test_import_command_nyc_no_field_file():
-    with MongoDBTestResource() as tr:
+    with MDBTestDB() as tr:
+        with pytest.raises(FieldFileException):
+            args = tr.args.add_arguments(fieldfile="yellow_trip_data_10xxx.tff",
+                                         filenames=["yellow_trip_data_10.csv"], hasheader=True)
+            results = ImportCommand(args=args.ns).process_one_file(args.ns, tr.log, filename="yellow_trip_data_10.csv")
+
+    with MDBTestDB() as tr:
         args = tr.args.add_arguments(fieldfile="yellow_trip_data_10xxx.tff",
                                      filenames=["yellow_trip_data_10.csv"], hasheader=True)
         results = ImportCommand(args=args.ns).run()
-        assert results.total_written is None
-        assert results.elapsed_time is None
-        assert results.avg_records_per_sec is None
+        assert results.total_errors == 1
+        assert results.total_results == 0
+
 
 
 @pytest.mark.asyncio
 async def test_import_command_nyc_async():
-    async with AsyncMongoDBTestResource() as tr:
+    async with AsyncMDBTestDB() as tr:
         start_size = await tr.test_col.count_documents({})
         size_test = LineCounter.count_now("yellow_trip_data_10.csv") - 1
         args = tr.args.add_arguments(fieldfile="yellow_trip_data_10.tff",
@@ -174,7 +176,7 @@ async def test_import_command_nyc_async():
         assert result.total_written == (new_size - start_size)
         assert size_test == result.total_written
 
-    async with AsyncMongoDBTestResource() as tr:
+    async with AsyncMDBTestDB() as tr:
         start_size = await tr.test_col.count_documents({})
         size_test = LineCounter.count_now("yellow_trip_data_10.csv") - 1
         args = tr.args.add_arguments(fieldfile="yellow_trip_data_10.tff",

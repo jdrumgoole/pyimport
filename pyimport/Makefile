@@ -10,7 +10,7 @@ ROOT=${HOME}/GIT/pyimport
 PYTHONPATH=${ROOT}
 PATH=/bin:/usr/bin:/usr/local/mongodb/bin:/Users/jdrumgoole/.pyenv/shims/
 
-include ${ROOT}/.env
+#include ${ROOT}/.env
 #
 # Hack the right PYTHONPATH into make subshells.
 
@@ -159,6 +159,9 @@ missing_records:
 test_all_scripts: test_scripts test_audit test_multi test_small_multi test_yellowtrip test_data
 
 test_all: pytest test_all_scripts
+
+test_pytest:
+	(cd test/test_command && poetry run which ls )
 
 pytest:
 	(cd test/test_command && poetry run pytest)

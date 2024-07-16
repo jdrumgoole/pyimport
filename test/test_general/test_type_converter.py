@@ -3,7 +3,23 @@ import unittest
 from csv import DictReader
 from datetime import timezone
 
-from pyimport.type_converter import convert_it, guess_type
+import pytest
+
+from pyimport.type_converter import convert_it, guess_type, generate_format
+# List of test date strings
+
+test_dates = [
+    "1-Jan-2016", "01-01-2016", "31/12/2020", "31.12.2020",
+    "Monday, 1 January 2018", "Mon, 1 Jan 18", "2024-07-01",
+    "01/07/2024", "1. January 2024", "15-Feb-2021", "15/Feb/2021",
+    "July 4, 2020", "Jul 4, 20", "Tuesday, July 4, 2020",
+    "Tue, July 4, 2020", "July 4, 2020,", "Jul 4, 20,", "04/22/2017 04:46:37 AM",
+]
+
+
+def test_auto_date_format():
+    for i in test_dates:
+        assert generate_format(i) is not None, f"Failed to parse: {i}"
 
 
 class Test(unittest.TestCase):
@@ -44,8 +60,8 @@ class Test(unittest.TestCase):
         assert guess_type("10") == ("int", "")
         assert guess_type("10.0") == ("float", "")
         assert guess_type("1525658514") == ("int", "")
-        assert guess_type("11:30am 25-May-2018") == ("datetime", "")
-        assert guess_type("2018-05-25T11:30:00") == ("datetime", "%Y-%m-%dT%H:%M:%S")
+        assert guess_type("11:30am 25-May-2018") == ("datetime", "%I:%M%p %d-%b-%Y")
+        assert guess_type("2018-05-25T11:30:00") == ("datetime", "%Y-%m-%dT%I:%M:%S")
         assert guess_type("2018-05-25") == ("date", "%Y-%m-%d")
 
 

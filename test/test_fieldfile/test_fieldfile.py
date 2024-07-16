@@ -19,11 +19,11 @@ from pyimport.importcommand import ImportCommand
 from pyimport.argparser import ArgMgr
 import pytest
 
-from test.mongodbtestresource import MongoDBTestResource
+from test.mdbtest import MDBTestDB
 
 
 def test_generate_fieldfile():
-    with MongoDBTestResource() as tr:
+    with MDBTestDB() as tr:
         FieldFile.generate_field_file("inventory.csv", ext="testff")
         assert os.path.exists("inventory.testff")
         start_count = tr.test_col.count_documents({})
@@ -38,7 +38,7 @@ def test_generate_fieldfile():
 
 
 def test_delimiter_header():
-    with MongoDBTestResource() as tr:
+    with MDBTestDB() as tr:
         args = tr.args.add_arguments(filenames=["AandEData_300.csv"], fieldfile="AandE_Data_2011-04-10.tff", hasheader=True)
         results = ImportCommand(args=args.ns).run()
         assert results.total_errors == 1
@@ -91,6 +91,16 @@ class TestFieldFile(unittest.TestCase):
         assert results.total_errors > 0
         assert results.total_results == 0
         assert results.total_written is None
+
+    def test_fieldfile_autogen(self):
+        with MDBTestDB() as tr:
+            args = tr.args.add_arguments(filenames=["inventory.csv"], hasheader=True)
+            results = ImportCommand(args=args.ns).run()
+            assert results.total_errors == 0
+            assert results.total_results == 1
+            assert results.total_written == 4
+            assert os.path.exists("inventory.tff")
+            os.unlink("inventory.tff")
 
     def test_new_delimiter_and_timeformat_header(self):
         start_count = self._col.count_documents({})

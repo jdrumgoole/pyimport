@@ -27,6 +27,10 @@ aiofiles = "^23.2.1"
 python-dotenv = {extras = ["cli"], version = "^1.0.1"}
 pandas = "^2.2.2"
 pytz = "^2024.1"
+py-dateinfer = "^0.4.5"
+sqlalchemy = "^2.0.31"
+psycopg2-binary = "^2.9.9"
+dnspython = "^2.6.1"
 
 [tool.poetry.scripts]
 pyimport = "pyimport.pyimport_main:pyimport_main"

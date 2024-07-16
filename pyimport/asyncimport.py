@@ -14,7 +14,7 @@ from requests import exceptions
 from asyncstdlib import enumerate as aenumerate
 
 from pyimport import timer
-from pyimport.dbwriter import AsyncDBWriter
+from pyimport.mdbwriter import AsyncDBWriter
 from pyimport.importresult import ImportResults
 from pyimport.csvreader import AsyncCSVReader
 from pyimport.enricher import Enricher
@@ -35,9 +35,9 @@ class AsyncImportCommand(ImportCommand):
     @staticmethod
     def async_prep_collection(args):
         if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
-            client = AsyncIOMotorClient(args.host, w=args.writeconcern)
+            client = AsyncIOMotorClient(args.mdburi, w=args.writeconcern)
         else:
-            client = AsyncIOMotorClient(args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal)
+            client = AsyncIOMotorClient(args.mdburi, w=args.writeconcern, fsync=args.fsync, j=args.journal)
 
         database = client[args.database]
         collection = database[args.collection]
@@ -100,7 +100,7 @@ class AsyncImportCommand(ImportCommand):
     @staticmethod
     async def process_one_file(args, log, filename) -> ImportResult:
 
-        field_file = ImportCommand.prep_field_file(args)
+        field_file = ImportCommand.prep_field_file(args, filename)
         q: asyncio.Queue = asyncio.Queue()
         writer = await AsyncDBWriter.create(args)
         async_reader, parser = await AsyncImportCommand.async_prep_import(args, filename, field_file)

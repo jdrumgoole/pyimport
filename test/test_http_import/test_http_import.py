@@ -10,7 +10,7 @@ from pyimport.fieldfile import FieldFile
 from pyimport.enricher import Enricher
 from pyimport.fieldfile import FieldFile
 from pyimport.importcommand import ImportCommand
-from test.mongodbtestresource import MongoDBTestResource
+from test.mdbtest import MDBTestDB
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -66,7 +66,7 @@ def test_http_generate_fieldfile():
 
 def test_http_import():
     if check_internet():
-        with MongoDBTestResource() as tr:
+        with MDBTestDB() as tr:
             url = "https://jdrumgoole.s3.eu-west-1.amazonaws.com/2018_Yellow_Taxi_Trip_Data_1000.csv"
 
             FieldFile.generate_field_file(url,

@@ -44,6 +44,10 @@ class CSVReader:
         return self._has_header
 
     @property
+    def header_line(self):
+        return self._header_line
+
+    @property
     def file(self):
         return self._file
 

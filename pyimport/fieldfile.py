@@ -3,6 +3,7 @@ Created on 2 Mar 2016
 
 @author: jdrumgoole
 """
+import csv
 import itertools
 import logging
 import os
@@ -13,7 +14,7 @@ from enum import Enum
 from datetime import datetime, timezone, date
 
 from pyimport.linereader import RemoteLineReader,LocalLineReader, is_url
-from pyimport.logger import Log
+from pyimport.logger import Log, ehf
 from pyimport.type_converter import guess_type
 
 
@@ -46,7 +47,7 @@ class FieldNames(Enum):
 
 class FieldFile(object):
     """
-      Each field is represented by a section in the config parser
+      Each field is represented by a section in the config cfgparser
       For each field there are a set of configurations:
 
       type = the type of this field, int, float, str, date,
@@ -141,13 +142,12 @@ class FieldFile(object):
 
     @staticmethod
     def create_toml_dict(reader: LocalLineReader | RemoteLineReader, delimiter:str, has_header:bool=True) -> dict:
-        for i, line in enumerate(reader,1):
-            if i > 2:
-                break
+        csv_reader = csv.reader(reader, delimiter=delimiter)
+        for i, row in enumerate(csv_reader,1):
             if i == 1:
-                field_names = [n for n in line.split(delimiter)]
-            else: # i == 2
-                data_fields = [f.strip() for f in line.split(delimiter)]
+                field_names = row # get header
+            elif i == 2:
+                data_fields = row
 
                 if len(field_names) > len(data_fields):
                     raise ValueError(f"Header line has more columns than first "
@@ -164,12 +164,13 @@ class FieldFile(object):
                 data_field_types = [guess_type(v) for v in data_fields]  # generates a list of tuples
                 toml_dict = {k: {"type": v, "name": k, "format": f} for k, (v, f) in zip(field_names, data_field_types)}
                 if "DEFAULTS_SECTION" in toml_dict:
-                    raise FieldFileException("Error: DEFAULTS_SECTION is a reserved section name and cannot be a columm name in the CSV files")
+                    ehf.fatal("Error: DEFAULTS_SECTION is a reserved section name and cannot be a columm name in the CSV files")
                 else:
                     toml_dict["DEFAULTS_SECTION"] = {"delimiter"  : delimiter,
                                                      "has_header" : has_header,
                                                      "CSV File"   : reader.filename}
-
+            else:
+                break
 
         return toml_dict
 
@@ -197,7 +198,6 @@ class FieldFile(object):
     @staticmethod
     def generate_field_file(csv_filename, ff_filename=None, ext=DEFAULT_EXTENSION, delimiter=",", has_header=True):
 
-        toml_dict: dict = {}
         if not ext.startswith("."):
             ext = f".{ext}"
 
