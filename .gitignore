@@ -83,6 +83,6 @@ target/
 .idea/
 /.env
 /.cache_ggshield    // GGShield cache
-/.DS_Store        // Mac OS X
+.DS_Store        // Mac OS X
 /pyimport.conf    // pyimport configuration file
 
