@@ -1,0 +1,19 @@
+#
+# Created 'test/data/dob.tff' at UTC:2021-07-29 12:35:59.132648 by class pyimport.fieldfile
+#
+["Date Of Birth"]
+type = "datetime"
+name = "Date Of Birth"
+
+["First Name"]
+type = "str"
+name = "First Name"
+
+["Last Name"]
+type = "str"
+name = "Last Name"
+
+["Shoe Size"]
+type = "int"
+name = "Shoe Size"
+#end
