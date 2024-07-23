@@ -42,12 +42,8 @@ def test_multi_split(setup):
 
 
 def test_std_with_audit():
-    home = os.getenv("HOME")
-    assert os.path.isfile(f"{home}/GIT/pyimport/.env")
-    load_dotenv(f"{home}/GIT/pyimport/.env")
-    assert os.getenv("AUDITHOST") is not None
-    audithost = os.getenv("AUDITHOST")
-    args = ArgMgr.default_args().add_arguments(filenames=["10lines.txt"], audithost=audithost, audit=True, delimiter="|", fieldfile="10k.tff")
+    args = ArgMgr.default_args().add_arguments(filenames=["10lines.txt"], audit=True, delimiter="|", fieldfile="10k.tff")
+    assert args.ns.audit is True
     ImportCommand(args=args.ns).run()
 
 

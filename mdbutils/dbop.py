@@ -1,4 +1,6 @@
 import argparse
+import json
+import os
 import pprint
 import random
 import string
@@ -66,6 +68,42 @@ def drop_collection(args, client, db_name, collection_name):
         sys.exit(1)
 
 
+def save_resume_token(token, path):
+    with open(path, 'w') as f:
+        json.dump(token, f)
+
+
+def load_resume_token(path):
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            return json.load(f)
+    return None
+
+
+def watch_collection(host, restart_log, database_name, collection_name):
+    client = MongoClient(host)
+    db = client[database_name]  # replace with your database name
+    collection = db[collection_name] # replace with your collection name
+
+    resume_token = load_resume_token(restart_log)
+
+    pipeline = [{'$match': {'operationType': {'$in': ['insert', 'update', 'replace']}}}]
+
+    if resume_token:
+        change_stream = collection.watch(pipeline, resume_after=resume_token)
+    else:
+        change_stream = collection.watch(pipeline)
+
+    try:
+        for change in change_stream:
+            print(change)
+            save_resume_token(change['_id'], restart_log)
+    except Exception as e:
+        print(f"Error: {e}")
+    except KeyboardInterrupt:
+        print("Interrupted by user.")
+
+
 def main():
     parser = argparse.ArgumentParser(description="MongoDB server, database and collection operations.")
     parser.add_argument("--ping", action="store_true", default=False, help="Ping the MongoDB server.")
@@ -76,12 +114,13 @@ def main():
     parser.add_argument('--host', type=str, default='mongodb://localhost:27017/',
                         help="MongoDB connection URL (default: 'mongodb://localhost:27017/').")
     parser.add_argument('--strict', '-s', action='store_true', default=False, help="Fail if db or collection does not exist.")
+    parser.add_argument('--watch', help="Watch a collection for changes.")
     parser.add_argument('--timeout', type=int, default=1000, help="Timeout in milliseconds (default: 1000).")
 
     args = parser.parse_args()
 
     try:
-        client = MongoClient(args.mdburi, serverSelectionTimeoutMS=args.timeout)
+        client = MongoClient(args.host, serverSelectionTimeoutMS=args.timeout)
 
         if args.ping:
             client.admin.command('ping')
@@ -111,9 +150,18 @@ def main():
             else:
                 count = client[db][col].count_documents({})
                 print(f"count {db}.{col}:{count}")
+        if args.watch:
+            db, col = parse_db_and_col(args.watch)
+            if col is None:
+                print("Error: You must specify a collection to watch in the format 'database_name.collection_name'.")
+                sys.exit(1)
+            else:
+                watch_collection(args.host, args.watch + '.log', db, col)
+
     except ConnectionError as e:
         print(f"Failed connect to MongoDB server: {e}")
         sys.exit(1)
+
 
 
 if __name__ == '__main__':

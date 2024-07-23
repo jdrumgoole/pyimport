@@ -172,6 +172,8 @@ def parse_args_and_cfg_files(cfgparser, input_args=None) -> configargparse.Argum
     cfgparser.add_argument("--keepsplits", default=False, action="store_true",
                            help="Keep the split files after processing")
 
+    cfgparser.add_argument('--argsource', default=False, action="store_true",help="Where do the arguments come from?")
+
     #
     # Also try ISO-8859-1
     #

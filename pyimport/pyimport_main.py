@@ -60,6 +60,10 @@ def pyimport_main(input_args=None):
             except OSError as e:
                 log.error(f"{e}")
 
+        if args.argsource:
+            log.info(f"parsed args")
+            log.info(parser.format_values())
+
         if args.filenames is None:
             log.info("No input files: Nothing to do")
             return 0

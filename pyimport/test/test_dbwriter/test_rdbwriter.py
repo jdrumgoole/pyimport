@@ -19,7 +19,7 @@ def test_env() -> None:
 
 def test_connect() -> None:
     with RDBTestDB() as tr:
-        assert tr.writer.engine is not None
+        assert tr.writer._engine is not None
 
 
 def test_rdbwriter() -> None:
@@ -38,7 +38,7 @@ def test_create_table() -> None:
 
         tr.writer.create_table("test_table_name", tr.test_schema)
         # Verify the table creation
-        inspector = inspect(tr.writer.engine)
+        inspector = inspect(tr.writer._engine)
         assert "test_table_name" in inspector.get_table_names()
 
 

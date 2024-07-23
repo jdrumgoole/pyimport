@@ -172,8 +172,8 @@ For larger documents you may find a smaller *batchsize* is more efficient.
 
     For large batches you may want to restart the batch if uploading is
     interrupted. Restarts are stored in the current database in a collection
-    called *restartlog*. Each file to be uploaded has its own record in the
-    *restartlog*. The restart log record format is
+    called *restart_log*. Each file to be uploaded has its own record in the
+    *restart_log*. The restart log record format is
     ::
 
         { "filename"           : <filename of file being uploaded>,

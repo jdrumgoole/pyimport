@@ -7,8 +7,15 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
 from pyimport.argparser import ArgMgr
+from pyimport.rdbmanager import RDBManager
 from pyimport.rdbwiter import RDBWriter
 from test.rdbtest import RDBTestDB
+
+
+@pytest.fixture
+def default_args():
+    args = ArgMgr.default_args()
+    return args.ns
 
 
 def test_env() -> None:
@@ -16,21 +23,18 @@ def test_env() -> None:
     assert args.ns.pguri is not None
 
 
+def test_connect(default_args) -> None:
+    with RDBTestDB(default_args.pguri) as tr:
+        assert tr.mgr.engine is not None
 
-def test_connect() -> None:
-    with RDBTestDB() as tr:
-        assert tr.writer.engine is not None
 
-
-def test_rdbwriter() -> None:
-    args = ArgMgr.default_args()
-    assert args.ns.pguri is not None
-    writer = RDBWriter(args.ns.pguri)
-    assert writer.is_table("pyimport_test") is False
-    writer.create_table("pyimport_test", RDBTestDB.test_schema_dict)
-    assert writer.is_table("pyimport_test") is True
-    writer.drop_table_by_name("pyimport_test")
-    assert writer.is_table("pyimport_test") is False
+def test_rdbwriter(default_args) -> None:
+    with RDBTestDB(default_args.pguri) as tr:
+        assert tr.mgr.is_table("pyimport_test") is True
+        tr.create_table("pyimport_test_rdb", RDBTestDB.test_schema_dict)
+        assert tr.mgr.is_table("pyimport_test_rdb") is True
+        tr.mgr.drop_table("pyimport_test_rdb")
+        assert tr.mgr.is_table("pyimport_test_rdb") is False
 
 
 def test_create_table() -> None:
@@ -38,7 +42,7 @@ def test_create_table() -> None:
 
         tr.writer.create_table("test_table_name", tr.test_schema)
         # Verify the table creation
-        inspector = inspect(tr.writer.engine)
+        inspector = inspect(tr.writer._engine)
         assert "test_table_name" in inspector.get_table_names()
 
 
@@ -63,11 +67,12 @@ def test_insert() -> None:
         result = tr.writer.find_one(tr.test_table_name, "name", "Alice")
         assert result.name == "Alice"
 
-def test_dbwriter_generator(setup_args):
-    writer = RDBWriter(setup_args.ns)
-    assert writer.database.name == "DBWRITER_TEST_DB"
-    assert writer.collection.name == "DBWRITER_TEST_COLLECTION"
-    assert writer.docs_per_second == 0
-    d = {"a": 1, "b": 2}
-    writer.write(d)
-    writer.write(None)
+def test_dbwriter_generator():
+    with RDBTestDB() as tr:
+        writer = RDBWriter(tr.args.ns)
+        assert writer.database.name == "DBWRITER_TEST_DB"
+        assert writer.collection.name == "DBWRITER_TEST_COLLECTION"
+        assert writer.docs_per_second == 0
+        d = {"a": 1, "b": 2}
+        writer.write(d)
+        writer.write(None)

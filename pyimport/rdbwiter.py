@@ -1,104 +1,27 @@
-# rdb_writer.py
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, MetaData, Table, inspect, select, Text, \
-    Boolean, VARCHAR
-from sqlalchemy.orm import sessionmaker, declarative_base
-from datetime import datetime
-from typing import Dict, List, Any, Type
+
+
+from sqlalchemy import Table, select
+
+from typing import Dict, List, Any
+
+from sqlalchemy.orm import declarative_base
 
 from pyimport.mdbwriter import start_generator
-from pyimport.fieldfile import FieldFile
+
+from pyimport.rdbmanager import RDBManager
 
 Base = declarative_base()
 
+
 class RDBWriter:
-    def __init__(self, db_url: str):
-        self.db_url = db_url
-        self._engine = create_engine(db_url)
-        self._metadata = MetaData()
-        self._session_factory = sessionmaker(bind=self.engine)
-        self._metadata = MetaData()
-        self._session = self.session_factory()
-        self._inspector = inspect(self._engine)
-        self._writer = self.write_generator()
-
-    @property
-    def engine(self):
-        return self._engine
-
-    @property
-    def metadata(self):
-        return self._metadata
-
-    @property
-    def session_factory(self):
-        return self._session_factory
-
-    def get_session(self):
-        return self._session_factory()
-
-    def get_inspector(self):
-        inspector = inspect(self._engine)
-        return inspector
-
-    @property
-    def metadata(self):
-        return self._metadata
-
-    @staticmethod
-    def get_metadata():
-        return MetaData()
-
-    @staticmethod
-    def map_python_type(py_type: Type) -> Any:
-        if py_type == int:
-            return Integer
-        elif py_type == float:
-            return Float
-        elif py_type == str:
-            return String
-        elif py_type == datetime:
-            return DateTime
-        else:
-            raise ValueError(f"Unsupported type: {py_type}")
-
-    def create_table(self, table_name: str, ff: dict) -> Table:
-        columns = []
-        metadata = self.get_metadata()
-        for name, py_type in ff.items():
-            col_type = self.map_python_type(py_type)
-            if name == "id":
-                column = Column(name, col_type, primary_key=True)
-            else:
-                column = Column(name, col_type)
-            columns.append(column)
-
-        table = Table(table_name, metadata, *columns)
-        metadata.create_all(self.engine)
-        return table
-
-    def get_table(self, table_name) -> Table:
-        return Table(table_name, self._metadata, autoload_with=self._engine)
-
-    def is_table(self, table_name):
-        return table_name in self.get_inspector().get_table_names()
-
-    def drop_table(self, table):
-        if self.is_table(table.name):
-            table.drop(self._engine)
-        else:
-            raise ValueError(f"Table {table.name} does not exist")
-
-    def drop_table_by_name(self, table_name):
-        if self.is_table(table_name):
-            table = self.get_table(table_name)
-            table.drop(self._engine)
-        else:
-            raise ValueError(f"Table {table_name} does not exist")
+    def __init__(self, mgr: RDBManager, table_name: str):
+        self._mgr = mgr
+        self._writer = self.write_generator(table_name)
 
     def insert(self, table_name: str, list_of_dicts: List[Dict[str, Any]]) -> int:
         total_written = len(list_of_dicts)
         table = Table(table_name, self.metadata, autoload_with=self.engine)
-        session = self.session_factory()
+        session = self._mgr.session_factory()
         session.execute(table.insert(), list_of_dicts)
         session.commit()
         return total_written
@@ -115,8 +38,8 @@ class RDBWriter:
     def write_generator(self, table_name:str):
         buffer = []
         total_written = 0
-        table = Table(table_name, self.metadata, autoload_with=self.engine)
-        session = self.session_factory()
+        table = self._mgr.get_table(table_name)
+        session = self._mgr.session_factory()
         while True:
             doc = yield
             if doc is None:
