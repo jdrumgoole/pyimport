@@ -75,9 +75,10 @@ class RDBManager:
         columns = [Column(name, self.map_python_type_to_sqlalchemy(py_type)) for name, py_type in schema.items()]
         table = Table(table_name, self.get_metadata(), *columns)
         table.create(self._engine)
+        return self.get_table(table_name)
 
     def get_table(self, table_name) -> Table:
-        return Table(table_name, self._metadata, autoload_with=self._engine)
+        return Table(table_name, self.get_metadata(), autoload_with=self._engine)
 
     def is_table(self, table_name):
         inspector = inspect(self._engine)
@@ -106,3 +107,7 @@ class RDBManager:
         table = Table(table_name, metadata, autoload_with=self._engine)
         index = sqlalchemy.Index(name=index_name, _table=table)
         index.drop(self._engine)
+
+    def close(self):
+        self._session.close()
+        self._engine.dispose()

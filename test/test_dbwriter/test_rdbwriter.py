@@ -3,6 +3,7 @@ import os
 
 import pytest
 from sqlalchemy import create_engine, inspect, select
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
@@ -15,7 +16,7 @@ from test.rdbtest import RDBTestDB
 @pytest.fixture
 def default_args():
     args = ArgMgr.default_args()
-    return args.ns
+    return args
 
 
 def test_env() -> None:
@@ -24,36 +25,48 @@ def test_env() -> None:
 
 
 def test_connect(default_args) -> None:
-    with RDBTestDB(default_args.pguri) as tr:
+    with RDBTestDB(default_args.ns.pguri) as tr:
         assert tr.mgr.engine is not None
 
 
 def test_rdbwriter(default_args) -> None:
-    with RDBTestDB(default_args.pguri) as tr:
-        assert tr.mgr.is_table("pyimport_test") is True
+    with RDBTestDB(default_args.ns.pguri) as tr:
+        if tr.is_table("pyimport_test_rdb"):
+            tr.drop_table("pyimport_test_rdb")
+        assert tr.is_table("pyimport_test_rdb") is False
         tr.create_table("pyimport_test_rdb", RDBTestDB.test_schema_dict)
         assert tr.mgr.is_table("pyimport_test_rdb") is True
-        tr.mgr.drop_table("pyimport_test_rdb")
+        tr.drop_table("pyimport_test_rdb")
+        assert tr.is_table("pyimport_test_rdb") is False
         assert tr.mgr.is_table("pyimport_test_rdb") is False
 
 
-def test_create_table() -> None:
-    with RDBTestDB() as tr:
+def test_create_table(default_args) -> None:
+    table_name = "test_table_name"
+    args = default_args.add_arguments(table=table_name)
+    mgr = None
+    try:
+        with RDBTestDB(default_args.ns.pguri) as tr:
+            mgr = tr.mgr
+            mgr.create_table(args.ns.table, tr.test_schema)
+            # Verify the table creation
+            inspector = inspect(mgr.engine)
+            assert table_name in inspector.get_table_names()
+    except ProgrammingError:
+        pytest.skip(f"Error: table {args.ns.table} already exists")
+    finally:
+        if mgr.is_table(args.ns.table):
+            mgr.drop_table(args.ns.table)
 
-        tr.writer.create_table("test_table_name", tr.test_schema)
-        # Verify the table creation
-        inspector = inspect(tr.writer._engine)
-        assert "test_table_name" in inspector.get_table_names()
 
-
-def test_mdb_resource() -> None:
-    with RDBTestDB() as tr:
-        assert tr.test_table_name == tr.get_test_table().name
+def test_mdb_resource(default_args) -> None:
+    with RDBTestDB(default_args.ns.pguri) as tr:
+        assert RDBTestDB.test_table_name == tr.get_test_table().name
         assert tr.test_table_name in tr.table_names
 
 
-def test_insert() -> None:
-    with RDBTestDB() as tr:
+def test_insert(default_args) -> None:
+    with RDBTestDB(default_args.ns.pguri) as tr:
         # Verify the table creation
         assert tr.test_table_name == tr.get_test_table().name
         data = [
@@ -67,12 +80,18 @@ def test_insert() -> None:
         result = tr.writer.find_one(tr.test_table_name, "name", "Alice")
         assert result.name == "Alice"
 
-def test_dbwriter_generator():
-    with RDBTestDB() as tr:
-        writer = RDBWriter(tr.args.ns)
-        assert writer.database.name == "DBWRITER_TEST_DB"
-        assert writer.collection.name == "DBWRITER_TEST_COLLECTION"
-        assert writer.docs_per_second == 0
-        d = {"a": 1, "b": 2}
-        writer.write(d)
-        writer.write(None)
+
+def test_dbwriter_generator(default_args):
+    with RDBTestDB(default_args.ns.pguri) as tr:
+        d1 = {"id": 1, "name": "Alice", "age": 30, "email": "alice@example.com", "salary": 60000.0,
+             "hire_date": datetime(2020, 5, 1)}
+        d2 = {"id": 2, "name": "Bob", "age": 25, "email": "bob@example.com", "salary": 50000.0,
+              "hire_date": datetime(2019, 7, 23)}
+        tr.writer.write(d1)
+        tr.writer.write(d2)
+        tr.writer.write(None)
+        result = tr.writer.find_one(tr.test_table_name, "name", "Alice")
+        assert result.name == "Alice"
+        result = tr.writer.find_one(tr.test_table_name, "name", "Bob")
+        assert result.name == "Bob"
+

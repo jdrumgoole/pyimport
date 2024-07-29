@@ -1,0 +1,1 @@
+poetry run python pyimport/pyimport_main.py --hasheader --drop --database stackoverflow --collection yr2023 $HOME/Downloads/stack-overflow-developer-survey-2023/survey_results_public.csv

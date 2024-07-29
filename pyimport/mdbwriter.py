@@ -3,8 +3,6 @@ import functools
 import time
 
 import pymongo
-import pytest
-import pytest_asyncio
 from motor import motor_asyncio
 
 from pyimport.argparser import ArgMgr
@@ -97,7 +95,7 @@ def start_coroutine(func):
     return wrapper
 
 
-class AsyncDBWriter:
+class AsyncMDBWriter:
 
     def __init__(self, args):
         if not hasattr(self, '_initialized'):
@@ -166,7 +164,7 @@ class AsyncDBWriter:
 #
 #     async def runner(args):
 #
-#         async_db_writer = await AsyncDBWriter.create(args)
+#         async_db_writer = await AsyncMDBWriter.create(args)
 #         total_written = await async_db_writer.write({"name": "John", "age": 25})
 #         print(f"Total written: {total_written}")
 #         total_written = await async_db_writer.write({"name": "Jane", "age": 30})

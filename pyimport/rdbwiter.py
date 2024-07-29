@@ -17,10 +17,12 @@ class RDBWriter:
     def __init__(self, mgr: RDBManager, table_name: str):
         self._mgr = mgr
         self._writer = self.write_generator(table_name)
+        self._total_written = 0
 
     def insert(self, table_name: str, list_of_dicts: List[Dict[str, Any]]) -> int:
         total_written = len(list_of_dicts)
-        table = Table(table_name, self.metadata, autoload_with=self.engine)
+        metadata = self._mgr.get_metadata()
+        table = Table(table_name, metadata, autoload_with=self._mgr.engine)
         session = self._mgr.session_factory()
         session.execute(table.insert(), list_of_dicts)
         session.commit()
@@ -59,10 +61,10 @@ class RDBWriter:
             session.commit()
 
     def find_one(self, table_name: str, column_name: str, key: Any) -> Any:
-        metadata = self.get_metadata()
+        metadata = self._mgr.get_metadata()
         # Reflect the table from the database
-        table = Table(table_name, metadata, autoload_with=self.engine)
-        session = self.get_session()
+        table = Table(table_name, metadata, autoload_with=self._mgr.engine)
+        session = self._mgr.get_session()
         try:
             # Access the column dynamically
             column = table.c[column_name]

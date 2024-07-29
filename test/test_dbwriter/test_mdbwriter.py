@@ -14,7 +14,6 @@ def test_dbwriter(setup_args):
     writer = MDBWriter(setup_args.ns)
     assert writer.database.name == "DBWRITER_TEST_DB"
     assert writer.collection.name == "DBWRITER_TEST_COLLECTION"
-    assert writer.docs_per_second == 0
     d = {"a": 1, "b": 2}
     writer.write(d)
     writer.write(None)

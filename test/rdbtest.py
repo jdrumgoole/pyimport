@@ -43,12 +43,14 @@ class RDBTestDB:
 
     def __enter__(self):
         self._mgr = RDBManager(self._uri)
-        if self._mgr.is_table(self.test_table_name):
-
-            self._mgr.drop_table(self.test_table_name)
+        if self.is_table(self.test_table_name):
+            self.drop_table(self.test_table_name)
         self.create_table(self.test_table_name, self.test_schema_dict)
         self._writer = RDBWriter(self._mgr, self._table_name)
         return self
+
+    def is_table(self, table_name):
+        return table_name in self._tables_registry
 
     def create_database(self, db_name):
         if db_name in self._databases:
@@ -68,8 +70,8 @@ class RDBTestDB:
 
     def drop_table(self, table_name):
         if table_name in self._tables_registry:
-            tbl = self._tables_registry.pop(table_name)
-            self._mgr.drop_table(tbl)
+            self._tables_registry.pop(table_name)
+            self._mgr.drop_table(table_name)
             return True
         else:
             return False
@@ -91,7 +93,7 @@ class RDBTestDB:
         if self._drop_db:
             db_names = list(self._tables_registry.keys())
             for n in db_names:
-                self._mgr.drop_table(n)
+                self.drop_table(n)
 
     @property
     def test_schema(self):

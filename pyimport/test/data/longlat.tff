@@ -1,4 +1,0 @@
-[$location]
-  name:pickup location
-  longitude: pickup_longitude
-  latitude: pickup_latitude

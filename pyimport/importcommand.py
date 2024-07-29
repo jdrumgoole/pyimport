@@ -74,7 +74,7 @@ class ImportCommand:
                                                            ff_filename=field_filename,
                                                            delimiter=args.delimiter,
                                                            has_header=args.hasheader)
-                eh.info(f"Auto generated field file:'{field_file.field_filename}'")
+                eh.info(f"Auto generated field file:'{field_filename}'")
             else:
                 raise FieldFileException(f"'{csv_filename}' has no header line, so we cannot generate a field file")
 

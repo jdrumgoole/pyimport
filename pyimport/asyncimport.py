@@ -14,7 +14,7 @@ from requests import exceptions
 from asyncstdlib import enumerate as aenumerate
 
 from pyimport import timer
-from pyimport.mdbwriter import AsyncDBWriter
+from pyimport.mdbwriter import AsyncMDBWriter
 from pyimport.importresult import ImportResults
 from pyimport.csvreader import AsyncCSVReader
 from pyimport.enricher import Enricher
@@ -74,7 +74,7 @@ class AsyncImportCommand(ImportCommand):
         return i
 
     @staticmethod
-    async def put_db_doc(args, q, log, writer: AsyncDBWriter,  filename: str) -> ImportResult:
+    async def put_db_doc(args, q, log, writer: AsyncMDBWriter, filename: str) -> ImportResult:
         total_written = 0
 
         time_start = time.time()
@@ -102,7 +102,7 @@ class AsyncImportCommand(ImportCommand):
 
         field_file = ImportCommand.prep_field_file(args, filename)
         q: asyncio.Queue = asyncio.Queue()
-        writer = await AsyncDBWriter.create(args)
+        writer = await AsyncMDBWriter.create(args)
         async_reader, parser = await AsyncImportCommand.async_prep_import(args, filename, field_file)
         try:
             async with TaskGroup() as tg:
