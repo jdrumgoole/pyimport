@@ -12,7 +12,7 @@ from pymongo.errors import OperationFailure
 def drop_database(args, client, database_name):
     try:
         dbs = client.admin.command('listDatabases')
-        if database_name in dbs['databases']:
+        if database_name in [ n["name"] for n in dbs['databases']]:
             client.drop_database(database_name)
             print(f"Database '{database_name}' dropped successfully.")
         elif args.strict:
@@ -111,7 +111,7 @@ def main():
     parser.add_argument('--touch', help="Touch the collection.")
     parser.add_argument('--drop', help="Drop the database or collection.")
     parser.add_argument('--count', help="Drop the database or collection.")
-    parser.add_argument('--host', type=str, default='mongodb://localhost:27017/',
+    parser.add_argument('--mdburi', type=str, default='mongodb://localhost:27017/',
                         help="MongoDB connection URL (default: 'mongodb://localhost:27017/').")
     parser.add_argument('--strict', '-s', action='store_true', default=False, help="Fail if db or collection does not exist.")
     parser.add_argument('--watch', help="Watch a collection for changes.")
@@ -120,7 +120,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        client = MongoClient(args.host, serverSelectionTimeoutMS=args.timeout)
+        client = MongoClient(args.mdburi, serverSelectionTimeoutMS=args.timeout)
 
         if args.ping:
             client.admin.command('ping')

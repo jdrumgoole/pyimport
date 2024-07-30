@@ -64,11 +64,12 @@ class AsyncImportCommand(ImportCommand):
     @staticmethod
     async def get_csv_doc(args, q, p: Enricher, async_reader: AsyncCSVReader):
 
+        new_field = ImportCommand.parse_new_field(args.addfield)
         async for i, doc in aenumerate(async_reader, 1):
             if args.noenrich:
                 d = doc
             else:
-                d = p.enrich_doc(doc, i)
+                d = p.enrich_doc(doc, new_field, i)
             await q.put(d)
         await q.put(None)
         return i

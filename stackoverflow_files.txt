@@ -1,0 +1,6 @@
+/Users/jdrumgoole/stackoverflow/survey_results_public_2017.csv
+/Users/jdrumgoole/stackoverflow/survey_results_public_2018.csv
+/Users/jdrumgoole/stackoverflow/survey_results_public_2019.csv
+/Users/jdrumgoole/stackoverflow/survey_results_public_2020.csv
+/Users/jdrumgoole/stackoverflow/survey_results_public_2022.csv
+/Users/jdrumgoole/stackoverflow/survey_results_public_2023.csv

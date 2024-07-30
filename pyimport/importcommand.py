@@ -36,6 +36,14 @@ class ImportCommand:
         else:
             self._audit = None
 
+    @staticmethod
+    def parse_new_field(new_field):
+        if new_field:
+            k, v = new_field.split("=")
+            return k.strip(), v.strip()
+        else:
+            return None
+
     def print_args(self, args):
         self._log.info(f"Using host       :'{args.mdburi}'")
         if self._audit:
@@ -178,12 +186,13 @@ class ImportCommand:
         time_start = time.time()
         writer = MDBWriter(args)
         try:
+            new_field = ImportCommand.parse_new_field(args.addfield)
             loop_timer = timer.QuantumTimer(start_now=True, quantum=time_period)
             for i, doc in enumerate(reader, 1):
                 if args.noenrich:
                     d = doc
                 else:
-                    d = parser.enrich_doc(doc, i)
+                    d = parser.enrich_doc(doc, new_field, i)
 
                 writer.write(d)
                 elapsed, docs_per_second = loop_timer.elapsed_quantum(writer.total_written)

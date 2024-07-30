@@ -1,7 +1,7 @@
 import _csv
 import csv
 import logging
-from typing import TextIO
+from typing import TextIO, Generator
 
 import aiocsv
 import aiofile
@@ -59,7 +59,7 @@ class CSVReader:
     def skip_lines(self):
         return self._skip_lines
 
-    def __iter__(self):
+    def __iter__(self)->Generator[dict, None, None]:
         # TODO: handle reading URLs
         reader = csv.reader(self._file, delimiter=self._delimiter)
         # we use Reader rather than DictReader because it is more straightforward to use when we may
