@@ -6,6 +6,7 @@ import random
 import pymongo
 import pytest
 
+from pyimport import type_converter
 from pyimport.argparser import ArgMgr
 from pyimport.generatefieldfilecommand import GenerateFieldfileCommand
 from pyimport.dropcollectioncommand import DropCollectionCommand
@@ -56,8 +57,13 @@ async def test_async_one_file():
         assert size_120 == (end_size - start_size)
 
         field_info = ImportCommand.prep_field_file(args.ns)
+        test_values = { "test_id": 346,
+                        "make": "TOYOTA",
+                        "model": "COROLLA",
+                        "test_id": 2212}
         for i in range(20):
             k, v = get_random_field("120lines.txt", field_info, "|")
+            v = type_converter.convert_it(field_info.type_value(k), v)
             assert await tr.test_col.find_one(
                 {k: v}) is not None, f"Field '{k}' with value '{v}' not found in collection i={i}"
 
@@ -78,6 +84,7 @@ async def test_async_import_command():
         field_info = ImportCommand.prep_field_file(args.ns)
         for i in range(20):
             k, v = get_random_field("10k.txt", field_info, "|")
+            v = type_converter.convert_it(field_info.type_value(k), v)
             assert await tr.test_col.find_one({k: v}) is not None, f"Field '{k}' with value '{v}' not found in collection i={i}"
 
 
@@ -95,7 +102,20 @@ def test_import_command_small():
         new_size = tr.test_col.count_documents({})
         assert size_test == (new_size - start_size)
 
+def test_import_command_cut():
+    with MDBTestDB() as tr:
+        start_size = tr.test_col.count_documents({})
+        size_test = LineCounter.count_now("test_date_data.csv") - 1
+        args = tr.args.add_arguments(fieldfile="10k.tff",
+                                     filenames=["test_date_data.csv"],
+                                     hasheader=True)
+        args = args.add_arguments(cut="test_mileage,colour")
+        results = ImportCommand(args=args.ns).run()
+        result = results.filename_results("test_date_data.csv")
+        assert size_test == result.total_written
 
+        new_size = tr.test_col.count_documents({})
+        assert size_test == (new_size - start_size)
 def test_drop_command():
 
     c = pymongo.MongoClient()

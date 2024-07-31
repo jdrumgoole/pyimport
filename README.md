@@ -246,7 +246,7 @@ Specify the *name* of the database to use [default: *test*]
 
 Specify the *name* of the collection to use [default: *test*]
 
-**--host** *mongodb URI*
+**--mdburi** *mongodb URI*
 
 Specify the URI for connecting to the database. [default: *mongodb://localhost:27017/test*]
 
@@ -262,7 +262,7 @@ For larger documents you may find a smaller *batchsize* is more efficient.
 
 **--drop**
 
-drop collection before loading [default: False]
+drop the specified collection or table before loading [default: False]
 
 **--ordered**
 
@@ -284,13 +284,20 @@ show program's version number and exit
          
 Add filename field to every entry
 
-**--addtimestamp** [none|now|gen]
+**--addtimestamp** [`none|now|gen`]
                         
 Add a timestamp to each record [default: none]
 
-**--has_header**
+**`--addfield`** `fieldname=fieldvalue`
 
-Use header line for column names [default: False]
+Add this field to every record. The program will attempt to convert `fieldvalue` to the correct type.
+
+**--has_header**  [default: False]
+
+Use header line for column names. 
+
+**--cut fieldname 1, fieldname 2, ...** [DEfault None]
+Only import the specified fields. If not specified import all fields. 
 
 **--genfieldfile**        
   
@@ -300,11 +307,9 @@ Generate automatically a typed field file *filename.tt* from the data file *file
     
 Auto generate ID [default: mongodb]
 
-**--onerror [fail|warn|ignore]**
+**`--onerror` [`fail|warn|ignore`]** [default: `warn`]
 
-What to do when we hit an error parsing a csv file. Possibility to default to a String if we cannot parse a value. [default: warn]
-
-
+What to do when we hit an error parsing a csv file. Possibility to default to a String if we cannot parse a value. 
 
 
 ### Positional arguments:

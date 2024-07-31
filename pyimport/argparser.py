@@ -87,6 +87,7 @@ def parse_args_and_cfg_files(cfgparser, input_args=None) -> configargparse.Argum
     cfgparser.add_argument("--filelist", default=None, help="Read files from an input file one per line")
     cfgparser.add_argument('--addfilename', default=False, action="store_true",
                            help="Add file filename field to every entry")
+    cfgparser.add_argument('--cut', type=lambda s: s.split(','), help="Comma-separated list of fields to cut out of import")
     cfgparser.add_argument('--addtimestamp', default=DocTimeStamp.NO_TIMESTAMP, type=DocTimeStamp,
                            choices=list(DocTimeStamp),
                            help="Add a timestamp to each doc, either generate per doc('doc'),"

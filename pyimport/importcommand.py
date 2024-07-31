@@ -123,7 +123,9 @@ class ImportCommand:
         else:
             csv_file = open(filename, "r")
 
-        return CSVReader(file=csv_file, limit=args.limit, field_file=field_info, has_header=args.hasheader,
+        return CSVReader(file=csv_file, limit=args.limit, field_file=field_info,
+                         has_header=args.hasheader,
+                         cut_fields=args.cut,
                          delimiter=args.delimiter)
 
     @staticmethod
@@ -192,7 +194,7 @@ class ImportCommand:
                 if args.noenrich:
                     d = doc
                 else:
-                    d = parser.enrich_doc(doc, new_field, i)
+                    d = parser.enrich_doc(doc, new_field, args.cut, i)
 
                 writer.write(d)
                 elapsed, docs_per_second = loop_timer.elapsed_quantum(writer.total_written)

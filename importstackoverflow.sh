@@ -1,4 +1,5 @@
 #!/bin/sh
+export PYTHONPATH=$HOME/GIT/pyimport
 IMPCMD="poetry run python pyimport/pyimport_main.py --hasheader --database stackoverflow --collection survey"
 python mdbutils/dbop.py --drop stackoverflow
 ${IMPCMD} --addfield "year=2017" $HOME/stackoverflow/survey_results_public_2017.csv

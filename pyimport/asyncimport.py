@@ -57,6 +57,7 @@ class AsyncImportCommand(ImportCommand):
                                 limit=args.limit,
                                 field_file=field_info,
                                 has_header=args.hasheader,
+                                cut_fields=args.cut,
                                 delimiter=args.delimiter)
 
         return reader, parser
@@ -69,7 +70,7 @@ class AsyncImportCommand(ImportCommand):
             if args.noenrich:
                 d = doc
             else:
-                d = p.enrich_doc(doc, new_field, i)
+                d = p.enrich_doc(doc, new_field, args.cut,  i)
             await q.put(d)
         await q.put(None)
         return i
