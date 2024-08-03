@@ -10,6 +10,7 @@ def test_args():
     assert "collection" in a.ns
 
 
+
 def test_add():
     am = ArgMgr.default_args()
     am.add_arguments(mdburi="mongodb://localhost:27017/testy", database="testy", collection="testy")

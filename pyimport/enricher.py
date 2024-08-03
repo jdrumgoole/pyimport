@@ -79,7 +79,7 @@ class Enricher:
             csv_doc['locator'] = {"line": line_number}
 
         if new_field and new_field not in csv_doc:
-            type_str = type_converter.guess_type(new_field[1])
+            type_str, _ = type_converter.guess_type(new_field[1])
             csv_doc[new_field[0]] = type_converter.convert_it(type_str, new_field[1])
 
         return self._timestamp_func(csv_doc) if self._timestamp_func else csv_doc

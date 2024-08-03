@@ -92,7 +92,7 @@ def parse_args_and_cfg_files(cfgparser, input_args=None) -> configargparse.Argum
                            choices=list(DocTimeStamp),
                            help="Add a timestamp to each doc, either generate per doc('doc'),"
                                 " or per batch {'batch') [default: %(default)s]")
-    cfgparser.add_argument("--addfield", default=None, type=str, help="Add a field to each doc")
+    cfgparser.add_argument("--addfield", default=None, type=str, help="Add a new field to each doc")
     cfgparser.add_argument('--hasheader', default=False, action="store_true",
                            help="Use header line for column names [default: %(default)s]")
     cfgparser.add_argument('--genfieldfile', default=False, action="store_true",

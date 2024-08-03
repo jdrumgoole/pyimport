@@ -102,6 +102,35 @@ def test_import_command_small():
         new_size = tr.test_col.count_documents({})
         assert size_test == (new_size - start_size)
 
+
+def test_import_command_add_field():
+    with MDBTestDB() as tr:
+        args = tr.args.add_arguments(fieldfile="10k.tff",
+                                     filenames=["test_date_data.csv"],
+                                     addfield="test_field=20",
+                                     hasheader=True)
+        results = ImportCommand(args=args.ns).run()
+
+        assert len(list(tr.test_col.find({"test_field": 20}))) == results.total_written
+
+        args = tr.args.add_arguments(fieldfile="10k.tff",
+                                     filenames=["test_date_data.csv"],
+                                     addfield="test_field=hello",
+                                     hasheader=True)
+        results = ImportCommand(args=args.ns).run()
+
+        assert len(list(tr.test_col.find({"test_field": "hello"}))) == results.total_written
+
+        args = tr.args.add_arguments(fieldfile="10k.tff",
+                                     filenames=["test_date_data.csv"],
+                                     addfield="test_field=3.71",
+                                     hasheader=True)
+        results = ImportCommand(args=args.ns).run()
+
+        assert len(list(tr.test_col.find({"test_field": 3.71}))) == results.total_written
+
+
+
 def test_import_command_cut():
     with MDBTestDB() as tr:
         start_size = tr.test_col.count_documents({})
