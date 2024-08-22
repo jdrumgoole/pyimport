@@ -7,7 +7,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.10"
 pymongo = "^4.7.3"
 python-dateutil = "^2.9.0.post0"
 toml = "^0.10.2"
@@ -31,6 +31,7 @@ sqlalchemy = "^2.0.31"
 psycopg2-binary = "^2.9.9"
 dnspython = "^2.6.1"
 pytest = "^8.3.2"
+tox = "^4.18.0"
 
 [tool.poetry.scripts]
 pyimport = "pyimport.pyimport_main:pyimport_main"
