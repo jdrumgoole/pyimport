@@ -4,12 +4,12 @@ import os
 import pymongo
 import requests
 
-from pyimport.argparser import ArgMgr
+from pyimport.argmgr import ArgMgr
 from pyimport.csvreader import CSVReader
 from pyimport.fieldfile import FieldFile
 from pyimport.enricher import Enricher
 from pyimport.fieldfile import FieldFile
-from pyimport.importcommand import ImportCommand
+from pyimport.mdbimportcmd import MDBImportCommand
 from test.mdbtest import MDBTestDB
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
@@ -74,7 +74,7 @@ def test_http_import():
                                           ff_filename="yellow-trip-data.tff")
             args = tr.args.add_arguments(fieldfile="yellow-trip-data.tff", filenames=[url], delimiter=";", hasheader=True)
             before_doc_count = tr.test_col.count_documents({})
-            result = ImportCommand(args=args.ns).run()
+            result = MDBImportCommand(args=args.ns).run()
             after_doc_count = tr.test_col.count_documents({})
             assert 999 == (after_doc_count - before_doc_count)
             assert 999 == result.total_written

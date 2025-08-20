@@ -1,16 +1,24 @@
 import re
 
 import sqlalchemy
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, MetaData, Table, inspect
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, MetaData, Table, inspect, text
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 from typing import Dict, Type
 
-from pyimport.rdbmaker import RDBMaker
+from pyimport.db.rdbmaker import RDBMaker
+
+
+class RDBManagerError(Exception):
+    pass
 
 
 class RDBManager:
+    """
+    Class to manage relational databases using SQLAlchemy. Uses a low level library to create and delete databases
+    called RDBMaker.
+    """
 
     sqlalchemy_type_map = {
         int: Integer,
@@ -22,11 +30,13 @@ class RDBManager:
     def __init__(self, db_url: str):
         self.db_url = db_url
         self._engine = create_engine(db_url)
+        # Test the connection
+        with self._engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
 
         self._metadata = MetaData()
         self._session_factory = sessionmaker(bind=self._engine)
         self._session = self._session_factory()
-
 
     @property
     def engine(self):
@@ -54,6 +64,7 @@ class RDBManager:
     @staticmethod
     def get_metadata():
         return MetaData()
+
     @staticmethod
     def sanitize_identifier(name: str) -> str:
         # Allow only alphanumeric characters and underscores in identifiers
@@ -66,11 +77,16 @@ class RDBManager:
 
         return cls.sqlalchemy_type_map.get(py_type, String)
 
-    def create_database(self, db_url:str, db_name: str):
-        RDBMaker.create_database(db_url, db_name)
-        self._engine = create_engine(db_url)
+    def create_database(self, db_name: str):
+        RDBMaker.create_database(self._db_url, db_name)
+        self._engine = create_engine(self._db_url)
+
+    def is_database(self, db_name: str):
+        return RDBMaker.is_database(self.db_url, db_name)
 
     def create_table(self, table_name: str, schema: Dict[str, Type]):
+        if self.is_table(table_name):
+            raise RDBManagerError(f"Table {table_name} already exists")
         table_name = self.sanitize_identifier(table_name)
         columns = [Column(name, self.map_python_type_to_sqlalchemy(py_type)) for name, py_type in schema.items()]
         table = Table(table_name, self.get_metadata(), *columns)
@@ -79,6 +95,11 @@ class RDBManager:
 
     def get_table(self, table_name) -> Table:
         return Table(table_name, self.get_metadata(), autoload_with=self._engine)
+
+    def get_table_names(self) -> list[str]:
+        # Get an inspector object
+        inspector = inspect(self._engine)
+        return inspector.get_table_names()
 
     def is_table(self, table_name):
         inspector = inspect(self._engine)
@@ -90,7 +111,7 @@ class RDBManager:
             table = Table(table_name, self._metadata, autoload_with=self._engine)
             table.drop(self._engine)
         else:
-            raise ProgrammingError(f"Table {table_name} does not exist")
+            raise ProgrammingError(f"Table {table_name} does not exist", None, None)
 
     def create_index(self, index_name: str, table_name: str, columns: list):
         index_name = self.sanitize_identifier(index_name)

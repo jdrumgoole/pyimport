@@ -12,7 +12,7 @@ from io import StringIO
 
 import pytest
 
-from pyimport.argparser import ArgMgr
+from pyimport.argmgr import ArgMgr
 from pyimport.filesplitter import FileSplitter, split_files
 from pyimport.splitfile import split_file_main
 

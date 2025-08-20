@@ -56,7 +56,6 @@ def make_parser():
     return CustomArgumentParser(usage=usage_message, default_config_files=default_config_files())
 
 
-
 def parse_args_and_cfg_files(cfgparser, input_args=None) -> configargparse.ArgumentParser:
     """
     Construct cfgparser for pyimport return it as a list suitable for passing to the parents
@@ -92,7 +91,7 @@ def parse_args_and_cfg_files(cfgparser, input_args=None) -> configargparse.Argum
                            choices=list(DocTimeStamp),
                            help="Add a timestamp to each doc, either generate per doc('doc'),"
                                 " or per batch {'batch') [default: %(default)s]")
-    cfgparser.add_argument("--addfield", default=None, type=str, help="Add a new field to each doc")
+    cfgparser.add_argument("--addfield", default=None , type=str, help="Add a new field to each doc")
     cfgparser.add_argument('--hasheader', default=False, action="store_true",
                            help="Use header line for column names [default: %(default)s]")
     cfgparser.add_argument('--genfieldfile', default=False, action="store_true",
@@ -137,7 +136,7 @@ def parse_args_and_cfg_files(cfgparser, input_args=None) -> configargparse.Argum
     #
     # Postgres options
     #
-    cfgparser.add_argument('--table', default="imported", help='specify the table name [default: %(default)s]')
+    cfgparser.add_argument('--pgtable', default="imported", help='specify the table name [default: %(default)s]')
     cfgparser.add_argument('--pguser', default="postgres", help='specify the postgres user [default: %(default)s]')
     cfgparser.add_argument('--pguri', default=pg_host, help='specify the postgres host [default: %(default)s]',
                            env_var="PG_URI")
@@ -192,82 +191,9 @@ def parse_args_and_cfg_files(cfgparser, input_args=None) -> configargparse.Argum
     return args
 
 
-class ArgMgr:
-
-    def __init__(self, ns: configargparse.Namespace):
-        self._args = ns
-
-    def merge_namespace(self, ns: configargparse.Namespace) -> configargparse.Namespace:
-        merged = configargparse.Namespace()
-        merged.__dict__.update(vars(self._args))
-        merged.__dict__.update(vars(ns))
-        self._args = merged
-        return merged
-
-    def merge(self, am: "ArgMgr") -> "ArgMgr":
-        return ArgMgr(self.merge_namespace(am._args))
-
-    def __len__(self):
-        return len(vars(self._args))
-
-    @property
-    def d(self) -> dict:
-        return vars(self._args)
-
-    @property
-    def ns(self) -> configargparse.Namespace:
-        return self._args
-
-    @classmethod
-    def default_args(cls) -> "ArgMgr":
-        p = make_parser()
-        args = parse_args_and_cfg_files(p)
-        return ArgMgr(args)
-
-    @classmethod
-    def args(cls, **kwargs) -> "ArgMgr":
-        ns = configargparse.Namespace(**kwargs)
-        return ArgMgr(ns)
-
-    @staticmethod
-    def default_args_dict() -> dict:
-        return ArgMgr.ns_to_dict(ArgMgr.default_args())
-
-    def add_arguments(self, **kwargs) -> "ArgMgr":
-        new_ns = configargparse.Namespace(**kwargs)
-        self.merge_namespace(new_ns)
-        return self
-
-    @staticmethod
-    def dict_to_ns(d: dict) -> configargparse.Namespace:
-        """
-        Convert a dictionary to an configargparse.Namespace object.
-
-        :param d: Dictionary to convert
-        :return: Namespace object with attributes corresponding to dictionary keys and values
-        """
-        return configargparse.Namespace(**d)
-
-    @staticmethod
-    def ns_to_dict(namespace: configargparse.Namespace) -> dict:
-        """
-        Convert an configargparse.Namespace object to a dictionary.
-
-        :param namespace: Namespace object to convert
-        :return: Dictionary with keys and values corresponding to Namespace attributes
-        """
-        return vars(namespace)
-
-    def __getitem__(self, key):
-        return self._args.__dict__[key]
-
-    def __setitem__(self, key, value):
-        self._args.__dict__[key] = value
-
-
 if __name__ == "__main__":
     home = os.getenv("HOME")
-    parser = ArgumentParser(default_config_files=["pyimport.conf", "~/pyimport.conf", "~/.config/pyimport.conf"])
+    parser = configargparse.ArgumentParser(default_config_files=["pyimport.conf", "~/pyimport.conf", "~/.config/pyimport.conf"])
     parser = parse_args_and_cfg_files(parser)
     args = parser.parse_args()
     print(args)

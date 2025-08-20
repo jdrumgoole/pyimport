@@ -13,12 +13,12 @@ import sys
 import time
 
 import pyimport.argparser as argparser
-from pyimport.asyncimport import AsyncImportCommand
-from pyimport.command import seconds_to_duration
+from pyimport.asyncimport import AsyncMDBImportCommand
+from pyimport.timer import seconds_to_duration
 from pyimport.filesplitter import split_files
 from pyimport.generatefieldfilecommand import GenerateFieldfileCommand
-from pyimport.dropcollectioncommand import DropCollectionCommand
-from pyimport.importcommand import ImportCommand
+from pyimport.dropcommand import DropCollectionCommand
+from pyimport.mdbimportcmd import MDBImportCommand
 from pyimport.logger import Log, ExitException
 from pyimport.fieldfile import FieldFile
 from pyimport.multiimportcommand import MultiImportCommand
@@ -72,7 +72,7 @@ def pyimport_main(input_args=None):
             if args.restart:
                 log.info("Warning --restart overrides --drop ignoring drop commmand")
             else:
-                DropCollectionCommand(args=args).run()
+                DropCollectionCommand(args=args).drop()
 
         if args.fieldinfo:
             cfg = FieldFile(args.fieldinfo)
@@ -100,9 +100,9 @@ def pyimport_main(input_args=None):
                 elif args.threads:
                     results = ThreadImportCommand(args).run()
                 elif args.asyncpro:
-                    results = AsyncImportCommand(args).run()
+                    results = AsyncMDBImportCommand(args).run()
                 else:
-                    results = ImportCommand(args).run()
+                    results = MDBImportCommand(args).run()
                 end_time = time.time()
                 elapsed = end_time - start_time
                 if len(args.filenames) > 1 and results.total_results > 0:

@@ -1,5 +1,5 @@
 import pytest
-from pyimport.argparser import ArgMgr
+from pyimport.argmgr import ArgMgr
 
 
 def test_args():

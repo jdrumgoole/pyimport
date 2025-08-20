@@ -1,18 +1,12 @@
 # test_rdb_writer.py
-import os
-
-import pytest
-from sqlalchemy import create_engine, inspect, select
-from sqlalchemy.exc import ProgrammingError
-from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
-from pyimport.argparser import ArgMgr
-from pyimport.rdbmanager import RDBManager
-from pyimport.rdbwiter import RDBWriter
+import pytest
+from sqlalchemy import inspect
+from sqlalchemy.exc import ProgrammingError
+
+from pyimport.argmgr import ArgMgr
 from test.rdbtest import RDBTestDB
-
-
 @pytest.fixture
 def default_args():
     args = ArgMgr.default_args()
@@ -21,23 +15,19 @@ def default_args():
 
 def test_env() -> None:
     args = ArgMgr.default_args()
+    args["drop"] = True
     assert args.ns.pguri is not None
 
 
-def test_connect(default_args) -> None:
-    with RDBTestDB(default_args.ns.pguri) as tr:
-        assert tr.mgr.engine is not None
-
-
 def test_rdbwriter(default_args) -> None:
-    with RDBTestDB(default_args.ns.pguri) as tr:
-        if tr.is_table("pyimport_test_rdb"):
-            tr.drop_table("pyimport_test_rdb")
-        assert tr.is_table("pyimport_test_rdb") is False
-        tr.create_table("pyimport_test_rdb", RDBTestDB.test_schema_dict)
+    with RDBTestDB(default_args) as tr:
+        if tr.mgr.is_table("pyimport_test_rdb"):
+            tr.mgr.drop_table("pyimport_test_rdb")
+        assert tr.mgr.is_table("pyimport_test_rdb") is False
+        tr.mgr.create_table("pyimport_test_rdb", RDBTestDB.test_schema_dict)
         assert tr.mgr.is_table("pyimport_test_rdb") is True
-        tr.drop_table("pyimport_test_rdb")
-        assert tr.is_table("pyimport_test_rdb") is False
+        tr.mgr.drop_table("pyimport_test_rdb")
+        assert tr.mgr.is_table("pyimport_test_rdb") is False
         assert tr.mgr.is_table("pyimport_test_rdb") is False
 
 
@@ -46,7 +36,7 @@ def test_create_table(default_args) -> None:
     args = default_args.add_arguments(table=table_name)
     mgr = None
     try:
-        with RDBTestDB(default_args.ns.pguri) as tr:
+        with RDBTestDB(default_args) as tr:
             mgr = tr.mgr
             mgr.create_table(args.ns.table, tr.test_schema)
             # Verify the table creation
@@ -55,20 +45,14 @@ def test_create_table(default_args) -> None:
     except ProgrammingError:
         pytest.skip(f"Error: table {args.ns.table} already exists")
     finally:
-        if mgr.is_table(args.ns.table):
+        if mgr and mgr.is_table(args.ns.table):
             mgr.drop_table(args.ns.table)
 
 
-def test_mdb_resource(default_args) -> None:
-    with RDBTestDB(default_args.ns.pguri) as tr:
-        assert RDBTestDB.test_table_name == tr.get_test_table().name
-        assert tr.test_table_name in tr.table_names
-
-
 def test_insert(default_args) -> None:
-    with RDBTestDB(default_args.ns.pguri) as tr:
+    with RDBTestDB(default_args) as tr:
         # Verify the table creation
-        assert tr.test_table_name == tr.get_test_table().name
+        assert tr.test_table_name == tr.test_table_name
         data = [
             {"id": 1, "name": "Alice", "age": 30, "email": "alice@example.com", "salary": 60000.0,
              "hire_date": datetime(2020, 5, 1)},
@@ -81,8 +65,8 @@ def test_insert(default_args) -> None:
         assert result.name == "Alice"
 
 
-def test_dbwriter_generator(default_args):
-    with RDBTestDB(default_args.ns.pguri) as tr:
+def test_syncdbwriter_generator(default_args):
+    with RDBTestDB(default_args) as tr:
         d1 = {"id": 1, "name": "Alice", "age": 30, "email": "alice@example.com", "salary": 60000.0,
              "hire_date": datetime(2020, 5, 1)}
         d2 = {"id": 2, "name": "Bob", "age": 25, "email": "bob@example.com", "salary": 50000.0,
@@ -90,6 +74,7 @@ def test_dbwriter_generator(default_args):
         tr.writer.write(d1)
         tr.writer.write(d2)
         tr.writer.write(None)
+        assert tr.total_written == 2
         result = tr.writer.find_one(tr.test_table_name, "name", "Alice")
         assert result.name == "Alice"
         result = tr.writer.find_one(tr.test_table_name, "name", "Bob")

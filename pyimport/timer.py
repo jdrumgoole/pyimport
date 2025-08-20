@@ -6,6 +6,7 @@ Created on 17 Nov 2010
 
 import time
 import math
+from datetime import timedelta, datetime
 from typing import Tuple
 
 
@@ -148,3 +149,11 @@ class QuantumTimer(Timer):
             return 0.0, 0.0
 
 
+def seconds_to_duration(seconds):
+    result=""
+    delta = timedelta(seconds=seconds)
+    d = datetime(1, 1, 1) + delta
+    if d.day - 1 > 0:
+        result =f"{d.day -1} day(s)"
+    result = result + "%02d:%02d:%02d.%02d" % (d.hour, d.minute, d.second, d.microsecond)
+    return result

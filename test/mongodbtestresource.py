@@ -4,7 +4,7 @@ from bson import CodecOptions
 from pymongo import MongoClient
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from pyimport.argparser import ArgMgr
+from pyimport.argmgr import ArgMgr
 
 
 class MongoDBTestResource:

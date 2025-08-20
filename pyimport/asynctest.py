@@ -3,7 +3,7 @@ import functools
 
 from motor import motor_asyncio
 
-from pyimport.argparser import ArgMgr
+from pyimport.argmgr import ArgMgr
 
 
 def start_coroutine(func):

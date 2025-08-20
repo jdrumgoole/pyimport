@@ -4,8 +4,9 @@ from csv import DictReader
 
 import pymongo
 
-from pyimport.argparser import ArgMgr
-from pyimport.importcommand import ImportCommand
+from pyimport.argmgr import ArgMgr
+from pyimport.importcmd import ImportCommand
+from pyimport.mdbimportcmd import MDBImportCommand
 
 
 class Test(unittest.TestCase):

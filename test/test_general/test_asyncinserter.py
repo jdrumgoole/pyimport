@@ -2,10 +2,9 @@ import asyncio
 
 import pytest
 from motor.motor_asyncio import AsyncIOMotorClient
-from pymongo import MongoClient
 from test.fakedata import generate_user_profiles
 
-from pyimport.asyncinserter import AsyncInserter
+from pyimport.db.asyncinserter import AsyncInserter
 
 
 @pytest.mark.asyncio

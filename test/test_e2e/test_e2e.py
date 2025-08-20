@@ -8,10 +8,10 @@ import dateutil
 import pytest
 
 from dotenv import load_dotenv
-from pyimport.argparser import ArgMgr
+from pyimport.argmgr import ArgMgr
 from pyimport.fieldfile import FieldFile, FieldNames
 from pyimport.filesplitter import LineCounter, split_files, FileSplitter
-from pyimport.importcommand import ImportCommand
+from pyimport.mdbimportcmd import MDBImportCommand
 from pyimport.multiimportcommand import MultiImportCommand
 from test.mdbtest import MDBTestDB
 
@@ -44,7 +44,7 @@ def test_multi_split(setup):
 def test_std_with_audit():
     args = ArgMgr.default_args().add_arguments(filenames=["10lines.txt"], audit=True, delimiter="|", fieldfile="10k.tff")
     assert args.ns.audit is True
-    ImportCommand(args=args.ns).run()
+    MDBImportCommand(args=args.ns).run()
 
 
 class TestEndToEnd(unittest.TestCase):
@@ -73,7 +73,7 @@ class TestEndToEnd(unittest.TestCase):
 
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["mot.txt"], delimiter="|", fieldfile="mot.tff", has_header=False)
-        ImportCommand(args=args.ns).run()
+        MDBImportCommand(args=args.ns).run()
         file_size = LineCounter.count_now("mot.txt")
         end_count = self._col.count_documents({})
 
@@ -99,7 +99,7 @@ class TestEndToEnd(unittest.TestCase):
         self.assertEqual(fc.fields()[19], "Number of patients spending >12 hours from decision to admit to admission")
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["AandEData.csv"], delimiter=",", fieldfile="AandEData.tff", hasheader=True)
-        ImportCommand(args=args.ns).run()
+        MDBImportCommand(args=args.ns).run()
         file_size = LineCounter.count_now("AandEData.csv") - 1
         end_count = self._col.count_documents({})
         self.assertEqual(end_count - start_count, file_size)

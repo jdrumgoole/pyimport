@@ -1,3 +1,4 @@
+import os
 from typing import Dict
 from urllib.parse import urlparse, parse_qs
 
@@ -6,15 +7,18 @@ class PostgresURI:
 
     def __init__(self, uri: str):
         self.uri_dict = self.parse_postgres_url(uri)
+        self._uri =  uri
+
+    @classmethod
+    def get_pguri(cls, default=None) -> "PostgresURI":
+        uri = os.getenv('PGURI', default)
+        if uri is None:
+            raise ValueError("No PostgreSQL URI found in the environment variable PGURI")
+        return PostgresURI(uri)
 
     @property
     def uri(self):
-        return self.make_uri(self.username,
-                             self.password,
-                             self.host,
-                             self.port,
-                             self.database,
-                             self.query)
+        return self._uri
 
     @property
     def scheme(self):
@@ -43,17 +47,22 @@ class PostgresURI:
     @database.setter
     def database(self, value):
         self.uri_dict['database'] = value
+        self._uri = self.make_uri(**self.uri_dict)
 
     @property
     def query(self):
         return self.uri_dict['query']
 
     @staticmethod
-    def make_uri(username: str = "",
+    def make_uri(scheme: str = "postgresql",
+                 username: str = "",
                  password: str = "",
                  host: str = "localhost",
                  port: int = 5432, database: str = "postgres",
                  query: Dict[str, str] = None):
+
+        if scheme != 'postgresql':
+            raise ValueError("Invalid scheme, expected 'postgres'")
         query_str = "&".join([f"{k}={v}" for k, v in query.items()]) if query else ""
         if query_str:
             query_str = f"?{query_str}"
@@ -65,8 +74,7 @@ class PostgresURI:
             auth_str = f"{username}@"
         else:
             auth_str = ""
-
-        return f"postgresql://{auth_str}{host}:{port}/{database}{query_str}"
+        return f"{scheme}://{auth_str}{host}:{port}/{database}{query_str}"
 
     @staticmethod
     def parse_postgres_url(url):

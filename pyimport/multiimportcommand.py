@@ -6,12 +6,12 @@ import os
 import subprocess
 import sys
 
-from pyimport.command import seconds_to_duration
+from pyimport.timer import seconds_to_duration
 from pyimport.importresult import ImportResults
-from pyimport.parallellimportcommand import ParallelImportCommand
+from pyimport.parallellimportcommand import ParallelMDBImportCommand
 
 
-class MultiImportCommand(ParallelImportCommand):
+class MultiImportCommand(ParallelMDBImportCommand):
 
     def __init__(self, args):
         super().__init__(args)
@@ -26,10 +26,10 @@ class MultiImportCommand(ParallelImportCommand):
         with multiprocessing.Pool(self._args.poolsize) as pool:
             try:
                 if self._args.asyncpro:
-                    results = pool.starmap(ParallelImportCommand.async_processor,
+                    results = pool.starmap(ParallelMDBImportCommand.async_processor,
                                            [(self._args, self._log, filename) for filename in self._args.filenames])
                 else:
-                    results = pool.starmap(ParallelImportCommand.sync_processor,
+                    results = pool.starmap(ParallelMDBImportCommand.sync_processor,
                                            [(self._args, self._log, filename) for filename in self._args.filenames])
 
             except subprocess.CalledProcessError as e:

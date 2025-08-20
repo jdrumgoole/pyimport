@@ -1,7 +1,7 @@
 import pytest
 
-from pyimport.argparser import ArgMgr
-from pyimport.mdbwriter import MDBWriter
+from pyimport.argmgr import ArgMgr
+from pyimport.db.syncmdbwriter import SyncMDBWriter
 
 
 @pytest.fixture(scope="module")
@@ -11,7 +11,7 @@ def setup_args():
 
 
 def test_dbwriter(setup_args):
-    writer = MDBWriter(setup_args.ns)
+    writer = SyncMDBWriter(setup_args.ns)
     assert writer.database.name == "DBWRITER_TEST_DB"
     assert writer.collection.name == "DBWRITER_TEST_COLLECTION"
     d = {"a": 1, "b": 2}

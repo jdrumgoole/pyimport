@@ -5,7 +5,7 @@ import time
 import pymongo
 from motor import motor_asyncio
 
-from pyimport.argparser import ArgMgr
+from pyimport.argmgr import ArgMgr
 
 
 def start_generator(func):
@@ -18,7 +18,7 @@ def start_generator(func):
     return wrapper
 
 
-class MDBWriter:
+class SyncMDBWriter:
     def __init__(self, args):
 
         if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
@@ -33,6 +33,10 @@ class MDBWriter:
         self._total_written = 0
         self._buffer = []
         self._batch_size = args.batchsize
+
+    @property
+    def client(self):
+        return self._client
 
     @property
     def collection(self):
@@ -174,7 +178,7 @@ class AsyncMDBWriter:
 #
 #     asyncio.run(runner(args.ns))
 #
-#     sync_db_writer = MDBWriter(args.ns)
+#     sync_db_writer = SyncMDBWriter(args.ns)
 #     total_written = sync_db_writer.write({"name": "John", "age": 25})
 #     total_written = sync_db_writer.write({"name": "John", "age": 25})
 #     total_written = sync_db_writer.write({"name": "John", "age": 25})

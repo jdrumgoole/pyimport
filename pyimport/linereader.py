@@ -1,8 +1,11 @@
-from sys import exception
+import time
 
 import requests
 import aiohttp
 from typing import TextIO
+
+from requests.adapters import HTTPAdapter
+from urllib3 import Retry
 
 
 class BlockReader:
@@ -72,9 +75,42 @@ class RemoteLineReader:
     def filename(self):
         return self.url
 
+    @staticmethod
+    def robust_download(url:str, max_retries:int=3):
+        # Configure retries for connection errors
+        retry_strategy = Retry(
+            total=max_retries,
+            backoff_factor=1,  # Wait 1, 2, 4 seconds between retries
+            status_forcelist=[429, 500, 502, 503, 504],
+            raise_on_status=False
+        )
+
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session = requests.Session()
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+
+        for attempt in range(max_retries + 1):
+            try:
+                response = session.get(url, stream=True, timeout=(10, 300))
+                response.raise_for_status()
+                return response
+
+            except requests.exceptions.ConnectionError as e:
+                if attempt < max_retries:
+                    wait_time = 2 ** attempt  # Exponential backoff
+                    time.sleep(wait_time)
+                else:
+                    raise
+
+            except requests.exceptions.RequestException as e:
+                print(f"Non-connection error: {e}")
+                raise
+
+        return None
+
     def __iter__(self):
-        with requests.get(self.url, stream=True) as r:
-            r.raise_for_status()
+        with self.robust_download(self.url) as r:
             residue = None
             for chunk in r.iter_content(self._block_size, decode_unicode=True):
                 if chunk:

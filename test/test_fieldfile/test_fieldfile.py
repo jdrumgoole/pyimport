@@ -15,8 +15,8 @@ import dateutil
 from pyimport.fieldfile import FieldFile, FieldFileException
 from pyimport.filesplitter import LineCounter
 from pyimport.logger import Log
-from pyimport.importcommand import ImportCommand
-from pyimport.argparser import ArgMgr
+from pyimport.mdbimportcmd import MDBImportCommand
+from pyimport.argmgr import ArgMgr
 import pytest
 
 from test.mdbtest import MDBTestDB
@@ -28,7 +28,7 @@ def test_generate_fieldfile():
         assert os.path.exists("inventory.testff")
         start_count = tr.test_col.count_documents({})
         args = tr.args.add_arguments(filenames=["inventory.csv"], fieldfile="inventory.testff", hasheader=True)
-        results = ImportCommand(args=args.ns).run()
+        results = MDBImportCommand(args=args.ns).run()
         result = results.filename_results("inventory.csv")
         line_count = LineCounter.count_now("inventory.csv")
         new_inserted_count = tr.test_col.count_documents({}) - start_count
@@ -40,7 +40,7 @@ def test_generate_fieldfile():
 def test_delimiter_header():
     with MDBTestDB() as tr:
         args = tr.args.add_arguments(filenames=["AandEData_300.csv"], fieldfile="AandE_Data_2011-04-10.tff", hasheader=True)
-        results = ImportCommand(args=args.ns).run()
+        results = MDBImportCommand(args=args.ns).run()
         assert results.total_errors == 1
         assert results.total_results == 0
 
@@ -82,12 +82,12 @@ class TestFieldFile(unittest.TestCase):
     def test_delimiter_no_header(self):
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["10k.txt"], delimiter="|", hasheader=False)
-        results = ImportCommand(args=args.ns).run()
+        results = MDBImportCommand(args=args.ns).run()
         self.assertEqual(self._col.count_documents({}) - start_count, results.total_written)
 
     def test_fieldfile_nomatch(self):
         args = self._args.add_arguments(filenames=["inventory.csv"], fieldfile="AandE_Data_2011-04-10.tff")
-        results = ImportCommand(args=args.ns).run()
+        results = MDBImportCommand(args=args.ns).run()
         assert results.total_errors > 0
         assert results.total_results == 0
         assert results.total_written is None
@@ -95,7 +95,7 @@ class TestFieldFile(unittest.TestCase):
     def test_fieldfile_autogen(self):
         with MDBTestDB() as tr:
             args = tr.args.add_arguments(filenames=["inventory.csv"], hasheader=True)
-            results = ImportCommand(args=args.ns).run()
+            results = MDBImportCommand(args=args.ns).run()
             assert results.total_errors == 0
             assert results.total_results == 1
             assert results.total_written == 4
@@ -105,7 +105,7 @@ class TestFieldFile(unittest.TestCase):
     def test_new_delimiter_and_timeformat_header(self):
         start_count = self._col.count_documents({})
         args = self._args.add_arguments(filenames=["mot_test_set_small.csv"], fieldfile="mot.tff", hasheader=False, delimiter="|")
-        results = ImportCommand(args=args.ns).run()
+        results = MDBImportCommand(args=args.ns).run()
         lines = LineCounter.count_now('mot_test_set_small.csv')
         result = results.filename_results("mot_test_set_small.csv")
         inserted_count = self._col.count_documents({}) - start_count
@@ -158,7 +158,7 @@ class TestFieldFile(unittest.TestCase):
     def test_date(self):
         start_count = self._col.count_documents({})
         args= self._args.add_arguments(filenames=["inventory.csv"], fieldfile="inventory_dates.tff", hasheader=True)
-        results = ImportCommand(args=args.ns).run()
+        results = MDBImportCommand(args=args.ns).run()
         result = results.filename_results("inventory.csv")
         lines_count = LineCounter.count_now("inventory.csv") - 1  # header
         end_count = self._col.count_documents({})

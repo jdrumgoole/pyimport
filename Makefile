@@ -39,6 +39,9 @@ path:
 pythonpath:
 	@echo "PYTHONPATH=${PYTHONPATH}"
 
+pguri:
+	@echo "PGURI=${PGURI}"
+
 root:
 	@echo "The project ROOT is '${ROOT}'"
 
@@ -160,7 +163,7 @@ test_all_scripts: test_scripts test_audit test_multi test_small_multi test_yello
 
 test_all: pytest test_all_scripts
 
-pytest:
+ pytest:
 	(cd test/test_command && poetry run pytest)
 	(cd test/test_config && poetry run pytest)
 	(cd test/test_e2e && poetry run pytest)
@@ -173,8 +176,8 @@ pytest:
 	(cd test/test_mot && poetry run pytest)
 	(cd test/test_splitfile && poetry run pytest)
 	(cd test/test_general && poetry run pytest)
-	(cd test/test_dbwriter && poetry run pytest)
 	(cd test/test_formats && poetry run pytest)
+	(cd test/test_db && PGURI=${PGURI} poetry run pytest)
 
 
 

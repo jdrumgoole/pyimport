@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from pyimport.command import seconds_to_duration
+from pyimport.timer import seconds_to_duration
 
 
 class ImportResult:

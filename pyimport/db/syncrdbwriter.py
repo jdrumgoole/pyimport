@@ -6,18 +6,19 @@ from typing import Dict, List, Any
 
 from sqlalchemy.orm import declarative_base
 
-from pyimport.mdbwriter import start_generator
+from pyimport.db.syncmdbwriter import start_generator
 
-from pyimport.rdbmanager import RDBManager
+from pyimport.db.rdbmanager import RDBManager
+from pyimport.db.rdbwriter import RDBWriter
 
 Base = declarative_base()
 
 
-class RDBWriter:
-    def __init__(self, mgr: RDBManager, table_name: str):
-        self._mgr = mgr
-        self._writer = self.write_generator(table_name)
-        self._total_written = 0
+class SyncRDBWriter(RDBWriter):
+    def __init__(self, args, table: Table):
+        super().__init__(args)
+        self._table = table
+        self._writer = self.write_generator(self._table)
 
     def insert(self, table_name: str, list_of_dicts: List[Dict[str, Any]]) -> int:
         total_written = len(list_of_dicts)
@@ -37,10 +38,9 @@ class RDBWriter:
             return self._total_written
 
     @start_generator
-    def write_generator(self, table_name:str):
+    def write_generator(self, table: Table):
         buffer = []
         total_written = 0
-        table = self._mgr.get_table(table_name)
         session = self._mgr.session_factory()
         while True:
             doc = yield
@@ -78,12 +78,6 @@ class RDBWriter:
         finally:
             session.close()
 
-    def close(self):
-        if self._conn and self._engine:
-            self._engine.dispose()
-            self._engine = None
-
-
 # Example Usage
 # if __name__ == "__main__":
 #     schema = {
@@ -103,6 +97,6 @@ class RDBWriter:
 #     ]
 #
 #     db_url = "postgresql://username:password@localhost/exampledb"
-#     writer = RDBWriter(db_url)
+#     writer = SyncRDBWriter(db_url)
 #     writer.create_table("employees", schema)
 #     writer.insert("employees", data)

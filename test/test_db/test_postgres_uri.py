@@ -1,5 +1,5 @@
 import pytest
-from pyimport.postgresuri import PostgresURI
+from pyimport.db.postgresuri import PostgresURI
 
 
 def test_parse_postgres_url():

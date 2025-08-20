@@ -7,12 +7,13 @@ import pymongo
 import pytest
 
 from pyimport import type_converter
-from pyimport.argparser import ArgMgr
+from pyimport.argmgr import ArgMgr
 from pyimport.generatefieldfilecommand import GenerateFieldfileCommand
-from pyimport.dropcollectioncommand import DropCollectionCommand
-from pyimport.asyncimport import AsyncImportCommand
+from pyimport.dropcommand import DropCollectionCommand
+from pyimport.asyncimport import AsyncMDBImportCommand
 from pyimport.enricher import Enricher
-from pyimport.importcommand import ImportCommand
+from pyimport.importcmd import ImportCommand
+from pyimport.mdbimportcmd import MDBImportCommand
 from pyimport.fieldfile import FieldFile, FieldFileException
 from pyimport.filesplitter import LineCounter
 from test.mdbtest import MDBTestDB, AsyncMDBTestDB
@@ -50,7 +51,7 @@ async def test_async_one_file():
         files = ["120lines.txt"]
         args = tr.args.add_arguments(fieldfile="10k.tff", filenames=files, delimiter="|")
         start_size = await tr.test_col.count_documents({})
-        cmd = AsyncImportCommand(args.ns)
+        cmd = AsyncMDBImportCommand(args.ns)
         result = await cmd.process_one_file(args.ns, tr.log, filename=files[0])
         end_size = await tr.test_col.count_documents({})
         assert result.total_written == size_120
@@ -76,7 +77,7 @@ async def test_async_import_command():
         files = ["10k.txt", "120lines.txt"]
         args = tr.args.add_arguments(fieldfile="10k.tff", filenames=files, delimiter="|")
         start_size = await tr.test_col.count_documents({})
-        results = await AsyncImportCommand(args.ns).process_files()
+        results = await AsyncMDBImportCommand(args.ns).process_files()
         end_size = await tr.test_col.count_documents({})
         assert results.total_written == (size_10k + size_120)
         assert (size_10k + size_120) == (end_size - start_size)
@@ -95,7 +96,7 @@ def test_import_command_small():
         args = tr.args.add_arguments(fieldfile="10k.tff",
                                      filenames=["test_date_data.csv"],
                                      hasheader=True)
-        results = ImportCommand(args=args.ns).run()
+        results = MDBImportCommand(args=args.ns).run()
         result = results.filename_results("test_date_data.csv")
         assert size_test == result.total_written
 
@@ -109,7 +110,7 @@ def test_import_command_add_field():
                                      filenames=["test_date_data.csv"],
                                      addfield="test_field=20",
                                      hasheader=True)
-        results = ImportCommand(args=args.ns).run()
+        results = MDBImportCommand(args=args.ns).run()
 
         assert len(list(tr.test_col.find({"test_field": 20}))) == results.total_written
 
@@ -117,7 +118,7 @@ def test_import_command_add_field():
                                      filenames=["test_date_data.csv"],
                                      addfield="test_field=hello",
                                      hasheader=True)
-        results = ImportCommand(args=args.ns).run()
+        results = MDBImportCommand(args=args.ns).run()
 
         assert len(list(tr.test_col.find({"test_field": "hello"}))) == results.total_written
 
@@ -125,7 +126,7 @@ def test_import_command_add_field():
                                      filenames=["test_date_data.csv"],
                                      addfield="test_field=3.71",
                                      hasheader=True)
-        results = ImportCommand(args=args.ns).run()
+        results = MDBImportCommand(args=args.ns).run()
 
         assert len(list(tr.test_col.find({"test_field": 3.71}))) == results.total_written
 
@@ -139,12 +140,14 @@ def test_import_command_cut():
                                      filenames=["test_date_data.csv"],
                                      hasheader=True)
         args = args.add_arguments(cut="test_mileage,colour")
-        results = ImportCommand(args=args.ns).run()
+        results = MDBImportCommand(args=args.ns).run()
         result = results.filename_results("test_date_data.csv")
         assert size_test == result.total_written
 
         new_size = tr.test_col.count_documents({})
         assert size_test == (new_size - start_size)
+
+
 def test_drop_command():
 
     c = pymongo.MongoClient()
@@ -157,7 +160,7 @@ def test_drop_command():
     col.insert_one({"hello": "world"})
     args = ArgMgr.default_args().add_arguments(database="TEST_DROP_CMD", collection="testx")
     assert col.find_one({"hello": "world"}, projection={"_id":0}) == {"hello": "world"}
-    DropCollectionCommand(args=args.ns).run()
+    DropCollectionCommand(args=args.ns).drop()
     import time
     time.sleep(0.01) # some times the delete doesn't complete as its a server side action
     assert "testx" not in db.list_collection_names()
@@ -179,7 +182,7 @@ def test_generate_fieldfile_command():
 # def test_generate_nyc_200k():
 #     with MDBTestDB() as tr:
 #         args = tr.args.add_arguments(delimiter=",", fieldfile="yellow_trip.tff", filenames=["yellow_tripdata_2015-01-06-200k.csv"])
-#         results = ImportCommand(args=args.ns).run()
+#         results = MDBImportCommand(args=args.ns).run()
 #         assert results.total_errors == 0
 
 
@@ -190,7 +193,7 @@ def test_import_command_nyc():
         size_test = LineCounter.count_now("yellow_trip_data_10.csv") - 1
         args = tr.args.add_arguments(fieldfile="yellow_trip_data_10.tff",
                                      filenames=["yellow_trip_data_10.csv"], hasheader=True)
-        ImportCommand(args=args.ns).run()
+        MDBImportCommand(args=args.ns).run()
         new_size = tr.test_col.count_documents({})
         assert size_test == (new_size - start_size)
 
@@ -200,12 +203,12 @@ def test_import_command_nyc_no_field_file():
         with pytest.raises(FieldFileException):
             args = tr.args.add_arguments(fieldfile="yellow_trip_data_10xxx.tff",
                                          filenames=["yellow_trip_data_10.csv"], hasheader=True)
-            results = ImportCommand(args=args.ns).process_one_file(args.ns, tr.log, filename="yellow_trip_data_10.csv")
+            results = MDBImportCommand(args=args.ns).process_one_file(args.ns, tr.log, filename="yellow_trip_data_10.csv")
 
     with MDBTestDB() as tr:
         args = tr.args.add_arguments(fieldfile="yellow_trip_data_10xxx.tff",
                                      filenames=["yellow_trip_data_10.csv"], hasheader=True)
-        results = ImportCommand(args=args.ns).run()
+        results = MDBImportCommand(args=args.ns).run()
         assert results.total_errors == 1
         assert results.total_results == 0
 
@@ -219,8 +222,8 @@ async def test_import_command_nyc_async():
         args = tr.args.add_arguments(fieldfile="yellow_trip_data_10.tff",
                                      asyncpro=True,
                                      filenames=["yellow_trip_data_10.csv"], hasheader=True)
-        result = await AsyncImportCommand(args=args.ns).process_one_file(args.ns, tr.log,
-                                                                         filename="yellow_trip_data_10.csv")
+        result = await AsyncMDBImportCommand(args=args.ns).process_one_file(args.ns, tr.log,
+                                                                            filename="yellow_trip_data_10.csv")
         new_size = await tr.test_col.count_documents({})
         assert result.total_written == (new_size - start_size)
         assert size_test == result.total_written
@@ -231,8 +234,8 @@ async def test_import_command_nyc_async():
         args = tr.args.add_arguments(fieldfile="yellow_trip_data_10.tff",
                                      asyncpro=True,
                                      filenames=["yellow_trip_data_10.csv", "yellow_trip_data_20.csv" ], hasheader=True)
-        result = await AsyncImportCommand(args=args.ns).process_one_file(args.ns, tr.log,
-                                                                         filename="yellow_trip_data_10.csv")
+        result = await AsyncMDBImportCommand(args=args.ns).process_one_file(args.ns, tr.log,
+                                                                            filename="yellow_trip_data_10.csv")
         new_size = await tr.test_col.count_documents({})
         assert result.total_written == (new_size - start_size)
         assert size_test == result.total_written

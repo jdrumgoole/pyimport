@@ -6,25 +6,25 @@ import os
 import sys
 import time
 from asyncio import TaskGroup
-from datetime import datetime, timezone
 
 import aiofiles
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
+from motor.motor_asyncio import AsyncIOMotorClient
 from requests import exceptions
 from asyncstdlib import enumerate as aenumerate
 
 from pyimport import timer
-from pyimport.mdbwriter import AsyncMDBWriter
+from pyimport.db.syncmdbwriter import AsyncMDBWriter
+from pyimport.importcmd import ImportCommand
 from pyimport.importresult import ImportResults
 from pyimport.csvreader import AsyncCSVReader
 from pyimport.enricher import Enricher
 from pyimport.fieldfile import FieldFileException, FieldFile
-from pyimport.importcommand import ImportCommand
+from pyimport.mdbimportcmd import MDBImportCommand
 from pyimport.importresult import ImportResult
 from pyimport.linereader import is_url, RemoteLineReader
 
 
-class AsyncImportCommand(ImportCommand):
+class AsyncMDBImportCommand(MDBImportCommand):
 
     def __init__(self, args=None):
 
@@ -105,11 +105,11 @@ class AsyncImportCommand(ImportCommand):
         field_file = ImportCommand.prep_field_file(args, filename)
         q: asyncio.Queue = asyncio.Queue()
         writer = await AsyncMDBWriter.create(args)
-        async_reader, parser = await AsyncImportCommand.async_prep_import(args, filename, field_file)
+        async_reader, parser = await AsyncMDBImportCommand.async_prep_import(args, filename, field_file)
         try:
             async with TaskGroup() as tg:
-                t1 = tg.create_task(AsyncImportCommand.get_csv_doc(args, q, parser, async_reader))
-                t2 = tg.create_task(AsyncImportCommand.put_db_doc(args, q, log, writer, filename))
+                t1 = tg.create_task(AsyncMDBImportCommand.get_csv_doc(args, q, parser, async_reader))
+                t2 = tg.create_task(AsyncMDBImportCommand.put_db_doc(args, q, log, writer, filename))
 
             total_documents_processed = t1.result()
             result = t2.result()
@@ -137,7 +137,7 @@ class AsyncImportCommand(ImportCommand):
                     if not os.path.isfile(filename):
                         self._log.warning(f"No such file: '{i}' ignoring")
                         continue
-                    task = tg.create_task(AsyncImportCommand.process_one_file(self._args, self._log, filename))
+                    task = tg.create_task(AsyncMDBImportCommand.process_one_file(self._args, self._log, filename))
                     tasks.append(task)
 
             for task in tasks:

@@ -2,7 +2,7 @@ import os
 
 from pyimport.fieldfile import FieldFile
 from pyimport.filesplitter import LineCounter
-from pyimport.importcommand import ImportCommand
+from pyimport.mdbimportcmd import MDBImportCommand
 from test.mdbtest import MDBTestDB
 import pytest
 
@@ -42,7 +42,7 @@ def test_import():
             initial_size = tr.count()
             file_size = LineCounter.count_now(filename) - 1 # subtract header
             tr.args.add_arguments(filenames=[filename], delimiter=delimiter, hasheader=True)
-            results = ImportCommand(tr.args.ns).run()
+            results = MDBImportCommand(tr.args.ns).run()
             this_result = results.filename_results(filename)
             assert this_result
             assert results.total_errors == 0
