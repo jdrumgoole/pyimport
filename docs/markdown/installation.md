@@ -50,7 +50,7 @@ Check that PyImport is installed correctly:
 
 ```bash
 pyimport --version
-# Output: pyimport 1.9.0
+# Output: pyimport 1.10.0
 ```
 
 Get help:

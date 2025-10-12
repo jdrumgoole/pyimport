@@ -147,7 +147,7 @@ Audit records stored in `PYIMPORT_AUDIT.audit` collection:
 {
   "_id": ObjectId("..."),
   "command": "process one file",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "filename": "data.csv",
   "elapsed_time": 8.3,
   "total_written": 200000,
@@ -213,6 +213,106 @@ db.audit.aggregate([
   }}
 ])
 ```
+
+### Restart Capability (NEW in v1.10.0)
+
+**Status:** ✅ Fully Implemented
+
+PyImport now supports resuming interrupted multi-file imports from where they left off. The restart feature enables:
+
+#### Progress Document Structure
+
+```json
+{
+  "batch_id": 12345,
+  "progress": {
+    "filename": "data.csv.1",
+    "docs_written": 125000,
+    "last_line_number": 125000,
+    "file_position": 5242880,
+    "status": "in_progress"  // or "completed"
+  },
+  "timestamp": ISODate("2025-10-12T14:30:00Z")
+}
+```
+
+#### Progress Tracking Features
+
+The audit system now provides methods for:
+
+- **`record_progress()`** - Record checkpoint every N documents (e.g., 10,000)
+- **`get_file_progress()`** - Get latest checkpoint for a specific file
+- **`get_completed_files()`** - Query which files have finished
+- **`get_incomplete_files()`** - Find files that need resuming
+- **`mark_file_completed()`** - Mark a file as done
+- **`get_last_incomplete_batch()`** - Auto-detect incomplete imports
+
+#### Restart Capability
+
+PyImport now supports restarting interrupted imports. Here's how it works:
+
+```bash
+# Start an import with audit enabled
+pyimport --audit --multi --splitfile --autosplit 8 \
+         --database mydb --collection mycol largefile.csv
+# ... import gets interrupted ...
+
+# Resume from where it left off
+pyimport --restart --batch-id <batch_id> \
+         --database mydb --collection mycol largefile.csv
+
+# Or auto-detect the last incomplete batch
+pyimport --restart \
+         --database mydb --collection mycol largefile.csv
+```
+
+The system:
+1. Skips completed split files
+2. Resumes incomplete files from last checkpoint
+3. Continues tracking progress
+4. Completes the import seamlessly
+
+**Example with multiple files:**
+
+```bash
+# Start importing 5 files
+pyimport --audit --database mydb --collection mycol \
+         file1.csv file2.csv file3.csv file4.csv file5.csv
+
+# Process is interrupted after completing file1 and file2...
+
+# Restart - automatically skips completed files
+pyimport --restart --database mydb --collection mycol \
+         file1.csv file2.csv file3.csv file4.csv file5.csv
+# Only processes file3.csv, file4.csv, file5.csv
+```
+
+**Key Features:**
+- **Auto-detection**: If `--batch-id` is not specified, PyImport automatically finds the last incomplete batch
+- **Progress checkpoints**: Records progress every 10,000 documents (configurable with `--checkpoint-interval`)
+- **Works with all import modes**: Supports sync, async, multi-process, and threaded imports
+- **File-level granularity**: Skips entire files that were completed, restarts incomplete ones
+
+**Requirements:**
+- Restart requires `--audit` to be enabled for progress tracking
+- Pass the same file list on restart to identify which files were completed
+
+#### Restart Granularity Options
+
+Current implementation supports:
+
+1. **File-level** (currently implemented): Skip completed files, restart incomplete ones
+   - Simple and reliable
+   - Best for multi-file imports with split files
+   - No duplicate data
+
+2. **Checkpoint-level** (future enhancement): Resume from last 10K-doc checkpoint
+   - Would allow resuming within a single large file
+   - Requires tracking file position/line number
+
+3. **Idempotent** (future enhancement): Use deterministic IDs with upserts
+   - Most reliable for network interruptions
+   - Handles duplicate data gracefully
 
 ## Performance Optimization
 

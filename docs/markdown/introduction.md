@@ -100,7 +100,7 @@ PyImport follows a clean architecture:
 | Dirty data handling | Graceful fallback to string | Strict, may fail |
 | Date formats | Multiple formats, automatic detection | Limited |
 | Parallel processing | Built-in with `--multi` or `--threads` | Requires external scripting |
-| Restart capability | Built-in with `--restart` and `--audit` | Not built-in |
+| Restart capability | Progress tracking infrastructure (in development) | Not built-in |
 | CSV from URLs | Yes | No |
 | File splitting | Built-in | Manual |
 

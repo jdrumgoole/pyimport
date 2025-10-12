@@ -15,10 +15,12 @@ from pyimport.linereader import LocalLineReader
 class CSVReader:
 
     def __init__(self, file: TextIO, field_file: FieldFile, delimiter=",",
-                 skip_lines=0, has_header=True, cut_fields: list[str] = None, limit=0):
+                 skip_lines=0, has_header=True, cut_fields: list[str] = None, limit=0,
+                 track_line_numbers=False):
         #
         # limit is the limit to the number of the data lines read. it ignores the header.
         # if limit is 0, all lines are read.
+        # track_line_numbers adds _line_number field to each document for restart capability
         #
         self._file = file
         self._delimiter = delimiter
@@ -27,6 +29,7 @@ class CSVReader:
         self._has_header = has_header
         self._cut_fields = cut_fields
         self._limit = limit
+        self._track_line_numbers = track_line_numbers
         self._header_line = None
         self._log = logging.getLogger(__name__)
         if delimiter == "tab":
@@ -80,14 +83,20 @@ class CSVReader:
         else:
             return [(k, self._enricher.enrich_value) for k in self._field_file.fields()]
 
-    def make_doc(self, fields, values, cut_fields=None):
+    def make_doc(self, fields, values, cut_fields=None, line_number=None):
         """Create document from CSV row using pre-compiled converters for performance."""
         if self._cut_fields is not None and len(self._cut_fields) > 0:
             # Use pre-compiled converters (faster than original)
-            yield {k: conv(k, v) for (k, conv), v in zip(self._compiled_converters, values)}
+            doc = {k: conv(k, v) for (k, conv), v in zip(self._compiled_converters, values)}
         else:
             # Use pre-compiled converters (faster than original)
-            yield {k: conv(k, v) for (k, conv), v in zip(self._compiled_converters, values)}
+            doc = {k: conv(k, v) for (k, conv), v in zip(self._compiled_converters, values)}
+
+        # Add line number if tracking is enabled
+        if self._track_line_numbers and line_number is not None:
+            doc['_line_number'] = line_number
+
+        yield doc
 
     def __iter__(self) -> Generator[dict, None, None]:
         # TODO: handle reading URLs
@@ -113,7 +122,7 @@ class CSVReader:
                         raise ValueError("CSVReader error - reading the CSV file failed")
                     validated = True
 
-                yield from self.make_doc(self._field_file.fields(), row, self._cut_fields)
+                yield from self.make_doc(self._field_file.fields(), row, self._cut_fields, line_number=i)
 
     @staticmethod
     def sniff_header(filename: str) -> bool:

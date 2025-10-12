@@ -109,6 +109,17 @@ def parse_args_and_cfg_files(cfgparser, input_args=None) -> configargparse.Argum
     cfgparser.add_argument('--auditdatabase', default="PYIMPORT_AUDIT",
                            help="Database for audit records [default: %(default)s]")
     cfgparser.add_argument('--info', default="", help="Info string to be added to audit record")
+
+    #
+    # Restart options
+    #
+    cfgparser.add_argument('--restart', action="store_true", default=False,
+                           help="Resume an interrupted import from last checkpoint (requires --audit)")
+    cfgparser.add_argument('--batch-id', type=int, default=None,
+                           help="Batch ID to restart (use with --restart) [default: auto-detect]")
+    cfgparser.add_argument('--checkpoint-interval', type=int, default=10000,
+                           help="Record progress every N documents [default: %(default)s]")
+
     # cfgparser.add_argument('--tag', default=False, action="store_true", help="Tag each record with filename:<record number>")
     cfgparser.add_argument('--noenrich', default=False, action="store_true",
                            help="Don't enrich records with type info from field file")

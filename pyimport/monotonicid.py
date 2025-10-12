@@ -55,6 +55,16 @@ class MonotonicID:
     def __hash__(self):
         return hash(self._id)
 
+    @classmethod
+    def get_simple_id(cls) -> int:
+        """
+        Get a simple sequential ID without timestamp encoding.
+        Returns just an incrementing counter for cleaner batch IDs.
+        """
+        with cls._lock:
+            cls._counter += 1
+            return cls._counter
+
 # # Example usage
 # id1 = MonotonicID()
 # time.sleep(0.001)  # Ensure the next ID is generated at a different timestamp

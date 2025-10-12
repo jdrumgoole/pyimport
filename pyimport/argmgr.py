@@ -30,10 +30,74 @@ class ArgMgr:
         return self._args
 
     @classmethod
-    def default_args(cls) -> "ArgMgr":
+    def default_args(cls, input_args=None) -> "ArgMgr":
         p = make_parser()
-        args = parse_args_and_cfg_files(p)
+        args = parse_args_and_cfg_files(p, input_args=input_args)
         return ArgMgr(args)
+
+    @classmethod
+    def test_args(cls) -> "ArgMgr":
+        """Create default args for testing with sensible defaults."""
+        import multiprocessing
+        from pyimport.doctimestamp import DocTimeStamp
+        from pyimport.logger import ErrorResponse
+
+        defaults = {
+            'locator': False,
+            'batchsize': 1000,
+            'drop': False,
+            'fieldfile': None,
+            'delimiter': ',',
+            'filenames': [],
+            'filelist': None,
+            'addfilename': False,
+            'cut': None,
+            'addtimestamp': DocTimeStamp.NO_TIMESTAMP,
+            'addfield': None,
+            'hasheader': False,
+            'genfieldfile': False,
+            'onerror': ErrorResponse.Warn,
+            'loglevel': 'INFO',
+            'silent': False,
+            'audit': False,
+            'audithost': 'mongodb://localhost:27017',
+            'auditcollection': 'audit',
+            'auditdatabase': 'PYIMPORT_AUDIT',
+            'info': '',
+            'restart': False,
+            'batch_id': None,
+            'checkpoint_interval': 10000,
+            'noenrich': False,
+            'fieldinfo': None,
+            'limit': 0,
+            'database': 'PYIM',
+            'collection': 'imported',
+            'mdburi': 'mongodb://localhost:27017',
+            'writeconcern': 0,
+            'journal': False,
+            'fsync': False,
+            'pgtable': 'imported',
+            'pguser': 'postgres',
+            'pguri': 'postgresql://localhost:5432/postgres',
+            'pgport': 5432,
+            'pgdatabase': 'postgres',
+            'pgpassword': None,
+            'asyncpro': False,
+            'multi': False,
+            'poolsize': multiprocessing.cpu_count(),
+            'forkmethod': 'fork',
+            'splitfile': False,
+            'autosplit': 2,
+            'splitsize': 1024 * 10,
+            'verbose': False,
+            'input': False,
+            'threads': False,
+            'keepsplits': False,
+            'argsource': False,
+        }
+
+        ns = configargparse.Namespace(**defaults)
+        return ArgMgr(ns)
 
     @classmethod
     def args(cls, **kwargs) -> "ArgMgr":
@@ -48,6 +112,12 @@ class ArgMgr:
         new_ns = configargparse.Namespace(**kwargs)
         self.merge_namespace(new_ns)
         return self
+
+    def copy(self) -> "ArgMgr":
+        """Create a copy of this ArgMgr with the same arguments."""
+        import copy as copy_module
+        new_ns = copy_module.deepcopy(self._args)
+        return ArgMgr(new_ns)
 
     @staticmethod
     def dict_to_ns(d: dict) -> configargparse.Namespace:

@@ -100,11 +100,11 @@ class AsyncMDBImportCommand(MDBImportCommand):
         return ImportResult(total_written, elapsed_time, filename)
 
     @staticmethod
-    async def process_one_file(args, log, filename) -> ImportResult:
+    async def process_one_file(args, log, filename, audit=None, batch_id=None) -> ImportResult:
 
         field_file = ImportCommand.prep_field_file(args, filename)
         q: asyncio.Queue = asyncio.Queue()
-        writer = await AsyncMDBWriter.create(args)
+        writer = await AsyncMDBWriter.create(args, audit=audit, batch_id=batch_id, filename=filename)
         async_reader, parser = await AsyncMDBImportCommand.async_prep_import(args, filename, field_file)
         try:
             async with TaskGroup() as tg:
@@ -120,6 +120,11 @@ class AsyncMDBImportCommand(MDBImportCommand):
                     f"Total documents processed: {total_documents_processed} is not equal to  Total written: {t2.total_written}")
                 raise ValueError(
                     f"Total documents processed: {total_documents_processed} is not equal to  Total written: {t2.total_written}")
+
+            # Mark file as completed if audit is enabled
+            if audit and batch_id:
+                await audit.mark_file_completed(batch_id, filename, result.total_written)
+                log.info(f"Marked '{filename}' as completed in audit")
         finally:
             await writer.close()
             if not is_url(filename):
@@ -129,22 +134,63 @@ class AsyncMDBImportCommand(MDBImportCommand):
     async def process_files(self) -> ImportResults:
         tasks = []
         results : list = []
-        self.print_args(self._args)
+
+        # Handle restart mode or create new batch for audit
+        batch_id = None
+        files_to_process = self._args.filenames
+
+        if self._audit and not self._args.restart:
+            # Create a new batch ID for tracking
+            from pyimport.batchid import generate_suffix_only_batch_id
+            batch_id = generate_suffix_only_batch_id()
+            # Record batch start (async audit uses different signature, skip for now)
+            # TODO: Align async audit with sync audit batch tracking
+
+        if self._args.restart:
+            if not self._audit:
+                self._log.error("--restart requires --audit to be enabled")
+                raise ValueError("Restart mode requires audit tracking")
+
+            # Get batch_id for restart
+            if self._args.batch_id:
+                batch_id = self._args.batch_id
+            else:
+                # Auto-detect last incomplete batch
+                incomplete_batch = await self._audit.get_last_incomplete_batch()
+                if incomplete_batch:
+                    batch_id = incomplete_batch['batchID']
+                else:
+                    self._log.error("No incomplete batch found to restart")
+                    raise ValueError("No incomplete batch found. Use --batch-id or start a new import.")
+
+            # Get completed files and skip them
+            completed_files = await self._audit.get_completed_files(batch_id)
+            files_to_process = [f for f in self._args.filenames if f not in completed_files]
+
+        # Print args with batch ID now that we have it
+        self.print_args(self._args, batch_id=batch_id)
         self._log.info("Using asyncpro")
+
+        if self._args.restart:
+            self._log.info(f"RESTARTING batch {batch_id}")
+            self._log.info(f"Skipping {len(completed_files)} completed files: {completed_files}")
+            self._log.info(f"Resuming with {len(files_to_process)} remaining files")
+
         try:
             async with TaskGroup() as tg:
-                for filename in self._args.filenames:
+                for filename in files_to_process:
                     if not os.path.isfile(filename):
-                        self._log.warning(f"No such file: '{i}' ignoring")
+                        self._log.warning(f"No such file: '{filename}' ignoring")
                         continue
-                    task = tg.create_task(AsyncMDBImportCommand.process_one_file(self._args, self._log, filename))
+                    task = tg.create_task(AsyncMDBImportCommand.process_one_file(self._args, self._log, filename,
+                                                                                  audit=self._audit, batch_id=batch_id))
                     tasks.append(task)
 
             for task in tasks:
                 result = task.result()
                 self.report_process_one_file(self._args, result)
-                self._log.info(f"imported file: '{filename}' ({result.total_written} rows)")
-                self._log.info(f"Total elapsed time to upload '{filename}' : {result.elapsed_duration}")
+                self._log.info(f"imported file: '{result.filename}' ({result.total_written} rows)")
+                self._log.info(f"Total elapsed time to upload '{result.filename}' : {result.elapsed_duration}")
                 self._log.info(f"Average upload rate per second: {round(result.avg_records_per_sec)}")
                 results.append(result)
         except OSError as e:

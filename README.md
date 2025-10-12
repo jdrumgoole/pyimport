@@ -8,7 +8,7 @@
 
 Unlike MongoDB's native `mongoimport`, PyImport focuses on handling real-world messy data, automatic type inference, and high-performance parallel imports.
 
-**Version**: 1.9.0
+**Version**: 1.10.0
 **Author**: Joe Drumgoole ([joe@joedrumgoole.com](mailto:joe@joedrumgoole.com) | [BlueSky](https://bsky.app/profile/joedrumgoole.com))
 **License**: Apache 2.0
 **Source**: [github.com/jdrumgoole/pyimport](https://github.com/jdrumgoole/pyimport)
@@ -24,6 +24,7 @@ Unlike MongoDB's native `mongoimport`, PyImport focuses on handling real-world m
 - **Performance Optimized** - Recent improvements provide 20-35% faster imports
 - **URL Support** - Import directly from URLs or local files
 - **Audit Tracking** - Optional audit records for import tracking and monitoring
+- **Restart Capability** - Resume interrupted imports from where they left off with `--restart`
 
 ## Performance
 
@@ -56,7 +57,7 @@ poetry install
 
 ```bash
 pyimport --version
-# Output: pyimport 1.9.0
+# Output: pyimport 1.10.0
 ```
 
 ## Quick Start
@@ -126,6 +127,35 @@ pyimport --audit --audithost mongodb://localhost:27017 \
 
 Audit records capture metadata about each import including filename, record count, elapsed time, and command-line arguments for monitoring and debugging.
 
+### Restart Interrupted Imports
+
+PyImport can resume interrupted multi-file imports from where they left off:
+
+```bash
+# Start a multi-file import with audit tracking
+pyimport --audit --database mydb --collection mycol file1.csv file2.csv file3.csv
+
+# If interrupted, restart using the batch ID
+pyimport --restart --batch-id abc123 --database mydb --collection mycol \
+         file1.csv file2.csv file3.csv
+
+# Or let PyImport auto-detect the incomplete batch
+pyimport --restart --database mydb --collection mycol \
+         file1.csv file2.csv file3.csv
+```
+
+**Key Features:**
+- **Progress Tracking** - Records checkpoints every N documents (configurable with `--checkpoint-interval`)
+- **File-Level Restart** - Skips already completed files, only processes remaining files
+- **Auto-Detection** - Automatically finds the last incomplete batch if `--batch-id` not specified
+- **Works with All Import Modes** - Supports sync, async, multi-process, and threaded imports
+
+**Example:** Import 10 large files in parallel. If the process crashes after completing 7 files, restart will automatically skip those 7 and only process the remaining 3 files.
+
+**Requirements:**
+- Restart requires `--audit` to be enabled for progress tracking
+- Pass the same file list on restart to identify which files were completed
+
 ## Why PyImport?
 
 MongoDB's native [mongoimport](https://docs.mongodb.com/manual/reference/program/mongoimport/) is excellent, but PyImport offers several additional capabilities:
@@ -138,7 +168,8 @@ MongoDB's native [mongoimport](https://docs.mongodb.com/manual/reference/program
 | **Dirty data handling** | Graceful fallback to string | Strict, may fail |
 | **Date formats** | Multiple formats, automatic detection | Limited |
 | **Parallel processing** | Built-in `--multi`, `--asyncpro`, `--threads` | Requires external scripting |
-| **Audit tracking** | Built-in `--audit` for import monitoring | Not built-in |
+| **Audit tracking** | Built-in `--audit` with progress tracking | Not built-in |
+| **Restart capability** | Full restart support with `--restart` | Not available |
 | **URL imports** | Direct URL support | Requires pre-download |
 | **File splitting** | Automatic with `--splitfile` | Manual |
 | **Performance optimization** | Pre-compiled converters, fast ISO dates | Standard |
@@ -159,6 +190,7 @@ Choose PyImport when you need to:
 - Import data directly from URLs
 - Add metadata (timestamps, filenames, line numbers) to documents
 - Track import operations with audit records
+- Resume interrupted multi-file imports without re-processing completed files
 
 ## Field Files (`.tff`)
 
@@ -337,8 +369,16 @@ Documentation includes:
 ```bash
 --audit                Enable audit tracking
 --audithost URI        MongoDB URI for audit records
---auditdatabase NAME   Database for audit records [default: PYIM_AUDIT]
+--auditdatabase NAME   Database for audit records [default: PYIMPORT_AUDIT]
 --auditcollection NAME Collection for audit records [default: audit]
+```
+
+### Restart Options
+
+```bash
+--restart              Resume an interrupted import
+--batch-id ID          Specify batch ID to restart (auto-detects if omitted)
+--checkpoint-interval N Records progress every N documents [default: 10000]
 ```
 
 ### Data Enrichment Options
@@ -388,6 +428,21 @@ pyimport --audit --audithost mongodb://localhost:27017 \
 
 This creates audit records in the audit collection tracking import metadata for monitoring and debugging.
 
+### Restart an Interrupted Import
+```bash
+# Start import with audit enabled
+pyimport --audit --multi --database mydb --collection mycol \
+         file1.csv file2.csv file3.csv file4.csv file5.csv
+
+# Process is interrupted after completing file1.csv and file2.csv...
+
+# Restart - will skip completed files and only process file3-5
+pyimport --restart --multi --database mydb --collection mycol \
+         file1.csv file2.csv file3.csv file4.csv file5.csv
+```
+
+The restart feature works with all import strategies (sync, async, multi-process, threaded).
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues, feature requests, or pull requests.
@@ -424,7 +479,20 @@ invoke quick-test
 
 ## Version History
 
-**1.9.0** (Current)
+**1.10.0** (Current)
+- **NEW: Restart Capability** - Resume interrupted multi-file imports with `--restart`
+- Progress tracking with configurable checkpoint intervals
+- Auto-detection of incomplete batches
+- File-level restart (skips completed files)
+- Works with all import strategies (sync, async, multi-process, threaded)
+- Fixed multiprocess/threaded audit pickling issue
+- Standardized batch ID field naming (`batchID`)
+- 100% test coverage for restart functionality (9/9 tests passing)
+
+**1.9.1**
+- Bug fixes and stability improvements
+
+**1.9.0**
 - Comprehensive documentation (2,700+ lines)
 - Version centralization with single source of truth
 - Read the Docs integration

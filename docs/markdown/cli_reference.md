@@ -16,7 +16,7 @@ Display PyImport version and exit.
 
 ```bash
 pyimport --version
-# Output: pyimport 1.9.0
+# Output: pyimport 1.10.0
 ```
 
 ### `--help`, `-h`
@@ -563,6 +563,76 @@ Add custom info string to audit record for tracking purposes.
 
 ```bash
 pyimport --audit --info "Daily ETL job - 2024-01-15" data.csv
+```
+
+## Restart Options (NEW in v1.10.0)
+
+### `--restart`
+
+Resume an interrupted multi-file import from where it left off.
+
+**Default:** `False`
+
+**Requirements:** Requires `--audit` to be enabled for progress tracking
+
+```bash
+# Start import with audit
+pyimport --audit --database mydb --collection mycol \
+         file1.csv file2.csv file3.csv
+
+# If interrupted, restart from where it stopped
+pyimport --restart --database mydb --collection mycol \
+         file1.csv file2.csv file3.csv
+```
+
+The system automatically:
+- Detects the last incomplete batch (unless `--batch-id` is specified)
+- Skips files that were already completed
+- Resumes processing remaining files
+- Continues tracking progress
+
+### `--batch-id ID`
+
+Specify the batch ID to restart (optional).
+
+If not specified, PyImport automatically finds the last incomplete batch.
+
+```bash
+# Restart specific batch
+pyimport --restart --batch-id abc123 \
+         --database mydb --collection mycol \
+         file1.csv file2.csv file3.csv
+```
+
+### `--checkpoint-interval COUNT`
+
+Number of documents between progress checkpoints during import.
+
+**Default:** `10000`
+
+```bash
+# Record progress every 5000 documents
+pyimport --audit --checkpoint-interval 5000 data.csv
+
+# Record progress more frequently (every 1000 docs)
+pyimport --audit --checkpoint-interval 1000 data.csv
+```
+
+Lower values provide more granular restart points but create more audit records.
+
+**Example: Restart Workflow**
+
+```bash
+# 1. Start multi-file import with audit
+pyimport --audit --multi --database mydb --collection mycol \
+         file1.csv file2.csv file3.csv file4.csv file5.csv
+
+# Process gets interrupted after completing file1 and file2...
+
+# 2. Restart - automatically skips completed files
+pyimport --restart --multi --database mydb --collection mycol \
+         file1.csv file2.csv file3.csv file4.csv file5.csv
+# Only processes file3.csv, file4.csv, file5.csv
 ```
 
 ## Collection Management Options

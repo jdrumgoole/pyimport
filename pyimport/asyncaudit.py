@@ -22,6 +22,17 @@ End Batch Document
   "end"      : October 10, 2016 9:20 PM
 }
 
+Progress Document (for restart capability)
+{ "batchID"  :  13
+  "progress" : { "filename"          : "data.csv.1"
+                 "docs_written"      : 125000
+                 "last_line_number"  : 125000
+                 "file_position"     : 5242880
+                 "status"            : "in_progress"  # or "completed"
+                }
+  "timestamp" : October 10, 2016 9:18 PM
+}
+
 There is an index on batchID.
 
 
@@ -192,3 +203,129 @@ class AsyncAudit(object):
 
     async def get_valid_batch_ids(self) -> Generator[MonotonicID, None, None]:
         return (MonotonicID(i["batch_id"]) async for i in await self.get_valid_batches())
+
+    # Progress tracking methods for restart capability
+
+    async def record_progress(self, batch_id: MonotonicID, filename: str, docs_written: int,
+                             last_line_number: int = None, file_position: int = None,
+                             status: str = "in_progress") -> pymongo.results.InsertOneResult:
+        """
+        Record progress for a file being imported. This allows restart capability.
+        Should be called periodically (e.g., every 10K documents) and when file completes.
+
+        Args:
+            batch_id: The batch ID for this import
+            filename: Name of the file being processed
+            docs_written: Number of documents written so far
+            last_line_number: Last line number processed (optional)
+            file_position: Byte position in file (optional)
+            status: "in_progress" or "completed"
+        """
+        progress_doc = {
+            "batch_id": batch_id.id,
+            "progress": {
+                "filename": filename,
+                "docs_written": docs_written,
+                "status": status
+            },
+            "timestamp": datetime.now(timezone.utc)
+        }
+
+        if last_line_number is not None:
+            progress_doc["progress"]["last_line_number"] = last_line_number
+        if file_position is not None:
+            progress_doc["progress"]["file_position"] = file_position
+
+        return await self._col.insert_one(progress_doc)
+
+    async def get_file_progress(self, batch_id: MonotonicID, filename: str) -> dict | None:
+        """
+        Get the latest progress record for a specific file in a batch.
+
+        Returns the progress document or None if not found.
+        """
+        return await self._col.find_one(
+            {
+                "batch_id": batch_id.id,
+                "progress.filename": filename
+            },
+            sort=[("timestamp", pymongo.DESCENDING)]
+        )
+
+    async def get_batch_progress(self, batch_id: MonotonicID) -> list[dict]:
+        """
+        Get all progress records for a batch, sorted by most recent first.
+
+        Returns a list of progress documents.
+        """
+        cursor = self._col.find(
+            {
+                "batch_id": batch_id.id,
+                "progress": {"$exists": True}
+            }
+        ).sort("timestamp", pymongo.DESCENDING)
+        return [doc async for doc in cursor]
+
+    async def get_completed_files(self, batch_id: MonotonicID) -> list[str]:
+        """
+        Get list of filenames that have been completed for a batch.
+
+        Returns a list of filenames.
+        """
+        cursor = self._col.find({
+            "batch_id": batch_id.id,
+            "progress.status": "completed"
+        })
+        return [doc["progress"]["filename"] async for doc in cursor]
+
+    async def get_incomplete_files(self, batch_id: MonotonicID) -> list[dict]:
+        """
+        Get list of files that are in progress or pending for a batch.
+
+        Returns a list of progress documents for incomplete files.
+        """
+        cursor = self._col.find({
+            "batch_id": batch_id.id,
+            "progress.status": {"$ne": "completed"}
+        }).sort("timestamp", pymongo.DESCENDING)
+        return [doc async for doc in cursor]
+
+    async def mark_file_completed(self, batch_id: MonotonicID, filename: str,
+                                  total_docs: int) -> pymongo.results.InsertOneResult:
+        """
+        Mark a file as completed for restart tracking.
+
+        Args:
+            batch_id: The batch ID
+            filename: Name of the completed file
+            total_docs: Total documents written for this file
+        """
+        return await self.record_progress(
+            batch_id=batch_id,
+            filename=filename,
+            docs_written=total_docs,
+            status="completed"
+        )
+
+    async def get_last_incomplete_batch(self) -> dict | None:
+        """
+        Find the most recent batch that has not been completed (no end document).
+        Useful for auto-restart functionality.
+
+        Returns the batch start document or None.
+        """
+        # Find batches that have a start but no end
+        cursor = self._col.find(
+            {"batch_id": {"$exists": True}, "start": {"$exists": True}}
+        ).sort("start", pymongo.DESCENDING)
+
+        batches_with_start = [doc async for doc in cursor]
+
+        for batch in batches_with_start:
+            batch_id = batch["batch_id"]
+            # Check if there's an end document for this batch
+            end_doc = await self._col.find_one({"batch_id": batch_id, "end": {"$exists": True}})
+            if end_doc is None:
+                return batch
+
+        return None
