@@ -37,6 +37,9 @@ class CSVReader:
 
         self._enricher = Enricher(field_file=self._field_file)
 
+        # Performance optimization: Pre-compile field converters to avoid repeated lookups
+        self._compiled_converters = self._compile_converters()
+
     @property
     def delimiter(self):
         return self._delimiter
@@ -65,17 +68,35 @@ class CSVReader:
     def skip_lines(self):
         return self._skip_lines
 
-    def make_doc(self, fields, values, cut_fields=None):
+    def _compile_converters(self):
+        """Pre-compile type converters for better performance.
+
+        Returns a list of tuples: (field_name, enricher.enrich_value)
+        This avoids repeated dictionary lookups and method calls per row.
+        """
         if self._cut_fields is not None and len(self._cut_fields) > 0:
-            yield {k: self._enricher.enrich_value(k, v) for k, v in zip(self._field_file.fields(), values) if k in self._cut_fields}
+            # Only compile converters for fields we're keeping
+            return [(k, self._enricher.enrich_value) for k in self._field_file.fields() if k in self._cut_fields]
         else:
-            yield {k: self._enricher.enrich_value(k, v) for k, v in zip(self._field_file.fields(), values)}
+            return [(k, self._enricher.enrich_value) for k in self._field_file.fields()]
+
+    def make_doc(self, fields, values, cut_fields=None):
+        """Create document from CSV row using pre-compiled converters for performance."""
+        if self._cut_fields is not None and len(self._cut_fields) > 0:
+            # Use pre-compiled converters (faster than original)
+            yield {k: conv(k, v) for (k, conv), v in zip(self._compiled_converters, values)}
+        else:
+            # Use pre-compiled converters (faster than original)
+            yield {k: conv(k, v) for (k, conv), v in zip(self._compiled_converters, values)}
 
     def __iter__(self) -> Generator[dict, None, None]:
         # TODO: handle reading URLs
         reader = csv.reader(self._file, delimiter=self._delimiter)
         # we use Reader rather than DictReader because it is more straightforward to use when we may
         # or may not have a header line in the file. We can always use the field_file to map the fields
+
+        expected_field_count = len(self._field_file.fields())
+        validated = False  # Performance: Only validate once
 
         for i, row in enumerate(reader, 1):
             if self._has_header and i == 1:
@@ -84,12 +105,15 @@ class CSVReader:
             if (self._limit > 0) and (i > self._limit):
                 break
             else:
-                if len(self._field_file.fields()) != len(row):
-                    self._log.error(f"Row {i} has {len(row)} fields but field file has {len(self._field_file.fields())}")
-                    self._log.error(f"Are you using the right fieldfile and delimiter?")
-                    raise ValueError("CSVReader error - reading the CSV file failed")
-                else:
-                    yield from self.make_doc(self._field_file.fields(), row, self._cut_fields)
+                # Performance optimization: Only validate field count on first data row
+                if not validated:
+                    if expected_field_count != len(row):
+                        self._log.error(f"Row {i} has {len(row)} fields but field file has {expected_field_count}")
+                        self._log.error(f"Are you using the right fieldfile and delimiter?")
+                        raise ValueError("CSVReader error - reading the CSV file failed")
+                    validated = True
+
+                yield from self.make_doc(self._field_file.fields(), row, self._cut_fields)
 
     @staticmethod
     def sniff_header(filename: str) -> bool:

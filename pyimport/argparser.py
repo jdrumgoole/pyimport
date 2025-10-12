@@ -66,7 +66,7 @@ def parse_args_and_cfg_files(cfgparser, input_args=None) -> configargparse.Argum
     mdb_uri = "mongodb://localhost:27017"
     pg_host = "postgresql://localhost:5432/postgres"
 
-    cfgparser.add_argument('-v", ''--version', action='version', version='%(prog)s ' + __VERSION__)
+    cfgparser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __VERSION__)
 
     cfgparser.add_argument('--locator', default=False, action="store_true",
                            help="add a locator field consisting of "
