@@ -9,7 +9,7 @@
 Unlike MongoDB's native `mongoimport`, PyImport focuses on handling real-world messy data, automatic type inference, and high-performance parallel imports.
 
 **Version**: 1.9.0
-**Author**: Joe Drumgoole ([joe@joedrumgoole.com](mailto:joe@joedrumgoole.com) | [@jdrumgoole](https://x.com/jdrumgoole))
+**Author**: Joe Drumgoole ([joe@joedrumgoole.com](mailto:joe@joedrumgoole.com) | [BlueSky](https://bsky.app/profile/joedrumgoole.com))
 **License**: Apache 2.0
 **Source**: [github.com/jdrumgoole/pyimport](https://github.com/jdrumgoole/pyimport)
 **Documentation**: [pyimport.readthedocs.io](https://pyimport.readthedocs.io/)
@@ -450,7 +450,7 @@ See [CHANGELOG](https://github.com/jdrumgoole/pyimport/releases) for complete ve
 ## Support
 
 - **Email**: [joe@joedrumgoole.com](mailto:joe@joedrumgoole.com)
-- **X/Twitter**: [@jdrumgoole](https://x.com/jdrumgoole)
+- **BlueSky**: [@joedrumgoole.com](https://bsky.app/profile/joedrumgoole.com)
 - **GitHub Issues**: [Report bugs or request features](https://github.com/jdrumgoole/pyimport/issues)
 
 ## License
