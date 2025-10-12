@@ -1,5 +1,12 @@
 import pytest
+import sys
 from pyimport.argmgr import ArgMgr
+
+
+@pytest.fixture(autouse=True)
+def mock_sys_argv(monkeypatch):
+    """Mock sys.argv to avoid pytest arguments interfering with argparser"""
+    monkeypatch.setattr(sys, 'argv', ['pyimport'])
 
 
 def test_args():
@@ -8,7 +15,6 @@ def test_args():
     assert "mdburi" in a.ns
     assert "database" in a.ns
     assert "collection" in a.ns
-
 
 
 def test_add():
@@ -51,7 +57,3 @@ def test_merge_namespaces():
     assert am2.d["b"] == 60
     assert am2.d["c"] == 70
     assert len(am2) == len(am1) + 5
-
-
-
-

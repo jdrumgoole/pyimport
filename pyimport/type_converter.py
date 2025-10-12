@@ -73,6 +73,9 @@ def to_str(v, fmt=None)->str:
 
 
 def iso_to_datetime(v, fmt=None) -> datetime:
+    """Fast ISO date parsing. Much faster than dateutil.parser.parse()."""
+    if v == "NULL" or v == "":
+        return None
     return datetime.fromisoformat(v)
 
 

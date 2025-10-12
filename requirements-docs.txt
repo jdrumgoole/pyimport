@@ -1,0 +1,19 @@
+# Documentation build requirements for Read the Docs
+# These are the minimal dependencies needed to build Sphinx documentation
+
+# Core Sphinx
+sphinx>=8.0.2,<9.0.0
+
+# Markdown support for Sphinx
+myst-parser>=4.0.0,<5.0.0
+
+# Theme
+alabaster>=0.7.13
+
+# Required for importing version from pyimport.version
+# (minimal runtime dependencies only)
+pymongo>=4.7.3
+python-dateutil>=2.9.0
+toml>=0.10.2
+configargparse>=1.7
+motor>=3.4.0

@@ -248,6 +248,7 @@ def test_all_scripts(c):
 def run_pytest(c):
     """Run pytest in all test directories"""
     test_dirs = [
+        'test/test_args',
         'test/test_command',
         'test/test_config',
         'test/test_e2e',
