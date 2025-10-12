@@ -69,10 +69,7 @@ def pyimport_main(input_args=None):
             return 0
 
         if args.drop:
-            if args.restart:
-                log.info("Warning --restart overrides --drop ignoring drop commmand")
-            else:
-                DropCollectionCommand(args=args).drop()
+            DropCollectionCommand(args=args).drop()
 
         if args.fieldinfo:
             cfg = FieldFile(args.fieldinfo)

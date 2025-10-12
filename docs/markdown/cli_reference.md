@@ -502,11 +502,11 @@ pyimport --splitfile --keepsplits data.csv
 # Split files will be named: data.csv.1, data.csv.2, data.csv.3, etc.
 ```
 
-## Audit and Restart Options
+## Audit Options
 
 ### `--audit`
 
-Enable audit tracking (records import progress to audit collection).
+Enable audit tracking (records import metadata to audit collection).
 
 **Default:** `False`
 
@@ -516,6 +516,13 @@ pyimport --audit data.csv
 # Audit records stored in separate collection
 pyimport --audit --audithost mongodb://localhost:27017 data.csv
 ```
+
+Audit records capture:
+- Filename and command-line arguments
+- Total records written and elapsed time
+- Average records per second
+- Import mode (sync, async, multi-process, threaded)
+- Timestamp of import
 
 ### `--audithost URI`
 
@@ -552,24 +559,10 @@ pyimport --audit --auditcollection import_logs data.csv
 
 ### `--info STRING`
 
-Add custom info string to audit record.
+Add custom info string to audit record for tracking purposes.
 
 ```bash
 pyimport --audit --info "Daily ETL job - 2024-01-15" data.csv
-```
-
-### `--restart`
-
-Resume import from last recorded position (requires `--audit`).
-
-**Default:** `False`
-
-```bash
-# Start import with audit
-pyimport --audit data.csv
-
-# If import fails, restart from last position
-pyimport --audit --restart data.csv
 ```
 
 ## Collection Management Options

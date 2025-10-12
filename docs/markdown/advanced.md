@@ -132,11 +132,11 @@ pyimport --splitfile --keepsplits --autosplit 8 --multi data.csv
 - Reusing splits for multiple imports
 - Manual processing of chunks
 
-## Audit and Restart
+## Audit Tracking
 
 ### Enabling Audit Trail
 
-Track import progress for potential restarts:
+Track import metadata for monitoring and debugging:
 
 ```bash
 pyimport --audit --audithost mongodb://localhost:27017 data.csv
@@ -146,35 +146,36 @@ Audit records stored in `PYIMPORT_AUDIT.audit` collection:
 ```json
 {
   "_id": ObjectId("..."),
+  "command": "process one file",
+  "version": "1.9.0",
   "filename": "data.csv",
-  "start_time": ISODate("..."),
-  "end_time": ISODate("..."),
-  "records_processed": 1000000,
-  "status": "completed"
+  "elapsed_time": 8.3,
+  "total_written": 200000,
+  "avg_records_per_sec": 24096,
+  "mode": {"single": true},
+  "cmd_line": "pyimport --audit data.csv",
+  "timestamp": ISODate("2025-10-12T13:45:00Z")
 }
 ```
 
-### Restarting Failed Imports
+### What Audit Records Capture
 
-If an import fails midway:
-
-```bash
-# Original import (fails at row 500,000)
-pyimport --audit data.csv
-
-# Restart from last checkpoint
-pyimport --audit --restart data.csv
-```
-
-PyImport resumes from the last successfully processed position.
+- **Filename** and full command-line arguments
+- **Total records** written and elapsed time
+- **Average throughput** (records per second)
+- **Import mode** (sync, async, multi-process, threaded)
+- **Version** of PyImport used
+- **Timestamp** of import completion
 
 ### Custom Audit Information
 
-Add context to audit records:
+Add context to audit records for better tracking:
 
 ```bash
 pyimport --audit --info "Daily ETL - Production - 2024-01-15" data.csv
 ```
+
+The `--info` string is added to the audit record for your reference.
 
 ### Separate Audit Database
 
@@ -186,6 +187,31 @@ pyimport --audit \
          --auditdatabase audit_logs \
          --auditcollection import_tracking \
          data.csv
+```
+
+### Querying Audit Records
+
+Find import history:
+
+```javascript
+// Recent imports
+use PYIMPORT_AUDIT
+db.audit.find().sort({timestamp: -1}).limit(10)
+
+// Imports for specific file
+db.audit.find({filename: "data.csv"})
+
+// Failed imports (check for errors)
+db.audit.find({"elapsed_time": {$exists: true}}).sort({avg_records_per_sec: 1})
+
+// Performance analysis
+db.audit.aggregate([
+  {$group: {
+    _id: "$mode",
+    avg_throughput: {$avg: "$avg_records_per_sec"},
+    count: {$sum: 1}
+  }}
+])
 ```
 
 ## Performance Optimization

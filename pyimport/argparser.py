@@ -73,9 +73,6 @@ def parse_args_and_cfg_files(cfgparser, input_args=None) -> configargparse.Argum
                                 "filename and input record line to each doc [default: %(default)s]")
     cfgparser.add_argument('--batchsize', type=int, default=1000,
                            help='set mongodb batch size for bulk inserts [default: %(default)s]')
-    cfgparser.add_argument('--restart', default=False, action="store_true",
-                           help="use record thread_id insert to restart at last write"
-                                "also enable restart logfile [default: %(default)s]")
     cfgparser.add_argument('--drop', default=False, action="store_true",
                            help="drop collection before loading [default: %(default)s]")
     # cfgparser.add_argument('--ordered', default=False, action="store_true", help="forced ordered inserts")

@@ -20,10 +20,10 @@ Unlike MongoDB's native `mongoimport`, PyImport focuses on handling real-world m
 - **Graceful Error Handling** - Falls back to strings on type conversion errors instead of failing
 - **Multiple Import Strategies** - Sync, async, multi-process, and threaded imports
 - **Parallel Processing** - Split large files and import in parallel for maximum throughput
-- **Restart Capability** - Resume failed imports from where they left off
 - **Flexible Date Parsing** - Multiple date formats with fast ISO date parsing (100x faster)
 - **Performance Optimized** - Recent improvements provide 20-35% faster imports
 - **URL Support** - Import directly from URLs or local files
+- **Audit Tracking** - Optional audit records for import tracking and monitoring
 
 ## Performance
 
@@ -116,17 +116,15 @@ pyimport --database mydb --collection taxi \
          https://jdrumgoole.s3.eu-west-1.amazonaws.com/2018_Yellow_Taxi_Trip_Data_1000.csv
 ```
 
-### Resume Failed Imports
+### Track Imports with Audit
 
 ```bash
-# First import with audit enabled
+# Import with audit tracking enabled
 pyimport --audit --audithost mongodb://localhost:27017 \
          --database mydb --collection mycol largefile.csv
-
-# Resume from where it left off
-pyimport --restart --audithost mongodb://localhost:27017 \
-         --database mydb --collection mycol largefile.csv
 ```
+
+Audit records capture metadata about each import including filename, record count, elapsed time, and command-line arguments for monitoring and debugging.
 
 ## Why PyImport?
 
@@ -140,7 +138,7 @@ MongoDB's native [mongoimport](https://docs.mongodb.com/manual/reference/program
 | **Dirty data handling** | Graceful fallback to string | Strict, may fail |
 | **Date formats** | Multiple formats, automatic detection | Limited |
 | **Parallel processing** | Built-in `--multi`, `--asyncpro`, `--threads` | Requires external scripting |
-| **Restart capability** | Built-in `--restart` and `--audit` | Not built-in |
+| **Audit tracking** | Built-in `--audit` for import monitoring | Not built-in |
 | **URL imports** | Direct URL support | Requires pre-download |
 | **File splitting** | Automatic with `--splitfile` | Manual |
 | **Performance optimization** | Pre-compiled converters, fast ISO dates | Standard |
@@ -158,9 +156,9 @@ Choose PyImport when you need to:
 - Handle messy, inconsistent, or "dirty" CSV data
 - Automatically infer types from CSV columns
 - Import large files quickly with parallel processing
-- Resume failed imports without starting over
 - Import data directly from URLs
 - Add metadata (timestamps, filenames, line numbers) to documents
+- Track import operations with audit records
 
 ## Field Files (`.tff`)
 
@@ -334,12 +332,13 @@ Documentation includes:
 --keepsplits           Don't delete split files after import
 ```
 
-### Restart Options
+### Audit Options
 
 ```bash
 --audit                Enable audit tracking
---restart              Resume from last successful import
 --audithost URI        MongoDB URI for audit records
+--auditdatabase NAME   Database for audit records [default: PYIM_AUDIT]
+--auditcollection NAME Collection for audit records [default: audit]
 ```
 
 ### Data Enrichment Options
@@ -381,15 +380,13 @@ pyimport --addfilename --addtimestamp now --locator \
          --database mydb --collection mycol data.csv
 ```
 
-### Resume Failed Import
+### Import with Audit Tracking
 ```bash
 pyimport --audit --audithost mongodb://localhost:27017 \
          --database mydb --collection mycol largefile.csv
-
-# If it fails, resume with:
-pyimport --restart --audithost mongodb://localhost:27017 \
-         --database mydb --collection mycol largefile.csv
 ```
+
+This creates audit records in the audit collection tracking import metadata for monitoring and debugging.
 
 ## Contributing
 

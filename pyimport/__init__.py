@@ -18,12 +18,11 @@ generate a typed field file for the specified input file. Even with a field file
 will fall back to the string type if type conversion fails on any
 input column.
 
-pyimport also has the ability to restart  an upload from the
-point where is finished. This restart capability is recorded in an
-``audit`` collection in the current database. And audit record is
-stored for each upload in progress and each completed upload. Thus the
-audit collection gives you a record of all uploads by filename and
-date time.
+pyimport also has the ability to track imports via an optional ``audit`` collection. When
+the ``--audit`` flag is used, an audit record is stored for each import containing
+metadata about the import (filename, records written, elapsed time, throughput, etc.).
+This gives you a complete record of all uploads by filename and datetime for monitoring
+and debugging purposes.
 
 Finally pyimport is more forgiving of *dirty* data. So if your
 actual data doesn't match your field type definitions then the type
@@ -96,19 +95,18 @@ without failing (unless **--onerror** *fail*  is specified).
 Each file in the input list must correspond to a fieldfile format that is
 common across all the files. The fieldfile is specified by the  **--fieldfile** parameter.
 
-Once you have generated a fiels dilw you can pass it in on the command line
+Once you have generated a field file you can pass it in on the command line
 by using the **--fieldfile** argument.
 
-Restart
+Audit Tracking
 -----------------------------
 
-if a user specifies the **--restart** argument the program will keep track of what has
-been uploaded by maintaining a document for each file in an *audit* collection. If the upload
-fails or is interrupted for any reason, the user can restart the upload at the last line of the file
-by including **--restart** on the command line. This will force the program to check the audit collection
-for a corresponding record and restart the upload from the last written location. The audit records are keyed
-by *filename* so for **--restart** to work correctly the same file path must be used for the the original upload
-and the restart.
+If a user specifies the **--audit** argument the program will keep track of import metadata
+by maintaining a document for each import in an *audit* collection. The audit records capture
+filename, total records written, elapsed time, average throughput, import mode, and the complete
+command line used. This provides a complete history of all imports for monitoring, debugging, and
+performance analysis. Audit records are stored in a separate audit database (default: PYIMPORT_AUDIT)
+to avoid impacting production collections.
 
 Examples
 -----------------------------
@@ -168,24 +166,24 @@ The default is *mongodb://localhost:27017/test*
 
 For larger documents you may find a smaller *batchsize* is more efficient.
 
-**--restart**
+**--audit**
 
-    For large batches you may want to restart the batch if uploading is
-    interrupted. Restarts are stored in the current database in a collection
-    called *restart_log*. Each file to be uploaded has its own record in the
-    *restart_log*. The restart log record format is
-    ::
+    Enable audit tracking to record import metadata in a separate audit collection.
+    Audit records capture filename, total records written, elapsed time, average throughput,
+    import mode (sync/async/multi/thread), and the complete command line used.
+    [default: False]
 
-        { "filename"           : <filename of file being uploaded>,
-          "timestamp"      : <datetime that this doc was inserted>,
-          "batch_size"     : <the batchsize specified by --batchsize>,
-          "thread_id"          : <the total number of documents inserted from <filename> file to <timestamp> >,
-          "doc_id"         : <The mongodb _id field for the last record inserted in this batch> }
+**--audithost** *mongodb URI*
 
-    The restart log is keyed of the filename so each filename must be unique otherwise
-    imports that are running in parallel will overwrite each others restart logs.
-    use record thread_id insert to restart at last write also enable restart logfile [default: False]
+    MongoDB URI for storing audit records. [default: mongodb://localhost:27017]
 
+**--auditdatabase** *database*
+
+    Database name for audit collection. [default: PYIMPORT_AUDIT]
+
+**--auditcollection** *collection*
+
+    Collection name for audit records. [default: audit]
 
 **--drop**
     drop collection before loading [default: False]
