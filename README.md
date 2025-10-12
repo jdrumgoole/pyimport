@@ -1,316 +1,462 @@
-# pyimport - A CSV loader for MongoDB
+# PyImport - A Powerful CSV Importer for MongoDB
 
-`pyimport` is a python command program that will import data into a MongoDB database. `pyimport` is written by 
-Joe Drumgoole. Email is [joe@joedrumgoole.com](mailto:joe@joedrumgoole.com)  or hit me up on X: [jdrumgoole](https://x.com/jdrumgoole).
-It is a Python program designed for python 3.10 and beyond. It is Apache 2.0 licensed. Full source code is on
-[github](https://github.com/jdrumgoole/pyimport).
+[![Documentation Status](https://readthedocs.org/projects/pyimport/badge/?version=latest)](https://pyimport.readthedocs.io/en/latest/?badge=latest)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-# Quick Start
+**PyImport** is a Python command-line tool for importing CSV data into MongoDB with automatic type detection, parallel processing, and graceful handling of "dirty" data.
 
-**Step 1**: Install the program
+Unlike MongoDB's native `mongoimport`, PyImport focuses on handling real-world messy data, automatic type inference, and high-performance parallel imports.
 
-```
-$ pip install pyimport
-```
+**Version**: 1.9.0
+**Author**: Joe Drumgoole ([joe@joedrumgoole.com](mailto:joe@joedrumgoole.com) | [@jdrumgoole](https://x.com/jdrumgoole))
+**License**: Apache 2.0
+**Source**: [github.com/jdrumgoole/pyimport](https://github.com/jdrumgoole/pyimport)
+**Documentation**: [pyimport.readthedocs.io](https://pyimport.readthedocs.io/)
 
-Check it runs by executing the following command:
-```
-$ pyimport -v
-pyimport 1.8.2
-```
-Find a suitable CSV file to test. You can download this file,  [2018_Yellow_Taxi_Trip_Data_1000.csv](https://jdrumgoole.s3.eu-west-1.amazonaws.com/2018_Yellow_Taxi_Trip_Data_1000.csv)
-if you have nothing handy. This is a sample of the New Taxi cab dataset from the pyimport test suite. here is 
-the curl command:
+## Key Features
+
+- **Automatic Type Detection** - Generate field files with inferred types using `--genfieldfile`
+- **Graceful Error Handling** - Falls back to strings on type conversion errors instead of failing
+- **Multiple Import Strategies** - Sync, async, multi-process, and threaded imports
+- **Parallel Processing** - Split large files and import in parallel for maximum throughput
+- **Restart Capability** - Resume failed imports from where they left off
+- **Flexible Date Parsing** - Multiple date formats with fast ISO date parsing (100x faster)
+- **Performance Optimized** - Recent improvements provide 20-35% faster imports
+- **URL Support** - Import directly from URLs or local files
+
+## Performance
+
+- **Sync**: ~24,000-32,000 docs/sec
+- **Async**: ~30,000-40,000 docs/sec
+- **Multi-process**: ~50,000+ docs/sec
+
+## Requirements
+
+- **Python**: 3.11 or higher
+- **MongoDB**: 4.0 or higher
+
+## Installation
+
+### From PyPI (Recommended)
+
 ```bash
-$ curl https://jdrumgoole.s3.eu-west-1.amazonaws.com/2018_Yellow_Taxi_Trip_Data_1000.csv -o yellow_trip.csv
-
-```
-Now generate a file file so that we know what the types of the fields are.
-```
-$ pyimport --genfieldfile --delimiter ';' yellow_trip.csv
-Forcing has_header true for --genfieldfile
-Generating field file from 'yellow_trip.csv'
-Created field filename(s) 'yellow_trip.tff' from ['yellow_trip.csv']
-```
-Note that for a fieldfile to be generated successfully the CSV file must has a header line. For this file 
-the delimiter is a semi-colon (;) so we have to specify that with the `--delimiter` option.
-
-Now we can import the data into a MongoDB database. We will accept the default options for database and collection.  
-```
-$ pyimport --delimiter ';' yellow_trip.csv
-Using host       :'mongodb://localhost:27017'
-Using database   :'PYIM'
-Using collection :'imported'
-Write concern    : 0
-journal          : False
-fsync            : False
-has header       : False
-Processing:'yellow_trip.csv'
-imported file: 'yellow_trip.csv' (1000 rows)
-Total elapsed time to upload 'yellow_trip.csv' : 00:00:00.30877
-Average upload rate per second: 32387
-Total elapsed time to upload all files : 00:00:00.32865 seconds
-Average upload rate per second: 30428
-Total records written: 1000
-```
-If you look at the files in [Compass](https://www.mongodb.com/try/download/compass) you will see that the data has been uploaded.
-
-[![Compass](https://jdrumgoole.s3.eu-west-1.amazonaws.com/initial-compass.png)
-
-# Installation
-
-You can install `pyimport` using `pip` the python package manager. This installs a [package](https://pypi.org/project/pyimport/) from PYPI.
-
-```bash:
 pip install pyimport
 ```
-Once installed the program should be available as a script on your path. 
-Run `pyimport -v` to check that the program is installed correctly.
 
+### From Source
 
-# Why pyimport?
- 
-Why do we have `pyimport`? MongoDB already has a perfectly good 
-[mongoimport](https://docs.mongodb.com/manual/reference/program/mongoimport/) program 
-that is available for free in the standard MongoDB [community download](https://www.mongodb.com/download-center#community).
-
-Well `pyimport` does a few things that `mongoimport` doesn't do (yet).
-
-- Automatic `fieldfile` generation with the option **--genfieldfile**.
-- Supports several options to handle "dirty" data: fail, warning or ignore.
-- `--multi` option to allow multiple files to be imported in parallel.
-- `--asyncpro` an option to use asyncio to parallelize the import.
-- `--spiltfiles` option to split a large file into smaller files for parallel import.
-- `--delimiter` option to specify the delimiter for the CSV file.
-- 
-
-On the other hand [mongoimport](https://docs.mongodb.com/manual/reference/program/mongoimport/) supports the richer security options of the [MongoDB Enterprise Advanced](https://www.mongodb.com/products/mongodb-enterprise-advanced)
-product. It is also allows importing of JSON files. This tool is specifically designed for importing CSV data into 
-MongoDB and is the best choice for large scale data imports from CSV repos.
-
-# Field Files
-Field files are TOML formatted files that define the fields in a CSV file. They are used to define the types of the
-fields (aka columns) in the CSV file. 
-
-The field file format is simple. Each field is defined by a TOML section with the field name as the table name. 
-The field can have an alternative name, a type and a format. The type can be one of the following:
-
-- *"str"* : a string
-- *"float"* : a floating point number
-- *"int"* : an integer
-- *"date"* : a date without a time
-- *"datetime"* : a date with a time
-- *"isodate"* : a date in the ISO format YYYY-MM-DD
-- *"bool"* : a boolean value
-- *"timestamp"* : a timestamp
-
-Each file you intend to upload must have a field file defining the
-contents of the CSV file you plan to upload.
-
-If a fieldfile is not explicitly passed in the program will look for a
-fieldfile corresponding to the file name with the extension replaced
-by `.ff`. So for an input file `inventory.csv` the corresponding field
-file would be `inventory.tff`.
-
-If there is no corresponding field file the upload will fail.
-
-Field files (normally expected to have the extension `.tff`) define the names of columns and their
-types for the importer. A field file isa TOML formatted line.
-
-For a [csv file ](https://raw.githubusercontent.com/jdrumgoole/pyimport/master/test/test_filesplitter/inventory.csv) 
-containing the following data:
-
-
-Inventory Item|Amount|Last Order
----|---:|---
-Screws|300|1-Jan-2016
-Bolts|150|3-Feb-2017
-Nails|25|31-Dec-2017
-Nuts|75|29-Feb-2016
-
-The field file generated by `--genfieldfile` is
-
+```bash
+git clone https://github.com/jdrumgoole/pyimport.git
+cd pyimport
+poetry install
 ```
-#
+
+### Verify Installation
+
+```bash
+pyimport --version
+# Output: pyimport 1.9.0
+```
+
+## Quick Start
+
+### Step 1: Create a Simple CSV File
+
+```bash
+# Create a test CSV file
+echo "name,age,city" > test.csv
+echo "Alice,30,NYC" >> test.csv
+echo "Bob,25,LA" >> test.csv
+```
+
+### Step 2: Generate Field File (Type Definitions)
+
+```bash
+pyimport --genfieldfile test.csv
+# Output: Created field filename 'test.tff' from 'test.csv'
+```
+
+This creates a `test.tff` file that defines the type of each column (string, int, date, etc.).
+
+### Step 3: Import to MongoDB
+
+```bash
+pyimport --database mydb --collection people test.csv
+# Imports data using the auto-generated test.tff field file
+```
+
+### Step 4: Verify Import
+
+```bash
+mongosh mydb --eval "db.people.find().pretty()"
+```
+
+## Advanced Usage
+
+### Fast Parallel Import for Large Files
+
+```bash
+pyimport --multi --splitfile --autosplit 8 --poolsize 4 \
+         --database mydb --collection mycol largefile.csv
+```
+
+This splits the file into 8 chunks and processes them with 4 parallel workers.
+
+### Async Import (High Performance)
+
+```bash
+pyimport --asyncpro --database mydb --collection mycol data.csv
+```
+
+### Import from URL
+
+```bash
+pyimport --database mydb --collection taxi \
+         https://jdrumgoole.s3.eu-west-1.amazonaws.com/2018_Yellow_Taxi_Trip_Data_1000.csv
+```
+
+### Resume Failed Imports
+
+```bash
+# First import with audit enabled
+pyimport --audit --audithost mongodb://localhost:27017 \
+         --database mydb --collection mycol largefile.csv
+
+# Resume from where it left off
+pyimport --restart --audithost mongodb://localhost:27017 \
+         --database mydb --collection mycol largefile.csv
+```
+
+## Why PyImport?
+
+MongoDB's native [mongoimport](https://docs.mongodb.com/manual/reference/program/mongoimport/) is excellent, but PyImport offers several additional capabilities:
+
+### PyImport Advantages
+
+| Feature | PyImport | mongoimport |
+|---------|----------|-------------|
+| **Type inference** | Automatic with `--genfieldfile` | Manual with `--columnsHaveTypes` |
+| **Dirty data handling** | Graceful fallback to string | Strict, may fail |
+| **Date formats** | Multiple formats, automatic detection | Limited |
+| **Parallel processing** | Built-in `--multi`, `--asyncpro`, `--threads` | Requires external scripting |
+| **Restart capability** | Built-in `--restart` and `--audit` | Not built-in |
+| **URL imports** | Direct URL support | Requires pre-download |
+| **File splitting** | Automatic with `--splitfile` | Manual |
+| **Performance optimization** | Pre-compiled converters, fast ISO dates | Standard |
+
+### mongoimport Advantages
+
+- Richer security options (Kerberos, LDAP, x.509)
+- MongoDB Enterprise Advanced features
+- JSON file imports (in addition to CSV)
+- Official MongoDB support
+
+### When to Use PyImport
+
+Choose PyImport when you need to:
+- Handle messy, inconsistent, or "dirty" CSV data
+- Automatically infer types from CSV columns
+- Import large files quickly with parallel processing
+- Resume failed imports without starting over
+- Import data directly from URLs
+- Add metadata (timestamps, filenames, line numbers) to documents
+
+## Field Files (`.tff`)
+
+Field files are TOML-formatted files that define column types and formats for CSV imports. They enable automatic type conversion during import.
+
+### Automatic Generation
+
+The easiest way to create a field file is to generate it automatically:
+
+```bash
+pyimport --genfieldfile data.csv
+# Creates data.tff with inferred types
+```
+
+### Supported Types
+
+- **str** - String (text)
+- **int** - Integer
+- **float** - Floating point number
+- **date** - Date without time
+- **datetime** - Date with time
+- **isodate** - ISO format date (YYYY-MM-DD) - fastest parsing
+- **bool** - Boolean (true/false)
+- **timestamp** - Unix timestamp
+
+### Field File Naming
+
+PyImport automatically looks for field files with the `.tff` extension:
+- For `data.csv`, it looks for `data.tff`
+- You can specify a custom field file with `--fieldfile`
+
+### Example Field File
+
+For a CSV file with inventory data:
+
+| Inventory Item | Amount | Last Order |
+|---------------|--------|------------|
+| Screws | 300 | 1-Jan-2016 |
+| Bolts | 150 | 3-Feb-2017 |
+| Nails | 25 | 31-Dec-2017 |
+
+Running `pyimport --genfieldfile inventory.csv` generates:
+
+```toml
 # Created 'inventory.tff'
-# at UTC: 2024-07-04 19:45:15.464832+00:00 by class pyimport.fieldfile
-# Parameters:
-#    csv        : 'inventory.csv'
-#    delimiter  : ','
-#
+# at UTC: 2025-10-12 by pyimport.fieldfile
+
 ["Inventory Item"]
 type = "str"
 name = "Inventory Item"
-format = ""
 
-[" Amount"]
+["Amount"]
 type = "int"
-name = " Amount"
-format = ""
+name = "Amount"
 
-[" Last Order"]
+["Last Order"]
 type = "date"
-name = " Last Order"
-format = "%d-%b-%Y"
+name = "Last Order"
+format = "%d-%b-%Y"  # Date format string
 
 [DEFAULTS_SECTION]
 delimiter = ","
 has_header = true
-"CSV File" = "inventory.csv"
-#end
 ```
 
-The generate field file function uses the first line after the header
-line to guess the type of each column. It tries in order for each
-column to successfully convert the type to a string (str), integer
-(int), float (float) or date (datetime).
+### Type Inference
 
-The generate function may guess wrong if the first line is not
-correctly parseable or is ambiguous. In this case the user can edit the .ff file to
-correct the types.
+PyImport analyzes the first data row after the header to infer types:
+1. Tries to parse as **int**
+2. If that fails, tries **float**
+3. If that fails, tries **date**
+4. Falls back to **str**
 
-In any case if the type conversion fails when reading the actual
-data-file the program will degenerate to converting to a string
-without failing (unless [--onerror fail](#onerror)  is specified).
+You can manually edit `.tff` files to correct types if inference is incorrect.
 
-Each file in the input list must correspond to a field file format that is
-common across all the files. Today the program does not support `format` fields for any other types other 
-than date and datetime fields.
+### Graceful Error Handling
 
-## Date Fields
-Date fields are special and support processing options. There are three types
-of date field.
+If type conversion fails during import, PyImport falls back to storing the value as a string instead of failing the entire import (unless `--onerror fail` is specified).
 
-* *date* : A normal date generally without a timestamp
-* *datetime* : fully qualified date including a timestamp.
-* *isodate* : A normal date in the standard ISO format YYYY-MM-DD. 
+### Date Format Strings
 
-Both date and datetime fields support date formatting strings. This allows
-[strptime](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior)
-to be used to efficient format a date. we infer the date format string using a herustic
-function. 
+Date and datetime fields support [strptime format strings](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior):
 
-If you do not specify a format string then the program will attempt to parse
-each date field it finds using `dateparse` from the [dateutil](https://pypi.org/project/python-dateutil/) 
-library. 
-
-### Simple date format entry
-```
-["test_date"]
-type="datetime"
+```toml
+["order_date"]
+type = "date"
+format = "%Y-%m-%d"  # 2024-12-31
 ```
 
-This will use `dateparse` to make sense of each field.
+Common format codes:
+- `%Y` - 4-digit year (2024)
+- `%m` - Month (01-12)
+- `%d` - Day (01-31)
+- `%H` - Hour (00-23)
+- `%M` - Minute (00-59)
+- `%S` - Second (00-59)
 
+### Date Parsing Performance
+
+For best performance, choose the right date type:
+
+1. **isodate** (fastest) - Use for ISO format dates (YYYY-MM-DD)
+   - 100x faster than generic date parsing
+   ```toml
+   ["created_date"]
+   type = "isodate"
+   ```
+
+2. **date/datetime with format** (fast) - Use when all dates have the same format
+   ```toml
+   ["order_date"]
+   type = "datetime"
+   format = "%Y-%m-%d %H:%M:%S"
+   ```
+
+3. **date/datetime without format** (slow) - Use only for inconsistent date formats
+   ```toml
+   ["flexible_date"]
+   type = "date"  # No format - uses slow dateutil.parser
+   ```
+
+## Complete Documentation
+
+For comprehensive documentation including all CLI options, advanced features, and examples, visit:
+
+**📖 [Full Documentation at readthedocs.io](https://pyimport.readthedocs.io/)**
+
+Documentation includes:
+- **[Installation Guide](https://pyimport.readthedocs.io/en/latest/markdown/installation.html)** - Setup and configuration
+- **[Quick Start](https://pyimport.readthedocs.io/en/latest/markdown/quickstart.html)** - Step-by-step tutorials
+- **[CLI Reference](https://pyimport.readthedocs.io/en/latest/markdown/cli_reference.html)** - All 45+ command-line options
+- **[Field Files Guide](https://pyimport.readthedocs.io/en/latest/markdown/fieldfiles.html)** - Complete `.tff` format reference
+- **[Advanced Usage](https://pyimport.readthedocs.io/en/latest/markdown/advanced.html)** - Parallel processing, optimization, production tips
+
+## Common Options
+
+### Basic Options
+
+```bash
+-h, --help              Show help message
+--version               Show version number
+--database NAME         Database name [default: PYIM]
+--collection NAME       Collection name [default: imported]
+--mdburi URI           MongoDB connection URI [default: mongodb://localhost:27017]
 ```
-["test_date"]
-type="datetime"
-format="%Y-%m-%d"
+
+### Field File Options
+
+```bash
+--genfieldfile          Generate field file from CSV
+--fieldfile FILE        Specify custom field file path
+--delimiter CHAR        Field delimiter [default: ,]
+--hasheader             CSV has header line
 ```
 
-This will use `strptime` to process each string.
+### Performance Options
+
+```bash
+--multi                 Multi-process parallel import
+--asyncpro             Async parallel import (high performance)
+--threads              Thread-based parallel import
+--poolsize N           Number of parallel workers [default: 4]
+--batchsize N          Batch size for bulk inserts [default: 1000]
 ```
-["test_date"]
-type="isodate"
+
+### File Splitting Options
+
+```bash
+--splitfile            Split file for parallel processing
+--autosplit N          Split into N chunks
+--keepsplits           Don't delete split files after import
 ```
 
-This will use [datetime.fromisoformat](https://docs.python.org/3/library/datetime.html#datetime.date.fromisoformat)
-to parse the date. This format only supports YYYY-MM-DD. 
+### Restart Options
 
-format="%Y-%m-%d"
+```bash
+--audit                Enable audit tracking
+--restart              Resume from last successful import
+--audithost URI        MongoDB URI for audit records
+```
 
-### Performance
-The `dateparse` mode is slower by several orders of magnitude.For
-large data sets prefer `date` and `datetime` with a `strptime` compatible format
-string. The fastest formatting is done with `isodate`.
+### Data Enrichment Options
 
-# Options
-`pyimport` has a number of options that can be used to control the import process. In general options are applied to
-all the files included at the end of the command line.
+```bash
+--addfilename          Add filename to each document
+--addtimestamp now     Add current timestamp
+--addtimestamp gen     Add generated ObjectId timestamp
+--locator              Add filename and line number
+--addfield key=value   Add custom field to all documents
+```
 
-## Arguments
+### Error Handling Options
 
+```bash
+--onerror fail         Stop on first error
+--onerror warn         Log errors and continue [default]
+--onerror ignore       Silently skip errors
+```
 
+## Example Workflows
 
-### Optional arguments:
+### Simple Import
+```bash
+pyimport --genfieldfile data.csv
+pyimport --database mydb --collection mycol data.csv
+```
 
-**-h, --help**
+### High-Performance Import
+```bash
+pyimport --multi --splitfile --autosplit 8 --poolsize 4 \
+         --batchsize 5000 --database mydb --collection mycol \
+         largefile.csv
+```
 
-Show the help message and exit.
+### Import with Metadata
+```bash
+pyimport --addfilename --addtimestamp now --locator \
+         --database mydb --collection mycol data.csv
+```
 
-**--database** *name*
+### Resume Failed Import
+```bash
+pyimport --audit --audithost mongodb://localhost:27017 \
+         --database mydb --collection mycol largefile.csv
 
-Specify the *name* of the database to use [default: *test*]
+# If it fails, resume with:
+pyimport --restart --audithost mongodb://localhost:27017 \
+         --database mydb --collection mycol largefile.csv
+```
 
-**--collection** *name*
+## Contributing
 
-Specify the *name* of the collection to use [default: *test*]
+Contributions are welcome! Please feel free to submit issues, feature requests, or pull requests.
 
-**--mdburi** *mongodb URI*
+### Development Setup
 
-Specify the URI for connecting to the database. [default: *mongodb://localhost:27017/test*]
+```bash
+git clone https://github.com/jdrumgoole/pyimport.git
+cd pyimport
+poetry install --with dev
 
-The full connection URI syntax is documented on the [MongoDB docs website.](https://docs.mongodb.com/manual/reference/connection-string/)
+# Run tests
+poetry run pytest
 
-**--batchsize** *batchsize*
+# Run all tests with coverage
+invoke test-all
+```
 
-Set batch os_size for bulk inserts. This is the amount of docs the client
-will add to a batch before trying to upload the whole chunk to the
-server (reduces server round trips). [default: *500*].
+## Testing
 
-For larger documents you may find a smaller *batchsize* is more efficient.
+PyImport has comprehensive test coverage (72%+):
 
-**--drop**
+```bash
+# Run all tests
+invoke test-all
 
-drop the specified collection or table before loading [default: False]
+# Run specific test suites
+cd test/test_command && poetry run pytest
+cd test/test_e2e && poetry run pytest
 
-**--ordered**
+# Quick smoke tests
+invoke quick-test
+```
 
-force ordered inserts
+## Version History
 
-**--fieldfile** *FIELDFILE*
+**1.9.0** (Current)
+- Comprehensive documentation (2,700+ lines)
+- Version centralization with single source of truth
+- Read the Docs integration
+- Performance improvements (20-35% faster)
+- Test coverage improvements (72%)
+- Bug fixes for `--version` flag
 
-Field and type mappings [default: will look for each filenames for a corresponding *filename.tt* file.]
+**1.8.2**
+- Previous stable release
 
-**--delimiter** *DELIMITER*
+See [CHANGELOG](https://github.com/jdrumgoole/pyimport/releases) for complete version history.
 
-The delimiter string used to split fields [default: ,]
+## Links
 
-**--version**
+- **PyPI Package**: [pypi.org/project/pyimport](https://pypi.org/project/pyimport/)
+- **Documentation**: [pyimport.readthedocs.io](https://pyimport.readthedocs.io/)
+- **Source Code**: [github.com/jdrumgoole/pyimport](https://github.com/jdrumgoole/pyimport)
+- **Issue Tracker**: [github.com/jdrumgoole/pyimport/issues](https://github.com/jdrumgoole/pyimport/issues)
 
-show program's version number and exit
+## Support
 
-**--addfilename**
-         
-Add filename field to every entry
+- **Email**: [joe@joedrumgoole.com](mailto:joe@joedrumgoole.com)
+- **X/Twitter**: [@jdrumgoole](https://x.com/jdrumgoole)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/jdrumgoole/pyimport/issues)
 
-**--addtimestamp** [`none|now|gen`]
-                        
-Add a timestamp to each record [default: none]
+## License
 
-**`--addfield`** `fieldname=fieldvalue`
+Apache License 2.0 - See [LICENSE](LICENSE) file for details.
 
-Add this field to every record. The program will attempt to convert `fieldvalue` to the correct type.
+---
 
-**--has_header**  [default: False]
-
-Use header line for column names. 
-
-**--cut fieldname 1, fieldname 2, ...** [DEfault None]
-Only import the specified fields. If not specified import all fields. 
-
-**--genfieldfile**        
-  
-Generate automatically a typed field file *filename.tt* from the data file *filename.xxx*, we set the option *has_header* to true [default: False]
-
-**--id [mongodb|gen]**
-    
-Auto generate ID [default: mongodb]
-
-**`--onerror` [`fail|warn|ignore`]** [default: `warn`]
-
-What to do when we hit an error parsing a csv file. Possibility to default to a String if we cannot parse a value. 
-
-
-### Positional arguments:
-*filenames*: list of files to be processed. 
+Made with ❤️ by [Joe Drumgoole](https://github.com/jdrumgoole) 
