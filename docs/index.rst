@@ -40,6 +40,7 @@ Documentation
    markdown/introduction
    markdown/installation
    markdown/quickstart
+   API
    markdown/cli_reference
    markdown/fieldfiles
    markdown/advanced
