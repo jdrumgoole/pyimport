@@ -116,6 +116,10 @@ def test_thread_import_with_poolsize():
 
             results = ThreadImportCommand(args=args.ns).run()
 
+            # Wait for MongoDB writes to complete (write concern 0)
+            import time
+            time.sleep(0.2)
+
             assert results.total_results == 4
             assert results.total_written == 4
             assert tr.test_col.count_documents({}) == 4
