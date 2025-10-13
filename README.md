@@ -60,6 +60,34 @@ pyimport --version
 # Output: pyimport 1.10.0
 ```
 
+## Python API
+
+PyImport provides a clean programmatic Python API for integrating CSV imports into your applications:
+
+```python
+from pyimport.api import PyImportAPI
+
+# Simple import
+api = PyImportAPI(database="mydb", collection="mycol")
+result = api.import_csv("data.csv", has_header=True)
+print(f"Imported {result.total_written} records")
+
+# Advanced usage with builder pattern
+from pyimport.api import PyImportBuilder
+
+result = (PyImportBuilder()
+    .connect("mongodb://localhost:27017")
+    .database("mydb")
+    .collection("mycol")
+    .csv_file("data.csv")
+    .has_header(True)
+    .parallel("multi", workers=4)
+    .add_timestamp()
+    .import_data())
+```
+
+**Full API Documentation**: [docs/API.md](docs/API.md)
+
 ## Quick Start
 
 ### Step 1: Create a Simple CSV File

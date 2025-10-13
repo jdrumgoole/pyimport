@@ -87,7 +87,7 @@ class ImportCommand:
             ts_func = None
 
         parser = Enricher(field_info, locator=args.locator, timestamp_func=ts_func, onerror=args.onerror,
-                          filename=filename)
+                          filename=filename, add_filename=args.addfilename)
         return parser
 
     @staticmethod

@@ -18,7 +18,8 @@ class Enricher:
                  locator: bool = True,
                  timestamp_func: Callable = None,
                  onerror: ErrorResponse = ErrorResponse.Warn,
-                 filename: str = None):
+                 filename: str = None,
+                 add_filename: bool = False):
 
         self._logger = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ class Enricher:
         self._field_file = field_file
         self._locator = locator
         self._timestamp_func = timestamp_func
+        self._add_filename = add_filename
         if filename is None:
             self._filename = "Unknown"
         else:
@@ -77,6 +79,9 @@ class Enricher:
 
         if self._locator:
             csv_doc['locator'] = {"line": line_number}
+
+        if self._add_filename:
+            csv_doc['filename'] = self._filename
 
         if new_field and new_field not in csv_doc:
             type_str, _ = type_converter.guess_type(new_field[1])
