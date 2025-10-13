@@ -321,11 +321,48 @@ def poetry_publish(c):
 
 
 @task
+def trigger_rtd_build(c):
+    """Trigger Read the Docs build via webhook"""
+    import requests
+
+    # Read the Docs webhook URL for pyimport
+    # Get token from environment variable RTD_WEBHOOK_TOKEN
+    rtd_token = os.environ.get('RTD_WEBHOOK_TOKEN')
+
+    if not rtd_token:
+        print("⚠️  RTD_WEBHOOK_TOKEN not found in environment")
+        print("⚠️  To enable automatic docs rebuilds:")
+        print("   1. Go to https://readthedocs.org/dashboard/pyimport/integrations/")
+        print("   2. Create a Generic webhook")
+        print("   3. Add RTD_WEBHOOK_TOKEN=<token> to .env file")
+        print("⚠️  Skipping Read the Docs rebuild trigger")
+        return
+
+    webhook_url = f"https://readthedocs.org/api/v2/webhook/pyimport/{rtd_token}/"
+
+    try:
+        print("Triggering Read the Docs rebuild...")
+        response = requests.post(webhook_url)
+
+        if response.status_code in [200, 202]:
+            print("✓ Read the Docs build triggered successfully!")
+            print(f"  Build status: {response.json().get('build', {}).get('state', 'queued')}")
+        else:
+            print(f"✗ Failed to trigger RTD build: {response.status_code}")
+            print(f"  Response: {response.text}")
+    except Exception as e:
+        print(f"✗ Error triggering RTD build: {e}")
+
+
+@task
 def publish(c):
-    """Build and publish"""
+    """Build and publish to PyPI and trigger Read the Docs rebuild"""
     build(c)
     with c.cd(ROOT):
         c.run('poetry publish')
+
+    # Trigger Read the Docs rebuild after successful publish
+    trigger_rtd_build(c)
 
 
 @task
