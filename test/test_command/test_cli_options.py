@@ -537,6 +537,10 @@ class TestCLIOptionCombinations:
 
                 results = MDBImportCommand(args=args.ns).run()
 
+                # Wait for MongoDB writes to complete (write concern 0)
+                import time
+                time.sleep(0.2)
+
                 doc = tr.test_col.find_one({"name": "test"})
                 assert doc is not None
                 assert "locator" in doc
