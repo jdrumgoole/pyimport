@@ -347,11 +347,11 @@ For comprehensive documentation including all CLI options, advanced features, an
 **📖 [Full Documentation at readthedocs.io](https://pyimport.readthedocs.io/)**
 
 Documentation includes:
-- **[Installation Guide](https://pyimport.readthedocs.io/en/latest/markdown/installation)** - Setup and configuration
-- **[Quick Start](https://pyimport.readthedocs.io/en/latest/markdown/quickstart)** - Step-by-step tutorials
-- **[CLI Reference](https://pyimport.readthedocs.io/en/latest/markdown/cli_reference)** - All 45+ command-line options
-- **[Field Files Guide](https://pyimport.readthedocs.io/en/latest/markdown/fieldfiles)** - Complete `.tff` format reference
-- **[Advanced Usage](https://pyimport.readthedocs.io/en/latest/markdown/advanced)** - Parallel processing, optimization, production tips
+- **[Installation Guide](https://pyimport.readthedocs.io/en/latest/markdown/installation.html)** - Setup and configuration
+- **[Quick Start](https://pyimport.readthedocs.io/en/latest/markdown/quickstart.html)** - Step-by-step tutorials
+- **[CLI Reference](https://pyimport.readthedocs.io/en/latest/markdown/cli_reference.html)** - All 45+ command-line options
+- **[Field Files Guide](https://pyimport.readthedocs.io/en/latest/markdown/fieldfiles.html)** - Complete `.tff` format reference
+- **[Advanced Usage](https://pyimport.readthedocs.io/en/latest/markdown/advanced.html)** - Parallel processing, optimization, production tips
 
 ## Common Options
 
