@@ -64,6 +64,13 @@ class AsyncAudit(object):
         self._open_batch_count = 0
         self._current_batch_id: MonotonicID = None
 
+    @staticmethod
+    def _get_batch_id_value(batch_id):
+        """Helper to extract batch ID value from either MonotonicID object or string/int."""
+        if isinstance(batch_id, MonotonicID):
+            return batch_id.id
+        return batch_id
+
     async def create_batch_index(self):
         indexes = await self._col.index_information()
         if "batch_id" not in indexes:
@@ -93,10 +100,13 @@ class AsyncAudit(object):
     def current_batch_id(self):
         return self._current_batch_id
 
-    async def add_batch_info(self, batch_id: MonotonicID, info: dict) -> pymongo.results.InsertOneResult:
-        return await self._col.insert_one({"batch_id": batch_id.id,
-                                           "timestamp": datetime.now(timezone.utc),
-                                           "info": info})
+    async def add_batch_info(self, info: dict) -> pymongo.results.InsertOneResult:
+        """
+        Add batch information document to the audit collection.
+        Compatible with sync Audit signature.
+        """
+        info["timestamp"] = datetime.now(timezone.utc)
+        return await self._col.insert_one(info)
 
     async def end_batch(self, batch_id: MonotonicID, info: dict | None = None) -> dict:
 
@@ -206,7 +216,7 @@ class AsyncAudit(object):
 
     # Progress tracking methods for restart capability
 
-    async def record_progress(self, batch_id: MonotonicID, filename: str, docs_written: int,
+    async def record_progress(self, batch_id, filename: str, docs_written: int,
                              last_line_number: int = None, file_position: int = None,
                              status: str = "in_progress") -> pymongo.results.InsertOneResult:
         """
@@ -214,7 +224,7 @@ class AsyncAudit(object):
         Should be called periodically (e.g., every 10K documents) and when file completes.
 
         Args:
-            batch_id: The batch ID for this import
+            batch_id: The batch ID for this import (MonotonicID, str, or int)
             filename: Name of the file being processed
             docs_written: Number of documents written so far
             last_line_number: Last line number processed (optional)
@@ -222,7 +232,7 @@ class AsyncAudit(object):
             status: "in_progress" or "completed"
         """
         progress_doc = {
-            "batch_id": batch_id.id,
+            "batch_id": self._get_batch_id_value(batch_id),
             "progress": {
                 "filename": filename,
                 "docs_written": docs_written,
@@ -238,65 +248,78 @@ class AsyncAudit(object):
 
         return await self._col.insert_one(progress_doc)
 
-    async def get_file_progress(self, batch_id: MonotonicID, filename: str) -> dict | None:
+    async def get_file_progress(self, batch_id, filename: str) -> dict | None:
         """
         Get the latest progress record for a specific file in a batch.
+
+        Args:
+            batch_id: The batch ID (MonotonicID, str, or int)
+            filename: Name of the file
 
         Returns the progress document or None if not found.
         """
         return await self._col.find_one(
             {
-                "batch_id": batch_id.id,
+                "batch_id": self._get_batch_id_value(batch_id),
                 "progress.filename": filename
             },
             sort=[("timestamp", pymongo.DESCENDING)]
         )
 
-    async def get_batch_progress(self, batch_id: MonotonicID) -> list[dict]:
+    async def get_batch_progress(self, batch_id) -> list[dict]:
         """
         Get all progress records for a batch, sorted by most recent first.
+
+        Args:
+            batch_id: The batch ID (MonotonicID, str, or int)
 
         Returns a list of progress documents.
         """
         cursor = self._col.find(
             {
-                "batch_id": batch_id.id,
+                "batch_id": self._get_batch_id_value(batch_id),
                 "progress": {"$exists": True}
             }
         ).sort("timestamp", pymongo.DESCENDING)
         return [doc async for doc in cursor]
 
-    async def get_completed_files(self, batch_id: MonotonicID) -> list[str]:
+    async def get_completed_files(self, batch_id) -> list[str]:
         """
         Get list of filenames that have been completed for a batch.
+
+        Args:
+            batch_id: The batch ID (MonotonicID, str, or int)
 
         Returns a list of filenames.
         """
         cursor = self._col.find({
-            "batch_id": batch_id.id,
+            "batch_id": self._get_batch_id_value(batch_id),
             "progress.status": "completed"
         })
         return [doc["progress"]["filename"] async for doc in cursor]
 
-    async def get_incomplete_files(self, batch_id: MonotonicID) -> list[dict]:
+    async def get_incomplete_files(self, batch_id) -> list[dict]:
         """
         Get list of files that are in progress or pending for a batch.
+
+        Args:
+            batch_id: The batch ID (MonotonicID, str, or int)
 
         Returns a list of progress documents for incomplete files.
         """
         cursor = self._col.find({
-            "batch_id": batch_id.id,
+            "batch_id": self._get_batch_id_value(batch_id),
             "progress.status": {"$ne": "completed"}
         }).sort("timestamp", pymongo.DESCENDING)
         return [doc async for doc in cursor]
 
-    async def mark_file_completed(self, batch_id: MonotonicID, filename: str,
+    async def mark_file_completed(self, batch_id, filename: str,
                                   total_docs: int) -> pymongo.results.InsertOneResult:
         """
         Mark a file as completed for restart tracking.
 
         Args:
-            batch_id: The batch ID
+            batch_id: The batch ID (MonotonicID, str, or int)
             filename: Name of the completed file
             total_docs: Total documents written for this file
         """

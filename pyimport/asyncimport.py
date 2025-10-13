@@ -32,6 +32,46 @@ class AsyncMDBImportCommand(MDBImportCommand):
         self._log = logging.getLogger(__name__)
         self._q = asyncio.Queue()
 
+        # Override parent's sync Audit with AsyncAudit for async operations
+        if args.audit:
+            from motor.motor_asyncio import AsyncIOMotorClient
+            from pyimport.asyncaudit import AsyncAudit
+            client = AsyncIOMotorClient(args.audithost)
+            db = client[args.auditdatabase]
+            self._audit = AsyncAudit(database=db, collection_name=args.auditcollection)
+        else:
+            self._audit = None
+
+    async def report_process_one_file(self, args, result):
+        """Override to make async-compatible"""
+        from pyimport.version import __VERSION__
+        audit_doc = None
+        if self._audit:
+            audit_doc = {"command": "process one file",
+                         "version": __VERSION__,
+                         "filename": result.filename,
+                         "elapsed_time": result.elapsed_time,
+                         "total_written": result.total_written,
+                         "mode": self.process_mode(args),
+                         "avg_records_per_sec": result.avg_records_per_sec,
+                         "cmd_line": " ".join(sys.argv)}
+            await self._audit.add_batch_info(audit_doc)
+        return audit_doc
+
+    async def report_process_files(self, args, results):
+        """Override to make async-compatible"""
+        audit_doc = None
+        if self._audit:
+            audit_doc = {"command": "process files",
+                         "filenames": results.filenames,
+                         "elapsed_time": results.elapsed_time,
+                         "total_written": results.total_written,
+                         "avg_records_per_sec": results.avg_records_per_sec,
+                         "mode": self.process_mode(args),
+                         "cmd_line": " ".join(sys.argv)}
+            await self._audit.add_batch_info(audit_doc)
+        return audit_doc
+
     @staticmethod
     def async_prep_collection(args):
         if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
@@ -188,7 +228,7 @@ class AsyncMDBImportCommand(MDBImportCommand):
 
             for task in tasks:
                 result = task.result()
-                self.report_process_one_file(self._args, result)
+                await self.report_process_one_file(self._args, result)
                 self._log.info(f"imported file: '{result.filename}' ({result.total_written} rows)")
                 self._log.info(f"Total elapsed time to upload '{result.filename}' : {result.elapsed_duration}")
                 self._log.info(f"Average upload rate per second: {round(result.avg_records_per_sec)}")
@@ -207,7 +247,7 @@ class AsyncMDBImportCommand(MDBImportCommand):
             self._log.error(f"Keyboard interrupt... exiting")
             sys.exit(1)
         results = ImportResults(results)
-        self.report_process_files(self._args, results)
+        await self.report_process_files(self._args, results)
         return results
 
     def run(self) -> ImportResults:

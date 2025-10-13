@@ -266,6 +266,7 @@ async def test_multiple_batches_isolation(audit):
 @pytest.mark.asyncio
 async def test_checkpoint_intervals(audit):
     """Test recording checkpoints at intervals"""
+    import asyncio
     batch_id = MonotonicID()
     filename = "large_file.csv"
     checkpoint_interval = 10000
@@ -280,6 +281,7 @@ async def test_checkpoint_intervals(audit):
             last_line_number=docs_written,
             status="in_progress"
         )
+        await asyncio.sleep(0.001)  # Ensure different timestamps
 
     # Mark as completed
     await audit.mark_file_completed(batch_id, filename, total_docs=50000)
