@@ -50,7 +50,7 @@ def test_record_progress_basic(audit):
     # Verify the document was inserted
     progress = audit.get_file_progress(batch_id, filename)
     assert progress is not None
-    assert progress["batch_id"] == batch_id
+    assert progress["batchID"] == batch_id
     assert progress["progress"]["filename"] == filename
     assert progress["progress"]["docs_written"] == 1000
     assert progress["progress"]["status"] == "in_progress"
@@ -110,7 +110,7 @@ def test_get_batch_progress(audit):
 
     # Verify they all belong to the same batch
     for progress in progress_list:
-        assert progress["batch_id"] == batch_id
+        assert progress["batchID"] == batch_id
 
 
 def test_mark_file_completed(audit):
