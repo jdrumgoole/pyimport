@@ -54,7 +54,7 @@ def test_auto_split():
 
 def test_split_file():
     input_filenames = ["mot_test_set_small.csv"]
-    args = ArgMgr.default_args().add_arguments(filenames=input_filenames, hasheader=False, autosplit=2)
+    args = ArgMgr.default_args(input_args=[]).add_arguments(filenames=input_filenames, hasheader=False, autosplit=2)
     files = split_files(args.ns)
     split_files_list = [split[0] for split in files]
     args.add_arguments(filenames=split_files_list)

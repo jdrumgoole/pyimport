@@ -21,8 +21,8 @@ class MDBTestDB:
         self._collections = {}
         self._init_db_name = db_name
         self._init_collection_name = collection_name
-        self._args = ArgMgr.default_args().add_arguments(database=self.TEST_DB_NAME,
-                                                         collection=self.TEST_COLLECTION_NAME)
+        self._args = ArgMgr.default_args(input_args=[]).add_arguments(database=self.TEST_DB_NAME,
+                                                                       collection=self.TEST_COLLECTION_NAME)
         self._drop_db = drop_db
 
     def __enter__(self):

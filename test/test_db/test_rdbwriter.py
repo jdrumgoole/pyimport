@@ -9,12 +9,12 @@ from pyimport.argmgr import ArgMgr
 from test.rdbtest import RDBTestDB
 @pytest.fixture
 def default_args():
-    args = ArgMgr.default_args()
+    args = ArgMgr.default_args(input_args=[])
     return args
 
 
 def test_env() -> None:
-    args = ArgMgr.default_args()
+    args = ArgMgr.default_args(input_args=[])
     args["drop"] = True
     assert args.ns.pguri is not None
 

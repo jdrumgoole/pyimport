@@ -22,7 +22,7 @@ def setup(scope="module"):
     client = pymongo.MongoClient()
     db = client["E2E_TEST"]
     col = db["TEST"]
-    args = ArgMgr.default_args().add_arguments(host="mongodb://localhost:27017", database="E2E_TEST", collection="TEST")
+    args = ArgMgr.default_args(input_args=[]).add_arguments(host="mongodb://localhost:27017", database="E2E_TEST", collection="TEST")
     yield col
     client.drop_database("E2E_TEST")
 
@@ -42,7 +42,7 @@ def test_multi_split(setup):
 
 
 def test_std_with_audit():
-    args = ArgMgr.default_args().add_arguments(filenames=["10lines.txt"], audit=True, delimiter="|", fieldfile="10k.tff")
+    args = ArgMgr.default_args(input_args=[]).add_arguments(filenames=["10lines.txt"], audit=True, delimiter="|", fieldfile="10k.tff")
     assert args.ns.audit is True
     MDBImportCommand(args=args.ns).run()
 
@@ -52,7 +52,7 @@ class TestEndToEnd(unittest.TestCase):
         self._client = pymongo.MongoClient(host="mongodb://localhost:27017")
         self._db = self._client["E2E_TEST"]
         self._col = self._db["TEST"]
-        self._args = ArgMgr.default_args()
+        self._args = ArgMgr.default_args(input_args=[])
         self._args.add_arguments(host="mongodb://localhost:27017", database="E2E_TEST", collection="TEST")
 
     def tearDown(self):

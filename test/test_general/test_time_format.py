@@ -16,7 +16,7 @@ class Test(unittest.TestCase):
         self._db = self._client["TEST_FORMAT"]
         self._collection = self._db["format"]
         self._dir = os.path.dirname(os.path.realpath(__file__))
-        self._args = ArgMgr.default_args()
+        self._args = ArgMgr.default_args(input_args=[])
         self._args.add_arguments(host="mongodb://localhost:27017", database="TEST_FORMAT", collection="format")
 
     def tearDown(self):
@@ -25,7 +25,7 @@ class Test(unittest.TestCase):
     def test_data_format(self):
 
         # MOT delimiter=| fieldfile=mot_time_format_test.tff filenames=mot_time_format_test.txt
-        args = ArgMgr.default_args().add_arguments(filenames=["mot_time_format_test.txt"])
+        args = ArgMgr.default_args(input_args=[]).add_arguments(filenames=["mot_time_format_test.txt"])
         fc = ImportCommand.prep_field_file(args.ns)
         fmt = fc.format_value("test_date")
         self.assertEqual(fmt, "%Y-%m-%d")

@@ -189,7 +189,7 @@ def parse_args_and_cfg_files(cfgparser, input_args=None) -> configargparse.Argum
     # cfgparser.add_argument( '--encoding', default="utf-8", help="Unicode encoding for input file [default: %(default)s]")
     splits = []
 
-    if input_args:
+    if input_args is not None:
         cmd = input_args
         args = cfgparser.parse_args(cmd)
     else:

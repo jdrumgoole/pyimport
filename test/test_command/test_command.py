@@ -158,7 +158,7 @@ def test_drop_command():
     col = db["testx"]
 
     col.insert_one({"hello": "world"})
-    args = ArgMgr.default_args().add_arguments(database="TEST_DROP_CMD", collection="testx")
+    args = ArgMgr.default_args(input_args=[]).add_arguments(database="TEST_DROP_CMD", collection="testx")
     assert col.find_one({"hello": "world"}, projection={"_id":0}) == {"hello": "world"}
     DropCollectionCommand(args=args.ns).drop()
     import time
@@ -168,7 +168,7 @@ def test_drop_command():
 
 def test_generate_fieldfile_command():
     shutil.copy("yellow_tripdata_2015-01-06-200k.csv", "test_generate_ff.csv")
-    args = ArgMgr.default_args().add_arguments(delimiter=",", fieldfile=None, filenames=["test_generate_ff.csv"])
+    args = ArgMgr.default_args(input_args=[]).add_arguments(delimiter=",", fieldfile=None, filenames=["test_generate_ff.csv"])
     GenerateFieldfileCommand(args=args.ns).run()
     assert os.path.isfile("test_generate_ff.tff")
     ff = FieldFile.load("test_generate_ff.tff")

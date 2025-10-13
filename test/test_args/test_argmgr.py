@@ -10,7 +10,7 @@ def mock_sys_argv(monkeypatch):
 
 
 def test_args():
-    a = ArgMgr.default_args()
+    a = ArgMgr.default_args(input_args=[])
     assert a is not None
     assert "mdburi" in a.ns
     assert "database" in a.ns
@@ -18,7 +18,7 @@ def test_args():
 
 
 def test_add():
-    am = ArgMgr.default_args()
+    am = ArgMgr.default_args(input_args=[])
     am.add_arguments(mdburi="mongodb://localhost:27017/testy", database="testy", collection="testy")
     assert am.d["mdburi"] == "mongodb://localhost:27017/testy"
     assert am.d["database"] == "testy"
@@ -26,7 +26,7 @@ def test_add():
 
 
 def test_length():
-    am = ArgMgr.default_args()
+    am = ArgMgr.default_args(input_args=[])
     original_length = len(am)
     am.add_arguments(mdburi="mongodb://localmdburi:27017/testy", database="testy", collection="testy")
     new_length = len(am)
@@ -36,11 +36,11 @@ def test_length():
 
 
 def test_merge_namespaces():
-    am1 = ArgMgr.default_args()
+    am1 = ArgMgr.default_args(input_args=[])
     assert "mdburi" in am1.d
     def_len = len(am1)
-    am2 = ArgMgr.default_args()
-    am3 = ArgMgr.default_args()
+    am2 = ArgMgr.default_args(input_args=[])
+    am3 = ArgMgr.default_args(input_args=[])
     am2.add_arguments(new_arg="is a test", listof=["1", "2", "3"])
     assert len(am2) == def_len + 2
     am3.add_arguments(a=50, b=60, c=70)

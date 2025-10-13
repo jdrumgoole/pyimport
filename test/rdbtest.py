@@ -19,7 +19,7 @@ class RDBTestDB:
     def __init__(self, args):
         self._test_table_name = "pyimport_test"
         self._args = args.ns
-        default_args = ArgMgr.default_args().ns
+        default_args = ArgMgr.default_args(input_args=[]).ns
         if self._args.pguri is None:
             self._uri = default_args.pguri
         else:

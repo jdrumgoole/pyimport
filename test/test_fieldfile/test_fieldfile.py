@@ -55,7 +55,7 @@ class TestFieldFile(unittest.TestCase):
         self._client = pymongo.MongoClient(host="mongodb://localhost:27017")
         self._db = self._client["FC_TEST"]
         self._col = self._db["FC_TEST"]
-        self._args = ArgMgr.default_args()
+        self._args = ArgMgr.default_args(input_args=[])
         self._args.add_arguments(host="mongodb://localhost:27017", database="FC_TEST", collection="FC_TEST")
 
     def tearDown(self):

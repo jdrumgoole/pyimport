@@ -6,7 +6,7 @@ from pyimport.db.syncmdbwriter import SyncMDBWriter
 
 @pytest.fixture(scope="module")
 def setup_args():
-    args = ArgMgr.default_args().add_arguments(database="DBWRITER_TEST_DB", collection="DBWRITER_TEST_COLLECTION")
+    args = ArgMgr.default_args(input_args=[]).add_arguments(database="DBWRITER_TEST_DB", collection="DBWRITER_TEST_COLLECTION")
     return args
 
 

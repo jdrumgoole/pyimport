@@ -337,18 +337,18 @@ class TestCLIOptions:
 
     def test_silent_option(self):
         """Test --silent option (just verify it's set)"""
-        args = ArgMgr.default_args().add_arguments(silent=True)
+        args = ArgMgr.default_args(input_args=[]).add_arguments(silent=True)
         assert args.ns.silent is True
 
-        args = ArgMgr.default_args().add_arguments(silent=False)
+        args = ArgMgr.default_args(input_args=[]).add_arguments(silent=False)
         assert args.ns.silent is False
 
     def test_verbose_option(self):
         """Test --verbose option (just verify it's set)"""
-        args = ArgMgr.default_args().add_arguments(verbose=True)
+        args = ArgMgr.default_args(input_args=[]).add_arguments(verbose=True)
         assert args.ns.verbose is True
 
-        args = ArgMgr.default_args().add_arguments(verbose=False)
+        args = ArgMgr.default_args(input_args=[]).add_arguments(verbose=False)
         assert args.ns.verbose is False
 
     def test_multiple_filenames(self):
@@ -425,7 +425,7 @@ class TestCLIOptions:
 
     def test_database_collection_options(self):
         """Test --database and --collection options"""
-        args = ArgMgr.default_args().add_arguments(
+        args = ArgMgr.default_args(input_args=[]).add_arguments(
             database="TEST_DB_NAME",
             collection="TEST_COLLECTION_NAME"
         )
@@ -435,10 +435,10 @@ class TestCLIOptions:
 
     def test_poolsize_option(self):
         """Test --poolsize option"""
-        args = ArgMgr.default_args().add_arguments(poolsize=4)
+        args = ArgMgr.default_args(input_args=[]).add_arguments(poolsize=4)
         assert args.ns.poolsize == 4
 
-        args = ArgMgr.default_args().add_arguments(poolsize=8)
+        args = ArgMgr.default_args(input_args=[]).add_arguments(poolsize=8)
         assert args.ns.poolsize == 8
 
 
@@ -613,12 +613,12 @@ class TestCLIEdgeCases:
 
     def test_zero_batchsize(self):
         """Test behavior with batchsize=0 (should use default or handle gracefully)"""
-        args = ArgMgr.default_args().add_arguments(batchsize=0)
+        args = ArgMgr.default_args(input_args=[]).add_arguments(batchsize=0)
         # Just verify it accepts the value
         assert args.ns.batchsize == 0
 
     def test_negative_limit(self):
         """Test behavior with negative limit"""
-        args = ArgMgr.default_args().add_arguments(limit=-1)
+        args = ArgMgr.default_args(input_args=[]).add_arguments(limit=-1)
         # Just verify it accepts the value
         assert args.ns.limit == -1
