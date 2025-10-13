@@ -101,6 +101,8 @@ def parse_args_and_cfg_files(cfgparser, input_args=None) -> configargparse.Argum
                            help='Logging level [default: %(default)s]')
     cfgparser.add_argument('--silent', default=False, action="store_true",
                            help="Suspend output except for log file [default: %(default)s]")
+    cfgparser.add_argument('--no-color', default=False, action="store_true",
+                           help="Disable colored output [default: %(default)s]", env_var="NO_COLOR")
     cfgparser.add_argument('--audit', action="store_true", default=False, help="Capture audit records for an upload")
     cfgparser.add_argument('--audithost', default=audit_host, help="Host for audit records [default: %(default)s]",
                            env_var="AUDIT_HOST")

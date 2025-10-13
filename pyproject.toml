@@ -36,6 +36,7 @@ psycopg = "^3.2.1"
 sphinx = "^8.0.2"
 myst-parser = "^4.0.0"
 invoke = "^2.2.0"
+colorama = "^0.4.6"
 
 [tool.poetry.scripts]
 pyimport = "pyimport.pyimport_main:pyimport_main"

@@ -50,7 +50,9 @@ def pyimport_main(input_args=None):
             Log.set_level(args.loglevel)
 
         if not args.silent:
-            Log.add_stream_handler(log_level=args.loglevel)
+            # Disable color if --no-color flag is set or NO_COLOR env var exists
+            use_color = not args.no_color
+            Log.add_stream_handler(log_level=args.loglevel, use_color=use_color)
 
         if args.filelist:
             try:

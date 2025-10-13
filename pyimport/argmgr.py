@@ -59,6 +59,7 @@ class ArgMgr:
             'onerror': ErrorResponse.Warn,
             'loglevel': 'INFO',
             'silent': False,
+            'no_color': False,
             'audit': False,
             'audithost': 'mongodb://localhost:27017',
             'auditcollection': 'audit',
