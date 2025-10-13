@@ -86,7 +86,7 @@ result = (PyImportBuilder()
     .import_data())
 ```
 
-**Full API Documentation**: [docs/API.md](docs/API.md)
+**Full API Documentation**: [docs/API.md](https://github.com/jdrumgoole/pyimport/blob/master/docs/API.md)
 
 ## Quick Start
 
