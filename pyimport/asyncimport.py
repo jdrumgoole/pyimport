@@ -5,7 +5,6 @@ import asyncio
 import os
 import sys
 import time
-from asyncio import TaskGroup
 
 import aiofiles
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -147,19 +146,21 @@ class AsyncMDBImportCommand(MDBImportCommand):
         writer = await AsyncMDBWriter.create(args, audit=audit, batch_id=batch_id, filename=filename)
         async_reader, parser = await AsyncMDBImportCommand.async_prep_import(args, filename, field_file)
         try:
-            async with TaskGroup() as tg:
-                t1 = tg.create_task(AsyncMDBImportCommand.get_csv_doc(args, q, parser, async_reader))
-                t2 = tg.create_task(AsyncMDBImportCommand.put_db_doc(args, q, log, writer, filename))
+            # Use asyncio.gather for Python 3.9+ compatibility (TaskGroup requires 3.11+)
+            t1, t2 = await asyncio.gather(
+                AsyncMDBImportCommand.get_csv_doc(args, q, parser, async_reader),
+                AsyncMDBImportCommand.put_db_doc(args, q, log, writer, filename)
+            )
 
-            total_documents_processed = t1.result()
-            result = t2.result()
+            total_documents_processed = t1
+            result = t2
             await q.join()
 
             if total_documents_processed != result.total_written:
                 log.error(
-                    f"Total documents processed: {total_documents_processed} is not equal to  Total written: {t2.total_written}")
+                    f"Total documents processed: {total_documents_processed} is not equal to  Total written: {result.total_written}")
                 raise ValueError(
-                    f"Total documents processed: {total_documents_processed} is not equal to  Total written: {t2.total_written}")
+                    f"Total documents processed: {total_documents_processed} is not equal to  Total written: {result.total_written}")
 
             # Mark file as completed if audit is enabled
             if audit and batch_id:
@@ -172,7 +173,6 @@ class AsyncMDBImportCommand(MDBImportCommand):
         return result
 
     async def process_files(self) -> ImportResults:
-        tasks = []
         results : list = []
 
         # Handle restart mode or create new batch for audit
@@ -217,17 +217,22 @@ class AsyncMDBImportCommand(MDBImportCommand):
             self._log.info(f"Resuming with {len(files_to_process)} remaining files")
 
         try:
-            async with TaskGroup() as tg:
-                for filename in files_to_process:
-                    if not os.path.isfile(filename):
-                        self._log.warning(f"No such file: '{filename}' ignoring")
-                        continue
-                    task = tg.create_task(AsyncMDBImportCommand.process_one_file(self._args, self._log, filename,
-                                                                                  audit=self._audit, batch_id=batch_id))
-                    tasks.append(task)
+            # Use asyncio.gather for Python 3.9+ compatibility (TaskGroup requires 3.11+)
+            # Build list of coroutines for files to process
+            coroutines = []
+            for filename in files_to_process:
+                if not os.path.isfile(filename):
+                    self._log.warning(f"No such file: '{filename}' ignoring")
+                    continue
+                coroutines.append(
+                    AsyncMDBImportCommand.process_one_file(self._args, self._log, filename,
+                                                          audit=self._audit, batch_id=batch_id)
+                )
 
-            for task in tasks:
-                result = task.result()
+            # Execute all file imports concurrently
+            file_results = await asyncio.gather(*coroutines)
+
+            for result in file_results:
                 await self.report_process_one_file(self._args, result)
                 self._log.info(f"imported file: '{result.filename}' ({result.total_written} rows)")
                 self._log.info(f"Total elapsed time to upload '{result.filename}' : {result.elapsed_duration}")

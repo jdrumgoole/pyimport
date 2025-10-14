@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyimport"
-version = "2.0.1"  # Also defined in pyimport/version.py - keep in sync
+version = "2.0.2"  # Also defined in pyimport/version.py - keep in sync
 description = "A CSV importer for MongoDB"
 authors = ["Joe Drumgoole"]
 license = "Apache-2.0"
@@ -8,42 +8,51 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
+# Core MongoDB dependencies
 pymongo = "^4.7.3"
+motor = "^3.4.0"
+dnspython = "^2.6.1"
+# CSV processing and data handling
 python-dateutil = "^2.9.0.post0"
 toml = "^0.10.2"
-requests = "^2.32.2"
-configargparse = "^1.7"
-coverage = "^7.5.1"
 tqdm = "^4.66.4"
-motor = "^3.4.0"
-aiocsv = "^1.3.2"
-aiofile = "^3.8.8"
-aiohttp = "^3.9.5"
-pytest-asyncio = "^0.23.7"
-asyncstdlib = "^3.12.3"
-mimesis = "^12.1.0"
-aiofiles = "^23.2.1"
-python-dotenv = {extras = ["cli"], version = "^1.0.1"}
-pandas = "^2.2.2"
+configargparse = "^1.7"
 pytz = "^2024.1"
 py-dateinfer = "^0.4.5"
+# Async support
+aiocsv = "^1.3.2"
+aiofile = "^3.8.8"
+aiofiles = "^23.2.1"
+aiohttp = "^3.9.5"
+asyncstdlib = "^3.12.3"
+# Optional: PostgreSQL support (could be made optional extras)
 sqlalchemy = "^2.0.34"
 psycopg2-binary = "^2.9.9"
-dnspython = "^2.6.1"
-pytest = "^8.3.2"
-tox = "^4.18.0"
 psycopg = "^3.2.1"
-sphinx = "^7.0.0"
-myst-parser = "^3.0.0"
-invoke = "^2.2.0"
-colorama = "^0.4.6"
+# Optional: HTTP file fetching
+requests = "^2.32.2"
 
 [tool.poetry.scripts]
 pyimport = "pyimport.pyimport_main:pyimport_main"
 
 [tool.poetry.group.dev.dependencies]
+# Testing
+pytest = "^8.3.2"
+pytest-asyncio = "^0.23.7"
 pytest-xdist = "^3.8.0"
 pytest-cov = "^7.0.0"
+coverage = "^7.5.1"
+tox = "^4.18.0"
+mimesis = "^12.1.0"
+# Documentation
+sphinx = "^7.0.0"
+myst-parser = "^3.0.0"
+# Build automation
+invoke = "^2.2.0"
+colorama = "^0.4.6"
+# Development utilities
+python-dotenv = {extras = ["cli"], version = "^1.0.1"}
+pandas = "^2.2.2"
 
 [tool.pytest.ini_options]
 minversion = "8.0"

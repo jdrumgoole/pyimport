@@ -5,6 +5,20 @@ All notable changes to pyimport will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2025-10-14
+
+### Fixed
+- **CRITICAL: Python 3.9/3.10 Compatibility**: Fixed `asyncio.TaskGroup` import error
+  - Replaced `TaskGroup` (Python 3.11+ only) with `asyncio.gather()` for Python 3.9+ compatibility
+  - Async import functionality now works correctly on Python 3.9, 3.10, 3.11, 3.12, and 3.13
+  - Fixed in `pyimport/asyncimport.py`: Two instances of TaskGroup usage converted to asyncio.gather
+
+### Changed
+- **Tox Configuration**: Fixed tox to actually test on specified Python versions
+  - Changed from `poetry run invoke run-pytest` (which used poetry's virtualenv) to direct `pytest` commands
+  - Tox now correctly uses its own Python 3.9/3.10/3.11/3.12/3.13 virtualenvs for testing
+  - Added all required dependencies directly to tox.ini deps section
+
 ## [2.0.1] - 2025-10-14
 
 ### Added
