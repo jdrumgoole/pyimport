@@ -246,35 +246,11 @@ def test_all_scripts(c):
 
 @task
 def run_pytest(c):
-    """Run pytest in all test directories"""
-    test_dirs = [
-        'test/test_args',
-        'test/test_command',
-        'test/test_config',
-        'test/test_e2e',
-        'test/test_fieldfile',
-        'test/test_file_processor',
-        'test/test_filesplitter',
-        'test/test_http_import',
-        'test/test_linecounter',
-        'test/test_linereader',
-        'test/test_mot',
-        'test/test_splitfile',
-        'test/test_general',
-        'test/test_formats',
-    ]
-
+    """Run pytest across all test directories (auto-discovery)"""
     with c.cd(ROOT):
-        for test_dir in test_dirs:
-            print(f"Running tests in {test_dir}")
-            with c.cd(test_dir):
-                c.run('poetry run pytest')
-
-        # Special case for test_db with PGURI environment variable
-        print("Running tests in test/test_db")
-        with c.cd('test/test_db'):
-            pguri = os.environ.get('PGURI', '')
-            c.run(f'PGURI={pguri} poetry run pytest')
+        pguri = os.environ.get('PGURI', '')
+        print("Running pytest with auto-discovery...")
+        c.run(f'PGURI={pguri} poetry run pytest test/')
 
 
 @task
@@ -294,53 +270,23 @@ def test_all(c):
 # Optimized test tasks
 @task
 def run_pytest_parallel(c):
-    """Run pytest in all test directories with parallel execution"""
-    test_dirs = [
-        'test/test_args',
-        'test/test_command',
-        'test/test_config',
-        'test/test_e2e',
-        'test/test_fieldfile',
-        'test/test_file_processor',
-        'test/test_filesplitter',
-        'test/test_http_import',
-        'test/test_linecounter',
-        'test/test_linereader',
-        'test/test_mot',
-        'test/test_splitfile',
-        'test/test_general',
-        'test/test_formats',
-    ]
-
+    """Run pytest with parallel execution (auto-discovery)"""
     with c.cd(ROOT):
-        for test_dir in test_dirs:
-            print(f"Running tests in {test_dir} (parallel)...")
-            with c.cd(test_dir):
-                c.run('poetry run pytest -n auto -q', warn=True)
-
-        # Special case for test_db with PGURI environment variable
-        print("Running tests in test/test_db (parallel)...")
-        with c.cd('test/test_db'):
-            pguri = os.environ.get('PGURI', '')
-            c.run(f'PGURI={pguri} poetry run pytest -n auto -q', warn=True)
+        pguri = os.environ.get('PGURI', '')
+        print("Running pytest with parallel execution...")
+        c.run(f'PGURI={pguri} poetry run pytest test/ -n auto', warn=True)
 
 
 @task
 def quick_pytest(c):
     """Run pytest quickly (parallel execution, essential tests only)"""
     # Run only the fastest/most important test directories
-    essential_test_dirs = [
-        'test/test_command',
-        'test/test_general',
-        'test/test_e2e',
-    ]
+    essential_dirs = 'test/test_command test/test_general test/test_e2e'
 
     print("Running essential pytest tests (parallel)...")
     with c.cd(ROOT):
-        for test_dir in essential_test_dirs:
-            print(f"  {test_dir}...")
-            with c.cd(test_dir):
-                c.run('poetry run pytest -n auto -q', warn=True)
+        pguri = os.environ.get('PGURI', '')
+        c.run(f'PGURI={pguri} poetry run pytest {essential_dirs} -n auto -q', warn=True)
 
 
 @task
