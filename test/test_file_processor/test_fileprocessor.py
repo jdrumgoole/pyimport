@@ -9,12 +9,15 @@ import unittest
 
 import pymongo
 import pymongo.errors
+import pytest
+
+# Mark all tests in this file to run in the same group to avoid collection conflicts
+pytestmark = pytest.mark.xdist_group(name="fileprocessor_sequential")
 
 from pyimport.argmgr import ArgMgr
 from pyimport.csvreader import CSVReader
 from pyimport.filesplitter import LineCounter
 from pyimport.mdbimportcmd import MDBImportCommand
-import pytest
 
 from test.mdbtest import MDBTestDB
 

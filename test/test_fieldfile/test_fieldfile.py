@@ -11,13 +11,16 @@ import unittest
 
 import pymongo
 import dateutil
+import pytest
+
+# Mark all tests in this file to run in the same group to avoid collection conflicts
+pytestmark = pytest.mark.xdist_group(name="fieldfile_sequential")
 
 from pyimport.fieldfile import FieldFile, FieldFileException
 from pyimport.filesplitter import LineCounter
 from pyimport.logger import Log
 from pyimport.mdbimportcmd import MDBImportCommand
 from pyimport.argmgr import ArgMgr
-import pytest
 
 from test.mdbtest import MDBTestDB
 

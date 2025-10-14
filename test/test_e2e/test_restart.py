@@ -16,6 +16,9 @@ import pytest
 import pymongo
 from unittest.mock import patch, MagicMock
 
+# Mark all tests in this file to run in the same group to avoid database conflicts
+pytestmark = pytest.mark.xdist_group(name="restart_sequential")
+
 from pyimport.argmgr import ArgMgr
 from pyimport.audit import Audit
 from pyimport.fieldfile import FieldFile

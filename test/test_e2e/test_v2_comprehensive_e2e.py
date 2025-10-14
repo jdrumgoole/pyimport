@@ -5,6 +5,10 @@ Tests full import pipelines with async, multi-process, and thread modes.
 import os
 import tempfile
 import pytest
+
+# Mark all tests in this file to run in the same group to avoid database conflicts
+pytestmark = pytest.mark.xdist_group(name="v2_comprehensive_sequential")
+
 from pyimport.fieldfile import FieldFile
 from pyimport.csvreader import CSVReader, AsyncCSVReader
 from pyimport.mdbimportcmd import MDBImportCommand

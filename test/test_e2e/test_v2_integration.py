@@ -4,6 +4,10 @@ Tests end-to-end CSV import with nested field mappings.
 """
 import os
 import pytest
+
+# Mark all tests in this file to run in the same group to avoid database conflicts
+pytestmark = pytest.mark.xdist_group(name="v2_integration_sequential")
+
 from pyimport.fieldfile import FieldFile
 from pyimport.csvreader import CSVReader
 from pyimport.mdbimportcmd import MDBImportCommand

@@ -6,6 +6,9 @@ import random
 import pymongo
 import pytest
 
+# Mark all tests in this file to run in the same group to avoid collection conflicts
+pytestmark = pytest.mark.xdist_group(name="command_sequential")
+
 from pyimport import type_converter
 from pyimport.argmgr import ArgMgr
 from pyimport.generatefieldfilecommand import GenerateFieldfileCommand
