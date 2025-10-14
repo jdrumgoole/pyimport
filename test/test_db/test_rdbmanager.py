@@ -18,6 +18,14 @@ def db_url():
 def rdb_manager(db_url):
     return RDBManager(db_url)
 
+
+@pytest.fixture
+def test_table_name(request):
+    """Generate worker-specific table name for parallel test isolation"""
+    worker_id = getattr(request.config, 'workerinput', {}).get('workerid', 'master')
+    return f"test_table_{worker_id}"
+
+
 def test_sanitize_identifier():
     assert RDBManager.sanitize_identifier('valid_name') == 'valid_name'
     with pytest.raises(ValueError):
@@ -32,27 +40,27 @@ def test_map_python_type_to_sqlalchemy():
     assert RDBManager.map_python_type_to_sqlalchemy(bytes) == String  # Default case
 
 
-def test_creates_table_successfully(rdb_manager):
+def test_creates_table_successfully(rdb_manager, test_table_name):
     schema = {"id": int, "name": str}
-    table = rdb_manager.create_table("test_table", schema)
-    assert table.name == "test_table"
-    assert rdb_manager.is_table("test_table")
-    rdb_manager.drop_table("test_table")
+    table = rdb_manager.create_table(test_table_name, schema)
+    assert table.name == test_table_name
+    assert rdb_manager.is_table(test_table_name)
+    rdb_manager.drop_table(test_table_name)
 
 
-def test_raises_error_if_table_exists(rdb_manager):
+def test_raises_error_if_table_exists(rdb_manager, test_table_name):
     schema = {"id": int, "name": str}
-    rdb_manager.create_table("test_table", schema)
+    rdb_manager.create_table(test_table_name, schema)
     with pytest.raises(RDBManagerError):
-        rdb_manager.create_table("test_table", schema)
-    rdb_manager.drop_table("test_table")
+        rdb_manager.create_table(test_table_name, schema)
+    rdb_manager.drop_table(test_table_name)
 
 
-def test_drops_table_successfully(rdb_manager):
+def test_drops_table_successfully(rdb_manager, test_table_name):
     schema = {"id": int, "name": str}
-    rdb_manager.create_table("test_table", schema)
-    rdb_manager.drop_table("test_table")
-    assert not rdb_manager.is_table("test_table")
+    rdb_manager.create_table(test_table_name, schema)
+    rdb_manager.drop_table(test_table_name)
+    assert not rdb_manager.is_table(test_table_name)
 
 
 def test_raises_error_if_table_does_not_exist(rdb_manager):
@@ -60,22 +68,22 @@ def test_raises_error_if_table_does_not_exist(rdb_manager):
         rdb_manager.drop_table("nonexistent_table")
 
 
-def test_creates_index_successfully(rdb_manager):
+def test_creates_index_successfully(rdb_manager, test_table_name):
     schema = {"id": int, "name": str}
-    rdb_manager.create_table("test_table", schema)
-    rdb_manager.create_index("test_index", "test_table", ["id"])
+    rdb_manager.create_table(test_table_name, schema)
+    rdb_manager.create_index("test_index", test_table_name, ["id"])
     inspector = rdb_manager.get_inspector()
-    indexes = inspector.get_indexes("test_table")
+    indexes = inspector.get_indexes(test_table_name)
     assert any(index['name'] == "test_index" for index in indexes)
-    rdb_manager.drop_table("test_table")
+    rdb_manager.drop_table(test_table_name)
 
 
-def test_drops_index_successfully(rdb_manager):
+def test_drops_index_successfully(rdb_manager, test_table_name):
     schema = {"id": int, "name": str}
-    rdb_manager.create_table("test_table", schema)
-    rdb_manager.create_index("test_index", "test_table", ["id"])
-    rdb_manager.drop_index("test_table", "test_index")
+    rdb_manager.create_table(test_table_name, schema)
+    rdb_manager.create_index("test_index", test_table_name, ["id"])
+    rdb_manager.drop_index(test_table_name, "test_index")
     inspector = rdb_manager.get_inspector()
-    indexes = inspector.get_indexes("test_table")
+    indexes = inspector.get_indexes(test_table_name)
     assert not any(index['name'] == "test_index" for index in indexes)
-    rdb_manager.drop_table("test_table")
+    rdb_manager.drop_table(test_table_name)

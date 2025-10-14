@@ -12,50 +12,51 @@ def postgres_uri():
     return PostgresURI.get_pguri().uri
 
 
+@pytest.fixture
+def test_db_name(request):
+    """Generate worker-specific database name for parallel test isolation"""
+    worker_id = getattr(request.config, 'workerinput', {}).get('workerid', 'master')
+    return f"test_db_{worker_id}"
+
+
 def test_connection(postgres_uri: str) -> bool:
     assert RDBMaker.test_db_connection(postgres_uri)
 
 
-def test_database_exists(postgres_uri):
-    dbname = "test_db"
-    assert not RDBMaker.is_database(postgres_uri, dbname)
+def test_database_exists(postgres_uri, test_db_name):
+    assert not RDBMaker.is_database(postgres_uri, test_db_name)
 
 
-def test_create_test_database(postgres_uri):
-    dbname = "test_db"
-    RDBMaker.create_database(postgres_uri, dbname)
-    assert RDBMaker.is_database(postgres_uri, dbname)
-    RDBMaker.delete_database(postgres_uri, dbname)
+def test_create_test_database(postgres_uri, test_db_name):
+    RDBMaker.create_database(postgres_uri, test_db_name)
+    assert RDBMaker.is_database(postgres_uri, test_db_name)
+    RDBMaker.delete_database(postgres_uri, test_db_name)
 
 
-def test_delete_test_database(postgres_uri):
-    dbname = "test_db"
-    RDBMaker.create_database(postgres_uri, dbname)
-    RDBMaker.delete_database(postgres_uri, dbname)
-    assert not RDBMaker.is_database(postgres_uri, dbname)
+def test_delete_test_database(postgres_uri, test_db_name):
+    RDBMaker.create_database(postgres_uri, test_db_name)
+    RDBMaker.delete_database(postgres_uri, test_db_name)
+    assert not RDBMaker.is_database(postgres_uri, test_db_name)
 
 
-def test_creates_database_successfully(postgres_uri):
-    dbname = "test_db"
-    RDBMaker.create_database(postgres_uri, dbname)
-    assert RDBMaker.is_database(postgres_uri, dbname)
-    RDBMaker.delete_database(postgres_uri, dbname)
+def test_creates_database_successfully(postgres_uri, test_db_name):
+    RDBMaker.create_database(postgres_uri, test_db_name)
+    assert RDBMaker.is_database(postgres_uri, test_db_name)
+    RDBMaker.delete_database(postgres_uri, test_db_name)
 
 
-def test_deletes_database_successfully(postgres_uri):
-    dbname = "test_db"
-    RDBMaker.create_database(postgres_uri, dbname)
-    assert RDBMaker.is_database(postgres_uri, dbname)
-    RDBMaker.delete_database(postgres_uri, dbname)
-    assert not RDBMaker.is_database(postgres_uri, dbname)
+def test_deletes_database_successfully(postgres_uri, test_db_name):
+    RDBMaker.create_database(postgres_uri, test_db_name)
+    assert RDBMaker.is_database(postgres_uri, test_db_name)
+    RDBMaker.delete_database(postgres_uri, test_db_name)
+    assert not RDBMaker.is_database(postgres_uri, test_db_name)
 
 
-def test_handles_existing_database_creation(postgres_uri):
-    dbname = "test_db"
-    RDBMaker.create_database(postgres_uri, dbname)
+def test_handles_existing_database_creation(postgres_uri, test_db_name):
+    RDBMaker.create_database(postgres_uri, test_db_name)
     with pytest.raises(DatabaseError):
-        RDBMaker.create_database(postgres_uri, dbname)
-    RDBMaker.delete_database(postgres_uri, dbname)
+        RDBMaker.create_database(postgres_uri, test_db_name)
+    RDBMaker.delete_database(postgres_uri, test_db_name)
 
 
 def test_handles_nonexistent_database_deletion(postgres_uri):
