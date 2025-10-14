@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyimport"
-version = "2.0.3"  # Also defined in pyimport/version.py - keep in sync
+version = "2.0.4"  # Also defined in pyimport/version.py - keep in sync
 description = "A CSV importer for MongoDB"
 authors = ["Joe Drumgoole"]
 license = "Apache-2.0"

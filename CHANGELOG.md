@@ -5,6 +5,16 @@ All notable changes to pyimport will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4] - 2025-10-14
+
+### Fixed
+- **Parallel test execution**: Fixed race conditions in pytest-xdist parallel tests
+  - Added `xdist_group` markers to force sequential execution within test files
+  - Prevents multiple test workers from interfering with each other's MongoDB collections
+  - Fixed test failures like `assert 9 == (4148 - 3130)` caused by cross-worker data pollution
+  - Affected files: test_command, test_restart, test_v2_comprehensive_e2e, test_v2_integration, test_fieldfile, test_fileprocessor
+  - Tests now properly isolated while maintaining parallel execution across different test files
+
 ## [2.0.3] - 2025-10-14
 
 ### Fixed
