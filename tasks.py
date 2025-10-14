@@ -68,11 +68,11 @@ def python_bin(c):
 def std_quicktest(c):
     """Standard quick test"""
     with c.cd(ROOT):
-        c.run('poetry run python mdbutils/dbopy.py--drop PYIM.imported', hide='stdout')
+        c.run('poetry run python pyimport/dbop.py --drop PYIM.imported', hide='stdout')
         c.run('poetry run python pyimport/pyimport_main.py --delimiter \'|\' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt', hide='stdout')
         c.run('poetry run python pyimport/pyimport_main.py --audit --delimiter \'|\' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt', hide='stdout')
-        c.run('poetry run python mdbutils/dbopy.py--count PYIM.imported')
-        c.run('poetry run python mdbutils/dbopy.py--drop PYIM.imported', hide='stdout')
+        c.run('poetry run python pyimport/dbop.py --count PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --drop PYIM.imported', hide='stdout')
 
 
 @task
@@ -80,8 +80,8 @@ def audit_quicktest(c):
     """Audit quick test"""
     with c.cd(ROOT):
         c.run('poetry run python pyimport/pyimport_main.py --audit --delimiter \'|\' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt')
-        c.run('poetry run python mdbutils/dbop.py --count PYIM.imported')
-        c.run('poetry run python mdbutils/dbop.py --drop PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --count PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --drop PYIM.imported')
 
 
 @task
@@ -90,8 +90,8 @@ def async_quicktest(c):
     with c.cd(ROOT):
         c.run('poetry run python pyimport/pyimport_main.py --audit --asyncpro --delimiter \'|\' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt')
         c.run('poetry run python pyimport/pyimport_main.py --asyncpro --delimiter \'|\' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt', hide='stdout')
-        c.run('poetry run python mdbutils/dbop.py --count PYIM.imported')
-        c.run('poetry run python mdbutils/dbopy.py--drop PYIM.imported', hide='stdout')
+        c.run('poetry run python pyimport/dbop.py --count PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --drop PYIM.imported', hide='stdout')
 
 
 @task
@@ -100,8 +100,8 @@ def thread_quicktest(c):
     with c.cd(ROOT):
         c.run('poetry run python pyimport/pyimport_main.py --audit --thread --delimiter \'|\' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt', hide='stdout')
         c.run('poetry run python pyimport/pyimport_main.py --asyncpro --thread --delimiter \'|\' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt', hide='stdout')
-        c.run('poetry run python mdbutils/dbop.py -count PYIM.imported')
-        c.run('poetry run python mdbutils/dbop.py --drop PYIM.imported', hide='stdout')
+        c.run('poetry run python pyimport/dbop.py --count PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --drop PYIM.imported', hide='stdout')
 
 
 @task
@@ -110,8 +110,8 @@ def multi_quicktest(c):
     with c.cd(ROOT):
         c.run('poetry run python pyimport/pyimport_main.py --splitfile --multi --poolsize 2 --delimiter \'|\' --fieldfile ./test/test_mot/10k.tff ./test/test_command/120lines.txt', hide='stdout')
         c.run('poetry run python pyimport/pyimport_main.py --splitfile --multi --poolsize 2 --audit --delimiter \'|\' --fieldfile ./test/test_mot/10k.tff ./test/test_command/120lines.txt', hide='stdout')
-        c.run('poetry run python mdbutils/dbop.py --count PYIM.imported')
-        c.run('poetry run python mdbutils/dbop.py --drop PYIM.imported', hide='stdout')
+        c.run('poetry run python pyimport/dbop.py --count PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --drop PYIM.imported', hide='stdout')
 
 
 @task
@@ -133,8 +133,8 @@ def test_audit(c):
         c.run('poetry run python pyimport/pyimport_main.py --audit --asyncpro --multi --delimiter \'|\' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt', hide='stdout')
         c.run('poetry run python pyimport/pyimport_main.py --audit --threads --delimiter \'|\' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt', hide='stdout')
         c.run('poetry run python pyimport/pyimport_main.py --audit --threads --asyncpro --delimiter \'|\' --fieldfile ./test/test_command/10k.tff ./test/test_command/120lines.txt', hide='stdout')
-        c.run('poetry run python mdbutils/dbop.py --count PYIM.imported')
-        c.run('poetry run python mdbutils/dbop.py --drop PYIM.imported', hide='stdout')
+        c.run('poetry run python pyimport/dbop.py --count PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --drop PYIM.imported', hide='stdout')
 
 
 @task
@@ -143,12 +143,12 @@ def test_scripts(c):
     with c.cd(ROOT):
         c.run('poetry run python pyimport/pyimport_main.py -h', hide='both')
         c.run('poetry run python pyimport/pyimport_main.py --delimiter \'|\' ./test/test_mot/10k.txt', hide='both')
-        c.run('poetry run python mdbutils/dbop.py --count PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --count PYIM.imported')
         c.run('poetry run python pyimport/pyimport_main.py --asyncpro --delimiter \'|\' ./test/test_mot/10k.txt', hide='both')
-        c.run('poetry run python mdbutils/dbop.py --count PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --count PYIM.imported')
         c.run('poetry run python pyimport/pwc.py -h', hide='both')
         c.run('poetry run python pyimport/splitfile.py -h', hide='both')
-        c.run('poetry run python mdbutils/dbop.py --drop PYIM.imported', hide='both')
+        c.run('poetry run python pyimport/dbop.py --drop PYIM.imported', hide='both')
 
 
 @task
@@ -156,7 +156,7 @@ def test_data(c):
     """Test with data files"""
     with c.cd(ROOT):
         c.run('poetry run python pyimport/pyimport_main.py --drop --multi --splitfile --autosplit 4 --fieldfile test/data/100k.tff --delimiter "|" --poolsize 2 test/data/100k.txt', hide='stdout')
-        c.run('poetry run python mdbutils/dbop.py --drop PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --drop PYIM.imported')
 
 
 @task
@@ -175,7 +175,7 @@ def test_yellowtrip(c):
         c.run('poetry run python pyimport/pyimport_main.py --audit --asyncpro --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --async ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv')
         c.run('poetry run python pyimport/pyimport_main.py --audit --asyncpro --splitfile --multi --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --async ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv')
         c.run('poetry run python pyimport/pyimport_main.py --audit --asyncpro --splitfile --threads --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv')
-        c.run('poetry run python mdbutils/dbop.py --drop PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --drop PYIM.imported')
         c.run('rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff')
 
 
@@ -186,7 +186,7 @@ def test_multi(c):
         c.run('poetry run python pyimport/pyimport_main.py --genfieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv', hide='stdout')
         c.run('poetry run python pyimport/pyimport_main.py --multi --splitfile --autosplit 10 --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff --poolsize 4 ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv', hide='stdout')
         c.run('rm ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff')
-        c.run('poetry run python mdbutils/dbop.py --drop PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --drop PYIM.imported')
 
 
 @task
@@ -194,7 +194,7 @@ def test_threads(c):
     """Test threading"""
     with c.cd(ROOT):
         c.run('poetry run python pyimport/pyimport_main.py --asyncpro --threads --poolsize 8 --splitfile --autosplit 8 --fieldfile ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.tff ./test/test_splitfile/yellow_tripdata_2015-01-06-200k.csv', hide='stdout')
-        c.run('poetry run python mdbutils/dbop.py --drop PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --drop PYIM.imported')
 
 
 @task
@@ -206,7 +206,7 @@ def test_small_multi(c):
         c.run('poetry run python pyimport/pyimport_main.py --genfieldfile yellow_tripdata_2015-01-06-5k.csv')
         c.run('poetry run python pyimport/pyimport_main.py --database SMALL --collection yellowcab --splitfile --autosplit 2 --fieldfile yellow_tripdata_2015-01-06-5k.tff --poolsize 2 yellow_tripdata_2015-01-06-5k.csv', hide='stdout')
         c.run('rm yellow_tripdata_2015-01-06-5k.tff yellow_tripdata_2015-01-06-5k.csv')
-        c.run('poetry run python mdbutils/dbop.py --drop SMALL.yellowcab')
+        c.run('poetry run python pyimport/dbop.py --drop SMALL.yellowcab')
 
 
 @task
@@ -222,8 +222,8 @@ def mongoimport(c):
     with c.cd(ROOT):
         c.run('mongoimport --db test --collection yellowcab --type csv --columnsHaveTypes --numInsertionWorkers=8 --fieldFile test/test_mongoimport/yellow_trip_data_10.mff --file test/test_mongoimport/yellow_tripdata_200_noheader.csv')
         c.run('poetry run python pyimport/pyimport_main.py --hasheader --forkmethod spawn --asyncpro --multi --splitfile --autosplit 10 --poolsize 8 --fieldfile ./test/test_command/yellow_trip.tff ./test/test_command/yellow_tripdata_2015-01-06-200k.csv')
-        c.run('poetry run python mdbutils/dbop.py --drop PYIM.imported')
-        c.run('poetry run python mdbutils/dbop.py --drop test.yellowcab')
+        c.run('poetry run python pyimport/dbop.py --drop PYIM.imported')
+        c.run('poetry run python pyimport/dbop.py --drop test.yellowcab')
 
 
 @task

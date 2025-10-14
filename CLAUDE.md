@@ -18,46 +18,68 @@ poetry install
 poetry run pyimport <options> <csv-files>
 
 # Build the package
-poetry build
+invoke build
 
 # Publish to PyPI
-poetry publish
+invoke publish
 ```
 
-### Testing
+### Task Management with Invoke
+
+This project uses **Invoke** for task automation (replacing Make). All development tasks are defined in `tasks.py`.
 
 ```bash
-# Run all tests
-make test_all
+# List all available tasks with descriptions
+invoke --list
 
-# Run pytest only (all test directories)
-make pytest
+# Quick development cycle (essential tests only - fastest)
+invoke quick-dev
 
-# Run specific test suites
+# Run all tests (pytest + integration + tox)
+invoke test-all
+
+# Run specific test categories
+invoke run-pytest              # All pytest suites
+invoke run-pytest-parallel     # Parallel pytest (faster)
+invoke quick-pytest            # Essential tests only
+invoke test-all-scripts        # Integration tests only
+
+# Quick smoke tests (various import modes)
+invoke quick-test              # All quick tests
+invoke std-quicktest           # Standard sync import
+invoke async-quicktest         # Async import
+invoke thread-quicktest        # Thread-based import
+invoke multi-quicktest         # Multi-process import
+
+# Build and publish workflow
+invoke build                   # Full test suite + tox + build
+invoke publish                 # Build, test, tag, publish to PyPI
+
+# Cross-version testing
+invoke tox-run                 # Test on Python 3.9-3.13
+invoke tox-run --env py312     # Test specific Python version
+invoke check-python-versions   # Check available Python versions
+
+# Documentation
+invoke docs-build              # Build Sphinx docs
+invoke docs-serve              # Build and serve docs on localhost:8000
+
+# Environment info
+invoke testenv                 # Show environment variables
+invoke pguri                   # Show PostgreSQL URI
+invoke root                    # Show project root path
+```
+
+### Direct Testing Commands
+
+```bash
+# Run specific test suites directly
 cd test/test_command && poetry run pytest
 cd test/test_e2e && poetry run pytest
 cd test/test_db && PGURI=${PGURI} poetry run pytest
 
-# Quick smoke tests
-make quick_test
-
-# Test specific import modes
-make std_quicktest      # Standard synchronous import
-make async_quicktest    # Async import
-make thread_quicktest   # Threaded import
-make multi_quicktest    # Multi-process import
-```
-
-### Alternative: Using Invoke Tasks
-
-```bash
-# List available tasks
-invoke --list
-
-# Run tests using invoke
-invoke test-all
-invoke run-pytest
-invoke quick-test
+# Parallel testing with pytest-xdist
+cd test/test_general && poetry run pytest -n auto
 ```
 
 ### Utility Commands
@@ -66,12 +88,20 @@ invoke quick-test
 # Generate a field file from a CSV
 poetry run pyimport --genfieldfile <csv-file>
 
-# Drop a collection
-poetry run python mdbutils/dbop.py --drop DATABASE.COLLECTION
-
-# Count documents
-poetry run python mdbutils/dbop.py --count DATABASE.COLLECTION
+# Database operations (using dbop.py)
+poetry run python pyimport/dbop.py --drop DATABASE.COLLECTION
+poetry run python pyimport/dbop.py --count DATABASE.COLLECTION
 ```
+
+### Migration from Make
+
+**Note**: The project has migrated from Make to Invoke. If you see references to `make` commands:
+- `make test_all` → `invoke test-all`
+- `make quick_test` → `invoke quick-test`
+- `make build` → `invoke build`
+- `make publish` → `invoke publish`
+
+See `MAKEFILE_TO_INVOKE_MIGRATION.md` for complete command mapping.
 
 ## Architecture
 
@@ -182,8 +212,41 @@ test/                         # Organized by feature
 ├── test_db/                  # Database writer tests
 └── test_general/             # Unit tests
 
-mdbutils/                     # MongoDB utility scripts
-└── dbop.py                   # Database operations (drop, count)
+tasks.py                      # Invoke task definitions (replaces Makefile)
+pyimport/dbop.py              # Database operations (drop, count)
+```
+
+### Task Organization (tasks.py)
+
+The project uses Invoke for task automation with the following categories:
+
+**Testing Tasks**:
+- `test-all`, `run-pytest`, `run-pytest-parallel`: Full test suites
+- `quick-test`, `quick-dev`, `quick-pytest`: Fast development cycles
+- `std-quicktest`, `async-quicktest`, `thread-quicktest`, `multi-quicktest`: Smoke tests
+- `test-audit`, `test-scripts`, `test-data`: Specific test categories
+
+**Build & Publish Tasks**:
+- `build`: Full build with cross-version testing (pytest + tox + poetry build)
+- `publish`: Complete release workflow (build, tag, publish, trigger docs)
+- `poetry-build`, `poetry-publish`: Direct poetry commands
+- `clean`: Remove build artifacts
+
+**Cross-Version Testing**:
+- `tox-run`: Test across Python 3.9-3.13
+- `check-python-versions`: Verify Python installations
+
+**Documentation Tasks**:
+- `docs-build`: Build Sphinx documentation
+- `docs-serve`: Serve docs locally on port 8000
+- `docs-clean`: Clean documentation artifacts
+- `trigger-rtd-build`: Trigger Read the Docs webhook
+
+**Utility Tasks**:
+- `testenv`, `path`, `pguri`, `root`: Environment inspection
+- `genfieldfile`: Generate field files
+- Integration test tasks: `test-yellowtrip`, `test-multi`, `test-threads`, etc.
+
 ```
 
 ## Environment Variables
