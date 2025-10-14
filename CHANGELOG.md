@@ -5,6 +5,40 @@ All notable changes to pyimport will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Build System Migration**: Completed migration from Make to Invoke
+  - Removed Makefile (all 33 targets successfully converted to invoke tasks)
+  - Fixed critical bugs in tasks.py discovered during migration:
+    - Corrected 13 instances of incorrect path `mdbutils/dbop.py` → `pyimport/dbop.py`
+    - Fixed typos `dbopy.py` → `dbop.py`
+    - Fixed missing dash `-count` → `--count` in thread_quicktest
+  - Simplified pytest tasks to use auto-discovery instead of explicit directory loops
+  - Eliminated ~85 lines of redundant code
+  - See MAKEFILE_TO_INVOKE_MIGRATION.md for complete migration analysis
+
+### Documentation
+- **CLAUDE.md**: Updated all build commands from `make` to `invoke`
+  - Replaced all `make test_all` references with `invoke test-all`
+  - Replaced all `make build` references with `invoke build`
+  - Replaced all `make publish` references with `invoke publish`
+  - Fixed dbop.py path references from `mdbutils/dbop.py` to `pyimport/dbop.py`
+- **MAKEFILE_TO_INVOKE_MIGRATION.md**: Added comprehensive migration documentation
+  - Complete coverage analysis showing all 33 Makefile targets converted
+  - Command mapping reference for developers
+  - Benefits analysis (better error handling, parallel tests, cross-platform)
+  - Lists 13 enhanced tasks unique to Invoke
+
+### Migration Notes
+- **Action Required**: Replace all `make` commands with `invoke` commands
+  - `make test_all` → `invoke test-all`
+  - `make quick_test` → `invoke quick-test`
+  - `make build` → `invoke build`
+  - `make publish` → `invoke publish`
+  - See full mapping in MAKEFILE_TO_INVOKE_MIGRATION.md
+- Use `invoke --list` to see all available tasks
+
 ## [2.0.5] - 2025-10-14
 
 ### Fixed
