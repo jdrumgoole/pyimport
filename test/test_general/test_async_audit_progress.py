@@ -20,12 +20,15 @@ async def mongo_client():
 
 
 @pytest_asyncio.fixture(scope="function")
-async def audit_db(mongo_client):
-    """Create test database"""
-    db = mongo_client["TEST_ASYNC_AUDIT"]
+async def audit_db(mongo_client, request):
+    """Create test database with worker-specific name for parallel test isolation"""
+    # Get worker ID from pytest-xdist (e.g., 'gw0', 'gw1', 'master')
+    worker_id = getattr(request.config, 'workerinput', {}).get('workerid', 'master')
+    db_name = f"TEST_ASYNC_AUDIT_{worker_id}"
+    db = mongo_client[db_name]
     yield db
     # Cleanup
-    await mongo_client.drop_database("TEST_ASYNC_AUDIT")
+    await mongo_client.drop_database(db_name)
 
 
 @pytest_asyncio.fixture(scope="function")

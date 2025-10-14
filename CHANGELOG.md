@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed test failures like `assert 9 == (4148 - 3130)` caused by cross-worker data pollution
   - Affected files: test_command, test_restart, test_v2_comprehensive_e2e, test_v2_integration, test_fieldfile, test_fileprocessor
   - Tests now properly isolated while maintaining parallel execution across different test files
+- **Async audit progress tests**: Fixed parallel test contamination in test_async_audit_progress.py
+  - Modified `audit_db` fixture to use worker-specific database names (TEST_ASYNC_AUDIT_{worker_id})
+  - Each pytest-xdist worker now has its own isolated MongoDB database
+  - All 166 tests in test_general now pass with parallel execution
 - **Tox test execution**: Fixed tox running tests from wrong directory
   - Tests now run from within their respective test directories using `sh -c 'cd test/XXX && pytest'`
   - Added `allowlist_externals = sh` to tox.ini to allow shell commands
