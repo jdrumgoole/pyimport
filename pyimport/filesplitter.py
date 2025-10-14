@@ -22,6 +22,8 @@ The output files have the same filename as the input file with a number appended
 There is also a **count_lines** function to thread_id the lines in a file.
 
 """
+from __future__ import annotations
+
 import os
 import shutil
 from enum import Enum
