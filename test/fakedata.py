@@ -39,7 +39,7 @@
 #     print(profile)
 from datetime import datetime
 
-from mimesis import Person, Cryptographic
+from mimesis import Person, Cryptographic, Datetime
 from mimesis.locales import Locale
 from mimesis.schema import Schema
 import random
@@ -59,14 +59,19 @@ def generate_user_profiles(count: int, seed: int = None):
 
     crypto = Cryptographic(seed=seed)
     person = Person(locale=Locale.EN, seed=seed)
+    dt = Datetime(locale=Locale.EN, seed=seed)
 
     for _ in range(count):
+        # Use Datetime provider for birthdate - compatible with mimesis 12.1.0+
+        # Generate a birthdate between 1950 and 2005 for realistic ages
+        birth_date = dt.date(start=1950, end=2005)
+
         yield {
             "id": crypto.uuid(),
             "name": person.full_name(),
             "email": person.email(),
             "username": person.username(),
-            "DOB": datetime.combine(person.birthdate(), datetime.min.time()),  # mongodb needs datetime objects
+            "DOB": datetime.combine(birth_date, datetime.min.time()),  # mongodb needs datetime objects
             "phone": person.telephone(),
             "gender": person.gender(),
         }
