@@ -5,6 +5,24 @@ All notable changes to pyimport will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.5] - 2025-10-14
+
+### Fixed
+- **File splitter test isolation**: Fixed file system race conditions with temporary directories
+  - Added `temp_work_dir` fixtures to test_splitfile.py and test_filesplitter.py
+  - Each test now runs in isolated temporary directory with worker-specific naming
+  - Prevents FileNotFoundError when parallel workers compete for same split file names
+  - All 29 filesplitter tests and 5 splitfile tests now pass with parallel execution
+- **Mimesis API compatibility**: Fixed test compatibility with mimesis 12.1.0
+  - Changed from `Person.birthdate()` (not available in 12.1.0) to `Datetime.date()`
+  - Works across all mimesis versions (12.1.0 for Python 3.9 and 17.0.0 for Python 3.10+)
+  - All asyncinserter tests now pass on Python 3.10-3.13
+
+### Verified
+- **Complete test suite success**: All 166 tests in test_general pass on Python 3.10-3.13
+- **Cross-version compatibility**: Confirmed working on Python 3.9, 3.10, 3.11, 3.12, and 3.13
+- **Parallel test execution**: Zero race conditions with pytest-xdist parallel workers
+
 ## [2.0.4] - 2025-10-14
 
 ### Fixed
