@@ -73,7 +73,8 @@ class Enricher:
             line_number = "Unknown"
 
         if len(csv_doc) == 1:
-            line = ",".join(csv_doc.values())
+            # Convert values to strings, handling nested dicts
+            line = ",".join(str(v) for v in csv_doc.values())
             self._eh.warning(f"Warning: only one field in input line. Do you have the right delimiter set ?")
             self._eh.warning(f"input line : {line}")
 

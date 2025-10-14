@@ -28,21 +28,32 @@ from pyimport.filesplitter import LineCounter
 @pytest.fixture(scope="function")
 def test_db():
     """Set up a test database and audit database."""
+    # Use pytest-xdist worker ID for unique database names in parallel tests
+    worker_id = os.environ.get('PYTEST_XDIST_WORKER', '')
+    db_suffix = f"_{worker_id}" if worker_id else ""
+
+    test_db_name = f"RESTART_TEST_DB{db_suffix}"
+    audit_db_name = f"RESTART_TEST_AUDIT{db_suffix}"
+    collection_name = "test_collection"
+
     client = pymongo.MongoClient("mongodb://localhost:27017")
-    test_db = client["RESTART_TEST_DB"]
-    audit_db = client["RESTART_TEST_AUDIT"]
+    test_db = client[test_db_name]
+    audit_db = client[audit_db_name]
 
     yield {
         "client": client,
         "test_db": test_db,
         "audit_db": audit_db,
-        "test_collection": test_db["test_collection"],
-        "audit_collection": audit_db["audit"]
+        "test_collection": test_db[collection_name],
+        "audit_collection": audit_db["audit"],
+        "test_db_name": test_db_name,
+        "audit_db_name": audit_db_name,
+        "collection_name": collection_name
     }
 
-    # Cleanup
-    client.drop_database("RESTART_TEST_DB")
-    client.drop_database("RESTART_TEST_AUDIT")
+    # Cleanup - drop only our worker-specific databases
+    client.drop_database(test_db_name)
+    client.drop_database(audit_db_name)
 
 
 @pytest.fixture(scope="function")
@@ -81,12 +92,12 @@ def test_basic_import_with_audit(test_db, temp_csv_files):
     """Test that basic import with audit creates progress records."""
     args = ArgMgr.test_args().add_arguments(
         mdburi="mongodb://localhost:27017",
-        database="RESTART_TEST_DB",
-        collection="test_collection",
+        database=test_db["test_db_name"],
+        collection=test_db["collection_name"],
         filenames=[temp_csv_files[0]],
         audit=True,
         audithost="mongodb://localhost:27017",
-        auditdatabase="RESTART_TEST_AUDIT",
+        auditdatabase=test_db["audit_db_name"],
         hasheader=True,
         checkpoint_interval=50  # Checkpoint every 50 docs
     )
@@ -128,12 +139,12 @@ def test_restart_skips_completed_files(test_db, temp_csv_files):
     """Test that restart skips files that have already been completed."""
     args = ArgMgr.test_args().add_arguments(
         mdburi="mongodb://localhost:27017",
-        database="RESTART_TEST_DB",
-        collection="test_collection",
+        database=test_db["test_db_name"],
+        collection=test_db["collection_name"],
         filenames=temp_csv_files,  # All three files
         audit=True,
         audithost="mongodb://localhost:27017",
-        auditdatabase="RESTART_TEST_AUDIT",
+        auditdatabase=test_db["audit_db_name"],
         hasheader=True,
         checkpoint_interval=50
     )
@@ -188,12 +199,12 @@ def test_restart_auto_detect_batch(test_db, temp_csv_files):
     """Test that restart can auto-detect the last incomplete batch."""
     args = ArgMgr.test_args().add_arguments(
         mdburi="mongodb://localhost:27017",
-        database="RESTART_TEST_DB",
-        collection="test_collection",
+        database=test_db["test_db_name"],
+        collection=test_db["collection_name"],
         filenames=temp_csv_files[:2],  # Only first two files
         audit=True,
         audithost="mongodb://localhost:27017",
-        auditdatabase="RESTART_TEST_AUDIT",
+        auditdatabase=test_db["audit_db_name"],
         hasheader=True
     )
 
@@ -240,12 +251,12 @@ def test_checkpoint_recording(test_db, temp_csv_files):
     """Test that checkpoints are recorded at correct intervals."""
     args = ArgMgr.test_args().add_arguments(
         mdburi="mongodb://localhost:27017",
-        database="RESTART_TEST_DB",
-        collection="test_collection",
+        database=test_db["test_db_name"],
+        collection=test_db["collection_name"],
         filenames=[temp_csv_files[1]],  # 200 rows
         audit=True,
         audithost="mongodb://localhost:27017",
-        auditdatabase="RESTART_TEST_AUDIT",
+        auditdatabase=test_db["audit_db_name"],
         hasheader=True,
         checkpoint_interval=50  # Checkpoint every 50 docs
     )
@@ -279,12 +290,12 @@ def test_multiprocess_restart(test_db, temp_csv_files):
     """Test restart functionality with multi-process import."""
     args = ArgMgr.test_args().add_arguments(
         mdburi="mongodb://localhost:27017",
-        database="RESTART_TEST_DB",
-        collection="test_collection",
+        database=test_db["test_db_name"],
+        collection=test_db["collection_name"],
         filenames=temp_csv_files,
         audit=True,
         audithost="mongodb://localhost:27017",
-        auditdatabase="RESTART_TEST_AUDIT",
+        auditdatabase=test_db["audit_db_name"],
         hasheader=True,
         multi=True,
         poolsize=2
@@ -337,12 +348,12 @@ def test_threaded_restart(test_db, temp_csv_files):
     """Test restart functionality with threaded import."""
     args = ArgMgr.test_args().add_arguments(
         mdburi="mongodb://localhost:27017",
-        database="RESTART_TEST_DB",
-        collection="test_collection",
+        database=test_db["test_db_name"],
+        collection=test_db["collection_name"],
         filenames=temp_csv_files,
         audit=True,
         audithost="mongodb://localhost:27017",
-        auditdatabase="RESTART_TEST_AUDIT",
+        auditdatabase=test_db["audit_db_name"],
         hasheader=True,
         threads=True,
         poolsize=2
@@ -389,9 +400,13 @@ def test_threaded_restart(test_db, temp_csv_files):
 
 def test_restart_requires_audit(temp_csv_files):
     """Test that restart fails without audit enabled."""
+    # Use worker-specific database names even for this negative test
+    worker_id = os.environ.get('PYTEST_XDIST_WORKER', '')
+    db_suffix = f"_{worker_id}" if worker_id else ""
+
     args = ArgMgr.test_args().add_arguments(
         mdburi="mongodb://localhost:27017",
-        database="RESTART_TEST_DB",
+        database=f"RESTART_TEST_DB{db_suffix}",
         collection="test_collection",
         filenames=temp_csv_files,
         audit=False,  # Audit NOT enabled
@@ -407,12 +422,12 @@ def test_restart_no_incomplete_batch(test_db, temp_csv_files):
     """Test that restart fails when no incomplete batch exists."""
     args = ArgMgr.test_args().add_arguments(
         mdburi="mongodb://localhost:27017",
-        database="RESTART_TEST_DB",
-        collection="test_collection",
+        database=test_db["test_db_name"],
+        collection=test_db["collection_name"],
         filenames=temp_csv_files,
         audit=True,
         audithost="mongodb://localhost:27017",
-        auditdatabase="RESTART_TEST_AUDIT",
+        auditdatabase=test_db["audit_db_name"],
         restart=True  # Trying to restart but no previous batch
     )
 
@@ -436,12 +451,12 @@ def test_progress_tracking_with_line_numbers(test_db, temp_csv_files):
     try:
         args = ArgMgr.test_args().add_arguments(
             mdburi="mongodb://localhost:27017",
-            database="RESTART_TEST_DB",
-            collection="test_collection",
+            database=test_db["test_db_name"],
+            collection=test_db["collection_name"],
             filenames=[temp_file.name],
             audit=True,
             audithost="mongodb://localhost:27017",
-            auditdatabase="RESTART_TEST_AUDIT",
+            auditdatabase=test_db["audit_db_name"],
             hasheader=True,
             checkpoint_interval=25
         )

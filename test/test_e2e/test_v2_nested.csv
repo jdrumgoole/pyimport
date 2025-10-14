@@ -1,0 +1,4 @@
+first_name,last_name,street,city,state,zip,age,email
+John,Doe,123 Main St,Boston,MA,02101,30,john@example.com
+Jane,Smith,456 Oak Ave,Cambridge,MA,02139,28,jane@example.com
+Bob,Johnson,789 Elm St,Somerville,MA,02144,35,bob@example.com

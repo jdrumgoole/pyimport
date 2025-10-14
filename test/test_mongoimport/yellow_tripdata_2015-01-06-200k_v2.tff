@@ -1,0 +1,197 @@
+#
+# TFF v2.0 Field File for NYC Taxi Trip Data
+# Created: 2025-10-13
+# Description: Demonstrates nested document mapping with geospatial coordinates
+#
+# This file uses TFF v2.0 format to create a hierarchical document structure
+# with properly nested GeoJSON-style coordinates for pickup and dropoff locations.
+#
+# Output structure:
+# {
+#   "vendor": {
+#     "id": 2
+#   },
+#   "pickup": {
+#     "datetime": "2015-01-08T22:44:09",
+#     "location": {
+#       "type": "Point",
+#       "coordinates": {
+#         "longitude": -73.987686157226562,
+#         "latitude": 40.724250793457031
+#       }
+#     }
+#   },
+#   "dropoff": {
+#     "datetime": "2015-01-08T22:50:56",
+#     "location": {
+#       "type": "Point",
+#       "coordinates": {
+#         "longitude": -73.973762512207031,
+#         "latitude": 40.743377685546875
+#       }
+#     }
+#   },
+#   "trip": {
+#     "passengers": 1,
+#     "distance": 1.55,
+#     "rate_code": 1,
+#     "store_and_fwd": "N"
+#   },
+#   "payment": {
+#     "type": 2,
+#     "fare": 7.5,
+#     "extra": 0.5,
+#     "mta_tax": 0.5,
+#     "tip": 0.0,
+#     "tolls": 0.0,
+#     "total": 8.8
+#   }
+# }
+#
+# Note: This structure enables geospatial queries in MongoDB:
+#   db.trips.createIndex({"pickup.location.coordinates": "2dsphere"})
+#   db.trips.find({
+#     "pickup.location.coordinates": {
+#       $near: {
+#         $geometry: {
+#           type: "Point",
+#           coordinates: [-73.98, 40.72]
+#         },
+#         $maxDistance: 1000
+#       }
+#     }
+#   })
+
+# Fields must be in the same order as CSV columns
+
+# Column 1: Vendor information
+[VendorID]
+type = "int"
+name = "VendorID"
+format = ""
+path = "vendor.id"
+
+# Column 2: Pickup datetime
+[tpep_pickup_datetime]
+type = "datetime"
+name = "tpep_pickup_datetime"
+format = "%Y-%m-%d %H:%M:%S"
+path = "pickup.datetime"
+
+# Column 3: Dropoff datetime
+[tpep_dropoff_datetime]
+type = "datetime"
+name = "tpep_dropoff_datetime"
+format = "%Y-%m-%d %H:%M:%S"
+path = "dropoff.datetime"
+
+# Column 4: Passenger count
+[passenger_count]
+type = "int"
+name = "passenger_count"
+format = ""
+path = "trip.passengers"
+
+# Column 5: Trip distance
+[trip_distance]
+type = "float"
+name = "trip_distance"
+format = ""
+path = "trip.distance"
+
+# Column 6: Pickup longitude
+[pickup_longitude]
+type = "float"
+name = "pickup_longitude"
+format = ""
+path = "pickup.location.coordinates.longitude"
+
+# Column 7: Pickup latitude
+[pickup_latitude]
+type = "float"
+name = "pickup_latitude"
+format = ""
+path = "pickup.location.coordinates.latitude"
+
+# Column 8: Rate code
+[RateCodeID]
+type = "int"
+name = "RateCodeID"
+format = ""
+path = "trip.rate_code"
+
+# Column 9: Store and forward flag
+[store_and_fwd_flag]
+type = "str"
+name = "store_and_fwd_flag"
+format = ""
+path = "trip.store_and_fwd"
+
+# Column 10: Dropoff longitude
+[dropoff_longitude]
+type = "float"
+name = "dropoff_longitude"
+format = ""
+path = "dropoff.location.coordinates.longitude"
+
+# Column 11: Dropoff latitude
+[dropoff_latitude]
+type = "float"
+name = "dropoff_latitude"
+format = ""
+path = "dropoff.location.coordinates.latitude"
+
+# Column 12: Payment type
+[payment_type]
+type = "int"
+name = "payment_type"
+format = ""
+path = "payment.type"
+
+# Column 13: Fare amount
+[fare_amount]
+type = "float"
+name = "fare_amount"
+format = ""
+path = "payment.fare"
+
+# Column 14: Extra charges
+[extra]
+type = "float"
+name = "extra"
+format = ""
+path = "payment.extra"
+
+# Column 15: MTA tax
+[mta_tax]
+type = "float"
+name = "mta_tax"
+format = ""
+path = "payment.mta_tax"
+
+# Column 16: Tip amount
+[tip_amount]
+type = "int"
+name = "tip_amount"
+format = ""
+path = "payment.tip"
+
+# Column 17: Tolls amount
+[tolls_amount]
+type = "int"
+name = "tolls_amount"
+format = ""
+path = "payment.tolls"
+
+# Column 18: Total amount
+[total_amount]
+type = "float"
+name = "total_amount"
+format = ""
+path = "payment.total"
+
+[DEFAULTS_SECTION]
+delimiter = ","
+has_header = true
+"CSV File" = "yellow_tripdata_2015-01-06-200k.csv"
+#end

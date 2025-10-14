@@ -3,6 +3,9 @@ Created on 2 Mar 2016
 
 @author: jdrumgoole
 """
+
+from __future__ import annotations
+
 import csv
 import itertools
 import logging
@@ -36,13 +39,14 @@ class FieldNames(Enum):
     NAME = "name"
     TYPE = "type"
     FORMAT = "format"
+    PATH = "path"  # v2.0: nested document path
 
     def __str__(self):
         return self.value
 
     @classmethod
     def is_valid(cls, lhs: str) -> bool:
-        return (lhs == cls.NAME.value) or (lhs == cls.TYPE.value) or (lhs == cls.FORMAT.value)
+        return (lhs == cls.NAME.value) or (lhs == cls.TYPE.value) or (lhs == cls.FORMAT.value) or (lhs == cls.PATH.value)
 
 
 class FieldFile(object):
@@ -290,6 +294,44 @@ class FieldFile(object):
     def name_value(self, field_name):
         return self._field_dict[field_name][FieldNames.NAME.value]
         # return cls._cfg.get(fieldName, "filename")
+
+    def path_value(self, field_name):
+        """
+        Get the nested path for a field (v2.0 format).
+
+        Returns:
+            The path string if defined, None otherwise
+        """
+        if FieldNames.PATH.value not in self._field_dict[field_name]:
+            return None
+        else:
+            return self._field_dict[field_name][FieldNames.PATH.value]
+
+    def is_v2_format(self):
+        """
+        Check if this field file uses v2.0 format (has any 'path' fields).
+
+        Returns:
+            True if any field has a 'path' definition, False otherwise
+        """
+        for field_name in self._fields:
+            if FieldNames.PATH.value in self._field_dict[field_name]:
+                return True
+        return False
+
+    def get_field_paths(self):
+        """
+        Get mapping of field names to paths for v2.0 format.
+
+        Returns:
+            Dict mapping field name to path (only for fields with 'path' defined)
+        """
+        paths = {}
+        for field_name in self._fields:
+            path = self.path_value(field_name)
+            if path is not None:
+                paths[field_name] = path
+        return paths
 
     def __repr__(self):
         return f"FieldFile({self._field_dict})"

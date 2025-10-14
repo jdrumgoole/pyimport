@@ -36,6 +36,8 @@ Basic Usage:
 @author: Claude Code
 """
 
+from __future__ import annotations
+
 import logging
 from typing import Optional, List, Literal, Dict, Any
 from pathlib import Path

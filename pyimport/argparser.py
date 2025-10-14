@@ -136,9 +136,9 @@ def parse_args_and_cfg_files(cfgparser, input_args=None) -> configargparse.Argum
     cfgparser.add_argument('--collection', default="imported",
                            help='specify the collection filename [default: %(default)s]')
     cfgparser.add_argument('--mdburi', default=mdb_uri, help='mongodb URI. [default: %(default)s]', env_var="MDB_URI")
-    cfgparser.add_argument('--writeconcern', default=0, type=int,
+    cfgparser.add_argument('--writeconcern', default=1, type=int,
                            help="specify write concern for a write operation [default: %(default)s]")
-    cfgparser.add_argument('--journal', default=False, action="store_true",
+    cfgparser.add_argument('--journal', default=True, action="store_true",
                            help="Turn on journaling [default: %(default)s]")
     cfgparser.add_argument('--fsync', default=False, action="store_true",
                            help="Sync all nodes to disk [default: %(default)s]")

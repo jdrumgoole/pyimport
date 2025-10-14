@@ -1,0 +1,102 @@
+#
+# Created 'TEST.tff'
+# at UTC: 2025-10-13 08:02:57.740089+00:00 by class pyimport.fieldfile
+# Parameters:
+#    csv        : 'test/test_command/yellow_trip_data_10.csv'
+#    delimiter  : ','
+#
+[VendorID]
+type = "int"
+name = "VendorID"
+format = ""
+
+[tpep_pickup_datetime]
+type = "datetime"
+name = "tpep_pickup_datetime"
+format = "%Y-%d-%m %H:%M:%S"
+
+[tpep_dropoff_datetime]
+type = "datetime"
+name = "tpep_dropoff_datetime"
+format = "%Y-%d-%m %H:%M:%S"
+
+[passenger_count]
+type = "int"
+name = "passenger_count"
+format = ""
+
+[trip_distance]
+type = "float"
+name = "trip_distance"
+format = ""
+
+[pickup_longitude]
+type = "float"
+name = "pickup_longitude"
+format = ""
+
+[pickup_latitude]
+type = "float"
+name = "pickup_latitude"
+format = ""
+
+[RateCodeID]
+type = "int"
+name = "RateCodeID"
+format = ""
+
+[store_and_fwd_flag]
+type = "str"
+name = "store_and_fwd_flag"
+format = ""
+
+[dropoff_longitude]
+type = "float"
+name = "dropoff_longitude"
+format = ""
+
+[dropoff_latitude]
+type = "float"
+name = "dropoff_latitude"
+format = ""
+
+[payment_type]
+type = "int"
+name = "payment_type"
+format = ""
+
+[fare_amount]
+type = "float"
+name = "fare_amount"
+format = ""
+
+[extra]
+type = "float"
+name = "extra"
+format = ""
+
+[mta_tax]
+type = "float"
+name = "mta_tax"
+format = ""
+
+[tip_amount]
+type = "int"
+name = "tip_amount"
+format = ""
+
+[tolls_amount]
+type = "int"
+name = "tolls_amount"
+format = ""
+
+[total_amount]
+type = "float"
+name = "total_amount"
+format = ""
+
+[DEFAULTS_SECTION]
+delimiter = ","
+has_header = true
+"CSV File" = "test/test_command/yellow_trip_data_10.csv"
+#end

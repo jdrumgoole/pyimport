@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "pyimport"
-version = "1.10.5"  # Also defined in pyimport/version.py - keep in sync
+version = "2.0.1"  # Also defined in pyimport/version.py - keep in sync
 description = "A CSV importer for MongoDB"
 authors = ["Joe Drumgoole"]
 license = "Apache-2.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.9"
 pymongo = "^4.7.3"
 python-dateutil = "^2.9.0.post0"
 toml = "^0.10.2"
@@ -21,7 +21,7 @@ aiofile = "^3.8.8"
 aiohttp = "^3.9.5"
 pytest-asyncio = "^0.23.7"
 asyncstdlib = "^3.12.3"
-mimesis = "^17.0.0"
+mimesis = "^12.1.0"
 aiofiles = "^23.2.1"
 python-dotenv = {extras = ["cli"], version = "^1.0.1"}
 pandas = "^2.2.2"
@@ -33,13 +33,35 @@ dnspython = "^2.6.1"
 pytest = "^8.3.2"
 tox = "^4.18.0"
 psycopg = "^3.2.1"
-sphinx = "^8.0.2"
-myst-parser = "^4.0.0"
+sphinx = "^7.0.0"
+myst-parser = "^3.0.0"
 invoke = "^2.2.0"
 colorama = "^0.4.6"
 
 [tool.poetry.scripts]
 pyimport = "pyimport.pyimport_main:pyimport_main"
+
+[tool.poetry.group.dev.dependencies]
+pytest-xdist = "^3.8.0"
+pytest-cov = "^7.0.0"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["test"]
+asyncio_mode = "strict"
+# Performance optimizations
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "-ra",
+]
+# Test markers for categorization
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "fast: marks tests as fast",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
 
 [build-system]
 requires = ["poetry-core"]

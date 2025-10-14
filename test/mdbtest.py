@@ -1,4 +1,5 @@
 import logging
+import os
 
 from pymongo import MongoClient
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -21,13 +22,23 @@ class MDBTestDB:
         self._collections = {}
         self._init_db_name = db_name
         self._init_collection_name = collection_name
+
+        # Use pytest-xdist worker ID for unique collection names in parallel tests
+        worker_id = os.environ.get('PYTEST_XDIST_WORKER', '')
+        if worker_id:
+            # Append worker ID to collection name for parallel test isolation
+            collection_name_with_worker = f"{self.TEST_COLLECTION_NAME}_{worker_id}"
+        else:
+            collection_name_with_worker = self.TEST_COLLECTION_NAME
+
         self._args = ArgMgr.default_args(input_args=[]).add_arguments(database=self.TEST_DB_NAME,
-                                                                       collection=self.TEST_COLLECTION_NAME)
+                                                                       collection=collection_name_with_worker)
         self._drop_db = drop_db
+        self._actual_collection_name = collection_name_with_worker
 
     def __enter__(self):
         self.create_database(self.TEST_DB_NAME)
-        self.create_collection(self.TEST_DB_NAME, self.TEST_COLLECTION_NAME)
+        self.create_collection(self.TEST_DB_NAME, self._actual_collection_name)
         if self._init_db_name and self._init_collection_name:
             self.create_collection(self._init_db_name, self._init_collection_name)
         elif self._init_db_name:
@@ -42,8 +53,12 @@ class MDBTestDB:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._drop_db:
-            for k in self._databases.keys():
-                self._client.drop_database(k)
+            # Drop only the collections we created, not the entire database
+            # This prevents parallel tests from interfering with each other
+            for collection_name in self._collections.keys():
+                db_name = self.TEST_DB_NAME
+                if db_name in self._databases:
+                    self._databases[db_name].drop_collection(collection_name)
 
     @property
     def test_db_name(self):
@@ -74,7 +89,7 @@ class MDBTestDB:
 
     @property
     def test_col(self):
-        return self._collections[self.TEST_COLLECTION_NAME]
+        return self._collections[self._actual_collection_name]
 
     def create_database(self, db_name):
         if not self._client:
@@ -97,7 +112,7 @@ class AsyncMDBTestDB(MDBTestDB):
 
     async def __aenter__(self):
         self.create_database(self.TEST_DB_NAME)
-        await self.create_collection(self.TEST_DB_NAME, self.TEST_COLLECTION_NAME)
+        await self.create_collection(self.TEST_DB_NAME, self._actual_collection_name)
         if self._init_db_name and self._init_collection_name:
             await self.create_collection(self._init_db_name, self._init_collection_name)
         elif self._init_db_name:
@@ -107,11 +122,16 @@ class AsyncMDBTestDB(MDBTestDB):
         else:
             pass
         await self.test_col.insert_one({"hello": "pyimport"})
+        await self.test_col.delete_one({"hello": "pyimport"})
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        for k in self._databases.keys():
-            await self._client.drop_database(k)
+        # Drop only the collections we created, not the entire database
+        # This prevents parallel tests from interfering with each other
+        for collection_name in self._collections.keys():
+            db_name = self.TEST_DB_NAME
+            if db_name in self._databases:
+                await self._databases[db_name].drop_collection(collection_name)
         if self._client:
             self._client.close()
 

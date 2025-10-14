@@ -1,0 +1,187 @@
+#
+# TFF v2.0 Field File for Healthcare A&E Data
+# Created: 2025-10-13
+# Description: Demonstrates nested document mapping with healthcare data
+#
+# This file uses TFF v2.0 format with dot notation paths to create
+# a hierarchical document structure suitable for querying.
+#
+# Output structure:
+# {
+#   "organization": {
+#     "sha": "Q30",
+#     "code": "RLN",
+#     "name": "City Hospitals Sunderland NHS Foundation Trust"
+#   },
+#   "departments": {
+#     "type1": {
+#       "attendances": 1423,
+#       "over_4_hours": 202
+#     },
+#     "type2": {
+#       "attendances": 669,
+#       "over_4_hours": 0
+#     },
+#     "type3": {
+#       "attendances": 297,
+#       "over_4_hours": 18
+#     }
+#   },
+#   "totals": {
+#     "attendances": 2389
+#   },
+#   "performance": {
+#     "type1_within_4_hours_pct": 0.858046381,
+#     "all_within_4_hours_pct": 0.90791126
+#   },
+#   "admissions": {
+#     "emergency": {
+#       "via_type1": 501,
+#       "via_type2": 2,
+#       "via_type3_and_4": 0,
+#       "other": 218
+#     },
+#     "wait_times": {
+#       "over_4_under_12_hours": 0,
+#       "over_12_hours": 0
+#     }
+#   }
+# }
+
+# Skip the blank columns
+[Blank-1]
+type = "int"
+name = "Blank-1"
+format = ""
+path = "_skip.blank1"
+
+[Blank-2]
+type = "str"
+name = "Blank-2"
+format = ""
+path = "_skip.blank2"
+
+# Organization information
+[SHA]
+type = "str"
+name = "SHA"
+format = ""
+path = "organization.sha"
+
+[Code]
+type = "str"
+name = "Code"
+format = ""
+path = "organization.code"
+
+[Name]
+type = "str"
+name = "Name"
+format = ""
+path = "organization.name"
+
+# Department Type 1 (Major A&E) - Attendances
+["Type 1 Departments - Major A&E | A&E attendances"]
+type = "int"
+name = "Type 1 Departments - Major A&E | A&E attendances"
+format = ""
+path = "departments.type1.attendances"
+
+# Department Type 2 (Single Specialty) - Attendances
+["Type 2 Departments - Single Specialty"]
+type = "int"
+name = "Type 2 Departments - Single Specialty"
+format = ""
+path = "departments.type2.attendances"
+
+# Department Type 3 (Other A&E/Minor Injury) - Attendances
+["Type 3 Departments - Other A&E/Minor Injury Unit"]
+type = "int"
+name = "Type 3 Departments - Other A&E/Minor Injury Unit"
+format = ""
+path = "departments.type3.attendances"
+
+# Total attendances across all departments
+["Total attendances"]
+type = "int"
+name = "Total attendances"
+format = ""
+path = "totals.attendances"
+
+# Department Type 1 - Patients waiting over 4 hours
+["Type 1 Departments - Major A&E | A&E attendances > 4 hours from arrival to admission transfer or discharge"]
+type = "int"
+name = "Type 1 Departments - Major A&E | A&E attendances > 4 hours from arrival to admission transfer or discharge"
+format = ""
+path = "departments.type1.over_4_hours"
+
+# Department Type 2 - Patients waiting over 4 hours
+["Type 2 Departments  2 - Single Specialty"]
+type = "int"
+name = "Type 2 Departments  2 - Single Specialty"
+format = ""
+path = "departments.type2.over_4_hours"
+
+# Department Type 3 - Patients waiting over 4 hours
+["Type 3 Departments  2 - Other A&E/Minor Injury Unit"]
+type = "int"
+name = "Type 3 Departments  2 - Other A&E/Minor Injury Unit"
+format = ""
+path = "departments.type3.over_4_hours"
+
+# Performance metrics - percentage within 4 hours
+["Percentage in 4 hours or less (type 1)"]
+type = "float"
+name = "Percentage in 4 hours or less (type 1)"
+format = ""
+path = "performance.type1_within_4_hours_pct"
+
+["Percentage in 4 hours or less (all)"]
+type = "float"
+name = "Percentage in 4 hours or less (all)"
+format = ""
+path = "performance.all_within_4_hours_pct"
+
+# Emergency admissions by type
+["Emergency Admissions via Type 1 A&E | Emergency Admissions"]
+type = "int"
+name = "Emergency Admissions via Type 1 A&E | Emergency Admissions"
+format = ""
+path = "admissions.emergency.via_type1"
+
+["Emergency Admissions via Type 2 A&E"]
+type = "int"
+name = "Emergency Admissions via Type 2 A&E"
+format = ""
+path = "admissions.emergency.via_type2"
+
+["Emergency Admissions via Type 3 and 4 A&E"]
+type = "int"
+name = "Emergency Admissions via Type 3 and 4 A&E"
+format = ""
+path = "admissions.emergency.via_type3_and_4"
+
+["Other Emergency admissions (i_e not via A&E)"]
+type = "int"
+name = "Other Emergency admissions (i_e not via A&E)"
+format = ""
+path = "admissions.emergency.other"
+
+# Wait time metrics
+["Number of patients spending >4 hours but <12 hours from decision to admit to admission"]
+type = "int"
+name = "Number of patients spending >4 hours but <12 hours from decision to admit to admission"
+format = ""
+path = "admissions.wait_times.over_4_under_12_hours"
+
+["Number of patients spending >12 hours from decision to admit to admission"]
+type = "int"
+name = "Number of patients spending >12 hours from decision to admit to admission"
+format = ""
+path = "admissions.wait_times.over_12_hours"
+
+[DEFAULTS_SECTION]
+delimiter = ","
+has_header = true
+"CSV File" = "AandEData.csv"
+#end

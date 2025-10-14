@@ -52,14 +52,20 @@ class TestFieldFile(unittest.TestCase):
         Log.add_null_hander()
 
     def setUp(self):
+        # Use pytest-xdist worker ID for unique database names in parallel tests
+        worker_id = os.environ.get('PYTEST_XDIST_WORKER', '')
+        db_suffix = f"_{worker_id}" if worker_id else ""
+        self._db_name = f"FC_TEST{db_suffix}"
+        self._col_name = f"FC_TEST{db_suffix}"
+
         self._client = pymongo.MongoClient(host="mongodb://localhost:27017")
-        self._db = self._client["FC_TEST"]
-        self._col = self._db["FC_TEST"]
+        self._db = self._client[self._db_name]
+        self._col = self._db[self._col_name]
         self._args = ArgMgr.default_args(input_args=[])
-        self._args.add_arguments(host="mongodb://localhost:27017", database="FC_TEST", collection="FC_TEST")
+        self._args.add_arguments(host="mongodb://localhost:27017", database=self._db_name, collection=self._col_name)
 
     def tearDown(self):
-        self._client.drop_database("FC_TEST")
+        self._client.drop_database(self._db_name)
 
     def test_error(self):
         with self.assertRaises(FieldFileException):

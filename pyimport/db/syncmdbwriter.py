@@ -24,7 +24,7 @@ class SyncMDBWriter:
         if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
             self._client = pymongo.MongoClient(args.mdburi, w=args.writeconcern)
         else:
-            self._client = pymongo.MongoClient(args.mdburi, w=args.writeconcern, fsync=args.fsync, j=args.journal)
+            self._client = pymongo.MongoClient(args.mdburi, w=args.writeconcern, fsync=args.fsync, journal=args.journal)
 
         self._database = self._client[args.database]
         self._collection = self._database[args.collection]
@@ -145,7 +145,7 @@ class AsyncMDBWriter:
         if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
             self._client = motor_asyncio.AsyncIOMotorClient(args.mdburi, w=args.writeconcern)
         else:
-            self._client = motor_asyncio.AsyncIOMotorClient(args.mdburi, w=args.writeconcern, fsync=args.fsync, j=args.journal)
+            self._client = motor_asyncio.AsyncIOMotorClient(args.mdburi, w=args.writeconcern, fsync=args.fsync, journal=args.journal)
 
         self._database = self._client[args.database]
         self._collection = self._database[args.collection]

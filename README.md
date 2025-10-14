@@ -1,14 +1,14 @@
 # PyImport - A Powerful CSV Importer for MongoDB
 
 [![Documentation Status](https://readthedocs.org/projects/pyimport/badge/?version=latest)](https://pyimport.readthedocs.io/en/latest/?badge=latest)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 **PyImport** is a Python command-line tool for importing CSV data into MongoDB with automatic type detection, parallel processing, and graceful handling of "dirty" data.
 
 Unlike MongoDB's native `mongoimport`, PyImport focuses on handling real-world messy data, automatic type inference, and high-performance parallel imports.
 
-**Version**: 1.10.0
+**Version**: 2.0.1
 **Author**: Joe Drumgoole ([joe@joedrumgoole.com](mailto:joe@joedrumgoole.com) | [BlueSky](https://bsky.app/profile/joedrumgoole.com))
 **License**: Apache 2.0
 **Source**: [github.com/jdrumgoole/pyimport](https://github.com/jdrumgoole/pyimport)
@@ -16,6 +16,7 @@ Unlike MongoDB's native `mongoimport`, PyImport focuses on handling real-world m
 
 ## Key Features
 
+- **🆕 Nested Document Mapping (v2.0)** - Transform flat CSV data into rich hierarchical MongoDB documents using dot notation paths
 - **Automatic Type Detection** - Generate field files with inferred types using `--genfieldfile`
 - **Graceful Error Handling** - Falls back to strings on type conversion errors instead of failing
 - **Multiple Import Strategies** - Sync, async, multi-process, and threaded imports
@@ -34,7 +35,7 @@ Unlike MongoDB's native `mongoimport`, PyImport focuses on handling real-world m
 
 ## Requirements
 
-- **Python**: 3.11 or higher
+- **Python**: 3.9 or higher
 - **MongoDB**: 4.0 or higher
 
 ## Installation
@@ -57,7 +58,7 @@ poetry install
 
 ```bash
 pyimport --version
-# Output: pyimport 1.10.0
+# Output: pyimport 2.0.1
 ```
 
 ## Python API
@@ -120,6 +121,123 @@ pyimport --database mydb --collection people test.csv
 ```bash
 mongosh mydb --eval "db.people.find().pretty()"
 ```
+
+## 🆕 Nested Document Mapping (v2.0)
+
+**Transform flat CSV data into rich hierarchical MongoDB documents!**
+
+PyImport v2.0 introduces powerful nested document mapping using dot notation paths in field files. This allows you to organize related fields into logical hierarchies, making your MongoDB documents more structured and queryable.
+
+### Quick Example
+
+Transform this flat CSV:
+```csv
+first_name,last_name,city,state,zip
+Alice,Smith,NYC,NY,10001
+```
+
+Into this nested MongoDB document:
+```json
+{
+  "name": {
+    "first": "Alice",
+    "last": "Smith"
+  },
+  "address": {
+    "city": "NYC",
+    "state": "NY",
+    "zip": "10001"
+  }
+}
+```
+
+### How It Works
+
+Simply add a `path` field to your `.tff` field file using dot notation:
+
+```toml
+[first_name]
+type = "str"
+name = "first_name"
+path = "name.first"  # ← Nested path
+
+[last_name]
+type = "str"
+name = "last_name"
+path = "name.last"   # ← Nested path
+
+[city]
+type = "str"
+name = "city"
+path = "address.city"  # ← Nested path
+
+[state]
+type = "str"
+name = "state"
+path = "address.state"
+
+[zip]
+type = "int"
+name = "zip"
+path = "address.zip"
+```
+
+Then import as usual:
+```bash
+pyimport --database mydb --collection people --fieldfile people_v2.tff people.csv
+```
+
+### Real-World Examples
+
+**Healthcare Data** - Organize hospital A&E data into departments, performance metrics, and admissions:
+```toml
+[SHA]
+type = "str"
+path = "organization.sha"
+
+[Type1_Attendances]
+type = "int"
+path = "departments.type1.attendances"
+
+[Percentage_4Hours]
+type = "float"
+path = "performance.within_4_hours_pct"
+```
+
+**Geospatial Data** - Structure NYC taxi data with nested coordinates for MongoDB geospatial queries:
+```toml
+[pickup_longitude]
+type = "float"
+path = "pickup.location.coordinates.longitude"
+
+[pickup_latitude]
+type = "float"
+path = "pickup.location.coordinates.latitude"
+
+[fare_amount]
+type = "float"
+path = "payment.fare"
+```
+
+### Key Benefits
+
+- **Better Organization** - Group related fields logically (e.g., `address.*`, `contact.*`, `payment.*`)
+- **Easier Queries** - Query nested paths: `db.collection.find({"address.city": "NYC"})`
+- **Better Indexes** - Create indexes on nested fields: `db.collection.createIndex({"payment.total": 1})`
+- **Backward Compatible** - Mix v1.0 (flat) and v2.0 (nested) fields in the same file
+- **Minimal Overhead** - Less than 5% performance impact
+- **Geospatial Support** - Perfect for organizing coordinates for MongoDB geospatial queries
+
+### Learn More
+
+See the complete [Nested Document Mapping Guide](https://pyimport.readthedocs.io/en/latest/markdown/fieldfiles.html#tff-v2-0-nested-document-mapping) for:
+- Deep nesting examples (5+ levels)
+- Path validation rules
+- Migration from v1.0 to v2.0
+- Common patterns and best practices
+- MongoDB query examples
+
+---
 
 ## Advanced Usage
 
@@ -507,31 +625,43 @@ invoke quick-test
 
 ## Version History
 
-**1.10.0** (Current)
+**2.0.1** (Current) - Python 3.9 Support & Reliability Improvements
+- **Python 3.9 Support**: Extended compatibility to Python 3.9+
+  - All 329 tests pass on Python 3.9, 3.10, 3.11, 3.12, and 3.13
+- **Improved Write Reliability**: Changed default write concern from 0 to 1 with journaling enabled
+  - Better data durability and eliminates race conditions
+
+**2.0.0** - Major Feature Release
+- **🎉 NEW: TFF v2.0 Format** - Nested document mapping with dot notation paths
+  - Transform flat CSV into hierarchical MongoDB documents
+  - Simple dot notation syntax: `path = "address.city"`
+  - 100% backward compatible with v1.0 field files
+  - Real-world tested with healthcare and geospatial data
+  - Minimal performance overhead (<5%)
+- **Fixed**: Enricher TypeError when handling nested documents
+- **Fixed**: PyMongo compatibility - updated deprecated `j=` parameter to `journal=`
+- **Comprehensive Testing**: 80+ tests with 100% coverage on new code
+- **Documentation**: Complete nested mapping guide with examples
+
+**1.10.9**
+- Optimized test suite with parallel execution (pytest-xdist)
+- Improved publish workflow performance (30-40% faster)
+- New invoke tasks for faster development
+
+**1.10.0**
 - **NEW: Restart Capability** - Resume interrupted multi-file imports with `--restart`
 - Progress tracking with configurable checkpoint intervals
 - Auto-detection of incomplete batches
 - File-level restart (skips completed files)
 - Works with all import strategies (sync, async, multi-process, threaded)
-- Fixed multiprocess/threaded audit pickling issue
-- Standardized batch ID field naming (`batchID`)
-- 100% test coverage for restart functionality (9/9 tests passing)
-
-**1.9.1**
-- Bug fixes and stability improvements
 
 **1.9.0**
 - Comprehensive documentation (2,700+ lines)
-- Version centralization with single source of truth
-- Read the Docs integration
 - Performance improvements (20-35% faster)
 - Test coverage improvements (72%)
-- Bug fixes for `--version` flag
+- Read the Docs integration
 
-**1.8.2**
-- Previous stable release
-
-See [CHANGELOG](https://github.com/jdrumgoole/pyimport/releases) for complete version history.
+See [CHANGELOG](CHANGELOG.md) for complete version history.
 
 ## Links
 

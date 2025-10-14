@@ -291,6 +291,92 @@ def test_all(c):
     test_all_scripts(c)
 
 
+# Optimized test tasks
+@task
+def run_pytest_parallel(c):
+    """Run pytest in all test directories with parallel execution"""
+    test_dirs = [
+        'test/test_args',
+        'test/test_command',
+        'test/test_config',
+        'test/test_e2e',
+        'test/test_fieldfile',
+        'test/test_file_processor',
+        'test/test_filesplitter',
+        'test/test_http_import',
+        'test/test_linecounter',
+        'test/test_linereader',
+        'test/test_mot',
+        'test/test_splitfile',
+        'test/test_general',
+        'test/test_formats',
+    ]
+
+    with c.cd(ROOT):
+        for test_dir in test_dirs:
+            print(f"Running tests in {test_dir} (parallel)...")
+            with c.cd(test_dir):
+                c.run('poetry run pytest -n auto -q', warn=True)
+
+        # Special case for test_db with PGURI environment variable
+        print("Running tests in test/test_db (parallel)...")
+        with c.cd('test/test_db'):
+            pguri = os.environ.get('PGURI', '')
+            c.run(f'PGURI={pguri} poetry run pytest -n auto -q', warn=True)
+
+
+@task
+def quick_pytest(c):
+    """Run pytest quickly (parallel execution, essential tests only)"""
+    # Run only the fastest/most important test directories
+    essential_test_dirs = [
+        'test/test_command',
+        'test/test_general',
+        'test/test_e2e',
+    ]
+
+    print("Running essential pytest tests (parallel)...")
+    with c.cd(ROOT):
+        for test_dir in essential_test_dirs:
+            print(f"  {test_dir}...")
+            with c.cd(test_dir):
+                c.run('poetry run pytest -n auto -q', warn=True)
+
+
+@task
+def quick_test_scripts(c):
+    """Run only fast integration scripts"""
+    print("Running fast integration tests...")
+    test_scripts(c)
+    test_data(c)
+
+
+@task
+def quick_dev(c):
+    """Quick development test cycle (essential tests only)"""
+    print("=" * 60)
+    print("QUICK DEVELOPMENT TEST CYCLE")
+    print("=" * 60)
+    quick_pytest(c)
+    quick_test_scripts(c)
+    print("\n✓ Quick development tests completed!")
+
+
+@task
+def full_pytest_parallel(c):
+    """Run full pytest suite with parallel execution"""
+    print("Running full pytest suite (parallel)...")
+    run_pytest_parallel(c)
+
+
+@task
+def test_timing(c):
+    """Show timing for slowest tests"""
+    with c.cd(ROOT / 'test' / 'test_general'):
+        print("Running timing analysis on test_general...")
+        c.run('poetry run pytest --durations=20')
+
+
 @task
 def clean(c):
     """Clean build artifacts"""
@@ -300,10 +386,27 @@ def clean(c):
 
 @task
 def build(c):
-    """Build the package"""
-    test_all(c)
+    """Build the package with full cross-version testing"""
+    print("\n" + "=" * 60)
+    print("BUILDING PACKAGE WITH FULL TEST SUITE")
+    print("=" * 60)
+
+    print("\n1. Running parallel pytest suite...")
+    full_pytest_parallel(c)
+
+    print("\n2. Running integration tests...")
+    test_all_scripts(c)
+
+    print("\n3. Running tox tests across Python 3.9-3.13...")
+    tox_run(c)
+
+    print("\n4. Building package with poetry...")
     with c.cd(ROOT):
         c.run('poetry build')
+
+    print("\n" + "=" * 60)
+    print("✓ Build completed successfully!")
+    print("=" * 60)
 
 
 @task
@@ -325,8 +428,7 @@ def trigger_rtd_build(c):
     """Trigger Read the Docs build via webhook"""
     import requests
 
-    # Read the Docs webhook URL for pyimport
-    # Get token from environment variable RTD_WEBHOOK_TOKEN
+    # Read the Docs webhook token from environment
     rtd_token = os.environ.get('RTD_WEBHOOK_TOKEN')
 
     if not rtd_token:
@@ -338,31 +440,178 @@ def trigger_rtd_build(c):
         print("⚠️  Skipping Read the Docs rebuild trigger")
         return
 
-    webhook_url = f"https://readthedocs.org/api/v2/webhook/pyimport/{rtd_token}/"
+    # Generic webhook URL format: https://app.readthedocs.org/api/v2/webhook/{project-slug}/{integration-id}/
+    # Using the generic API webhook integration ID 311422
+    webhook_url = "https://app.readthedocs.org/api/v2/webhook/pyimport/311422/"
 
     try:
         print("Triggering Read the Docs rebuild...")
-        response = requests.post(webhook_url)
+        # Generic webhooks require authentication via token parameter
+        data = {
+            'token': rtd_token
+        }
+        response = requests.post(webhook_url, data=data)
 
         if response.status_code in [200, 202]:
             print("✓ Read the Docs build triggered successfully!")
-            print(f"  Build status: {response.json().get('build', {}).get('state', 'queued')}")
+            try:
+                data = response.json()
+                build_id = data.get('build', {}).get('id', 'unknown')
+                print(f"  Build ID: {build_id}")
+                print(f"  View build: https://app.readthedocs.org/projects/pyimport/builds/{build_id}/")
+            except:
+                print("  Build queued (details unavailable)")
         else:
-            print(f"✗ Failed to trigger RTD build: {response.status_code}")
-            print(f"  Response: {response.text}")
+            print(f"✗ Failed to trigger RTD build: HTTP {response.status_code}")
+            if response.text:
+                print(f"  Response: {response.text[:200]}")
     except Exception as e:
         print(f"✗ Error triggering RTD build: {e}")
 
 
 @task
 def publish(c):
-    """Build and publish to PyPI and trigger Read the Docs rebuild"""
+    """Build, tag, publish to PyPI, push git tag, and trigger Read the Docs rebuild"""
+    # Get version from version.py
+    import sys
+    sys.path.insert(0, str(ROOT / 'pyimport'))
+    from version import __VERSION__
+
+    version_tag = f"v{__VERSION__}"
+
+    # Build and test
     build(c)
+
+    # Check if git tag already exists
     with c.cd(ROOT):
+        result = c.run(f'git tag -l {version_tag}', hide=True, warn=True)
+        tag_exists = bool(result.stdout.strip())
+
+        if tag_exists:
+            print(f"⚠️  Git tag {version_tag} already exists")
+            response = input(f"Delete existing tag {version_tag} and create new one? (y/N): ")
+            if response.lower() == 'y':
+                c.run(f'git tag -d {version_tag}')
+                c.run(f'git push origin :refs/tags/{version_tag}', warn=True)
+                print(f"✓ Deleted existing tag {version_tag}")
+            else:
+                print("⚠️  Skipping git tag creation")
+                tag_exists = False  # Don't try to push later
+
+        # Create git tag
+        if not tag_exists:
+            print(f"Creating git tag {version_tag}...")
+            c.run(f'git tag -a {version_tag} -m "Release {version_tag}"')
+            print(f"✓ Created git tag {version_tag}")
+
+        # Publish to PyPI
+        print("Publishing to PyPI...")
         c.run('poetry publish')
+        print("✓ Published to PyPI")
+
+        # Push git tag to remote
+        if not tag_exists:
+            print(f"Pushing tag {version_tag} to remote...")
+            c.run(f'git push origin {version_tag}')
+            print(f"✓ Pushed tag {version_tag} to GitHub")
 
     # Trigger Read the Docs rebuild after successful publish
     trigger_rtd_build(c)
+
+    print("\n" + "=" * 60)
+    print(f"✓ Release {version_tag} published successfully!")
+    print("=" * 60)
+    print(f"  PyPI: https://pypi.org/project/pyimport/{__VERSION__}/")
+    print(f"  GitHub: https://github.com/jdrumgoole/pyimport/releases/tag/{version_tag}")
+    print(f"  Docs: https://pyimport.readthedocs.io/en/latest/")
+    print("=" * 60)
+
+
+# Documentation tasks
+@task
+def docs_clean(c):
+    """Clean documentation build artifacts"""
+    with c.cd(ROOT / 'docs'):
+        c.run('rm -rf _build')
+        print("✓ Documentation build artifacts cleaned")
+
+
+@task
+def docs_build(c):
+    """Build documentation with Sphinx"""
+    with c.cd(ROOT / 'docs'):
+        c.run('poetry run sphinx-build -b html . _build/html')
+        print("✓ Documentation built successfully")
+        print(f"  Open: file://{ROOT}/docs/_build/html/index.html")
+
+
+@task
+def docs_serve(c):
+    """Build and serve documentation locally"""
+    docs_build(c)
+    with c.cd(ROOT / 'docs' / '_build' / 'html'):
+        print("Starting local web server on http://localhost:8000")
+        print("Press Ctrl+C to stop")
+        c.run('python -m http.server 8000')
+
+
+# Tox tasks
+@task
+def tox_list(c):
+    """List tox test environments"""
+    with c.cd(ROOT):
+        c.run('poetry run tox -l')
+
+
+@task
+def tox_run(c, env=None):
+    """Run tox tests across Python versions
+
+    Args:
+        env: Optional specific environment to test (e.g., py39, py310, py311, py312, py313)
+    """
+    with c.cd(ROOT):
+        if env:
+            print(f"Running tox for {env}...")
+            c.run(f'poetry run tox -e {env}')
+        else:
+            print("Running tox for all environments (py39, py310, py311, py312, py313)...")
+            c.run('poetry run tox')
+
+
+@task
+def check_python_versions(c):
+    """Check availability of Python versions required for tox"""
+    required_versions = {
+        'py39': 'python3.9',
+        'py310': 'python3.10',
+        'py311': 'python3.11',
+        'py312': 'python3.12',
+        'py313': 'python3.13',
+    }
+
+    print("Checking required Python versions for tox:\n")
+    all_found = True
+
+    for env, python_cmd in required_versions.items():
+        try:
+            result = c.run(f'{python_cmd} --version', hide=True, warn=True)
+            if result.ok:
+                print(f"✓ {env}: {result.stdout.strip()}")
+            else:
+                print(f"✗ {env}: Not found")
+                all_found = False
+        except:
+            print(f"✗ {env}: Not found")
+            all_found = False
+
+    print()
+    if all_found:
+        print("✓ All required Python versions are available!")
+    else:
+        print("⚠️  Some Python versions are missing.")
+        print("   See PYENV_SETUP.md for installation instructions.")
+        print("   Run: pyenv install 3.9.23 3.10.18 3.11.9 3.12.11 3.13.5")
 
 
 @task

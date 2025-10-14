@@ -1,0 +1,56 @@
+#
+# Test TFF file for v2.0 nested document format
+#
+
+[first_name]
+type = "str"
+name = "first_name"
+path = "personal.name.first"
+format = ""
+
+[last_name]
+type = "str"
+name = "last_name"
+path = "personal.name.last"
+format = ""
+
+[street]
+type = "str"
+name = "street"
+path = "address.street"
+format = ""
+
+[city]
+type = "str"
+name = "city"
+path = "address.city"
+format = ""
+
+[state]
+type = "str"
+name = "state"
+path = "address.state"
+format = ""
+
+[zip]
+type = "str"
+name = "zip"
+path = "address.postal_code"
+format = ""
+
+[age]
+type = "int"
+name = "age"
+path = "personal.age"
+format = ""
+
+[email]
+type = "str"
+name = "email"
+path = "contact.email"
+format = ""
+
+[DEFAULTS_SECTION]
+delimiter = ","
+has_header = true
+"CSV File" = "test_v2_nested.csv"

@@ -10,6 +10,7 @@ from asyncstdlib import enumerate as aenumerate
 from pyimport.enricher import Enricher
 from pyimport.fieldfile import FieldFile
 from pyimport.linereader import LocalLineReader
+from pyimport.nested_builder import FieldPathMapper
 
 
 class CSVReader:
@@ -42,6 +43,9 @@ class CSVReader:
 
         # Performance optimization: Pre-compile field converters to avoid repeated lookups
         self._compiled_converters = self._compile_converters()
+
+        # v2.0 support: Initialize path mapper for nested document building
+        self._path_mapper = FieldPathMapper(self._field_file)
 
     @property
     def delimiter(self):
@@ -87,14 +91,17 @@ class CSVReader:
         """Create document from CSV row using pre-compiled converters for performance."""
         if self._cut_fields is not None and len(self._cut_fields) > 0:
             # Use pre-compiled converters (faster than original)
-            doc = {k: conv(k, v) for (k, conv), v in zip(self._compiled_converters, values)}
+            flat_doc = {k: conv(k, v) for (k, conv), v in zip(self._compiled_converters, values)}
         else:
             # Use pre-compiled converters (faster than original)
-            doc = {k: conv(k, v) for (k, conv), v in zip(self._compiled_converters, values)}
+            flat_doc = {k: conv(k, v) for (k, conv), v in zip(self._compiled_converters, values)}
 
         # Add line number if tracking is enabled
         if self._track_line_numbers and line_number is not None:
-            doc['_line_number'] = line_number
+            flat_doc['_line_number'] = line_number
+
+        # v2.0 support: Build nested document if using v2.0 format
+        doc = self._path_mapper.build_document(flat_doc)
 
         yield doc
 
