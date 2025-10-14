@@ -39,6 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `colorama` (runtime dependency for colored terminal output)
   - Pinned `mimesis==12.1.0` for Python 3.9 compatibility (v17.0.0 uses unsupported type hints)
   - All tox tests now pass across Python 3.9-3.13
+- **Mimesis API compatibility**: Fixed test_asyncinserter.py for mimesis 12.1.0 compatibility
+  - Changed from `Person.birthdate()` to `Datetime.date(start=1950, end=2005)`
+  - `Person.birthdate()` method doesn't exist in mimesis 12.1.0
+  - `Datetime.date()` works across all mimesis versions (12.1.0 and 17.0.0)
+  - All 3 asyncinserter tests now pass on Python 3.9-3.13
 
 ## [2.0.3] - 2025-10-14
 
