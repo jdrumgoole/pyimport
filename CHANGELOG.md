@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.5] - 2025-10-14
 
 ### Fixed
+- **API test isolation**: Fixed parallel test contamination in test_api.py
+  - Modified setUp() in TestPyImportAPI and TestPyImportBuilder to use worker-specific database names
+  - Database names now include worker ID: TEST_API_DB_{worker_id}, TEST_BUILDER_DB_{worker_id}
+  - Fixed assertion failures like `assert 6 != 3` caused by workers sharing same database
+  - All API tests now pass with parallel execution
+- **PostgreSQL writer test isolation**: Fixed parallel test contamination in RDBTestDB
+  - Modified RDBTestDB.__init__() to use worker-specific table names
+  - Table names now include worker ID: pyimport_test_{worker_id}
+  - Fixed NoSuchTableError when parallel workers compete for same table name
+  - All PostgreSQL writer tests now pass with parallel execution
 - **File splitter test isolation**: Fixed file system race conditions with temporary directories
   - Added `temp_work_dir` fixtures to test_splitfile.py and test_filesplitter.py
   - Each test now runs in isolated temporary directory with worker-specific naming

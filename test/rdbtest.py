@@ -17,7 +17,10 @@ class RDBTestDB:
     }
 
     def __init__(self, args):
-        self._test_table_name = "pyimport_test"
+        # Use worker-specific table name for parallel test isolation
+        import os
+        worker_id = os.environ.get('PYTEST_XDIST_WORKER', 'master')
+        self._test_table_name = f"pyimport_test_{worker_id}"
         self._args = args.ns
         default_args = ArgMgr.default_args(input_args=[]).ns
         if self._args.pguri is None:

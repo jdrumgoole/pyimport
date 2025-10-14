@@ -22,7 +22,10 @@ class TestPyImportAPI(unittest.TestCase):
     def setUp(self):
         """Set up test database and collection."""
         self.client = pymongo.MongoClient()
-        self.database = "TEST_API_DB"
+        # Use worker-specific database name for parallel test isolation
+        import os
+        worker_id = os.environ.get('PYTEST_XDIST_WORKER', 'master')
+        self.database = f"TEST_API_DB_{worker_id}"
         self.collection = "test_api"
         self.db = self.client[self.database]
         self.col = self.db[self.collection]
@@ -50,6 +53,9 @@ class TestPyImportAPI(unittest.TestCase):
         # Drop test collection
         if self.collection in self.db.list_collection_names():
             self.db.drop_collection(self.collection)
+
+        # Drop worker-specific database
+        self.client.drop_database(self.database)
 
         # Remove test CSV
         if os.path.exists(self.test_csv.name):
@@ -251,7 +257,10 @@ class TestPyImportBuilder(unittest.TestCase):
     def setUp(self):
         """Set up test database and collection."""
         self.client = pymongo.MongoClient()
-        self.database = "TEST_BUILDER_DB"
+        # Use worker-specific database name for parallel test isolation
+        import os
+        worker_id = os.environ.get('PYTEST_XDIST_WORKER', 'master')
+        self.database = f"TEST_BUILDER_DB_{worker_id}"
         self.collection = "test_builder"
         self.db = self.client[self.database]
         self.col = self.db[self.collection]
@@ -275,6 +284,10 @@ class TestPyImportBuilder(unittest.TestCase):
         """Clean up test data."""
         if self.collection in self.db.list_collection_names():
             self.db.drop_collection(self.collection)
+
+        # Drop worker-specific database
+        self.client.drop_database(self.database)
+
         if os.path.exists(self.test_csv.name):
             os.unlink(self.test_csv.name)
         tff_file = Path(self.test_csv.name).with_suffix('.tff')
