@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added worker-specific database names (test_db_{worker_id}) in test_rdbmaker.py
   - Added worker-specific table names (test_table_{worker_id}) in test_rdbmanager.py
   - Eliminates "duplicate key" and "already exists" errors in parallel execution
+- **File splitter test isolation**: Fixed file system race conditions in test_splitfile and test_filesplitter
+  - Added `temp_work_dir` fixtures that create worker-specific temporary directories
+  - Each test now runs in its own isolated temp directory with copies of test data files
+  - Prevents FileNotFoundError when parallel workers compete for same split file names
+  - All 29 filesplitter tests and 5 splitfile tests now pass with parallel execution
 - **Tox test execution**: Fixed tox running tests from wrong directory
   - Tests now run from within their respective test directories using `sh -c 'cd test/XXX && pytest'`
   - Added `allowlist_externals = sh` to tox.ini to allow shell commands
