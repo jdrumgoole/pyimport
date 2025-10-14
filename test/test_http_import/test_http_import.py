@@ -50,15 +50,17 @@ def test_http_generate_fieldfile():
         # Demographic_Statistics_By_Zip_Code.csv
         url = "https://jdrumgoole.s3.eu-west-1.amazonaws.com/2018_Yellow_Taxi_Trip_Data_1000.csv"
 
+        tff_path = os.path.join(path_dir, "yellow-trip-data.tff")
         ff_file = FieldFile.generate_field_file(url,
                                                 delimiter=";",
-                                                ff_filename="yellow-trip-data.tff")
+                                                ff_filename=tff_path)
 
         assert "VendorID" in ff_file.fields()
         assert len(ff_file.fields()) == 17
         assert "fare_amount" in ff_file.fields()
 
-        os.unlink("yellow-trip-data.tff")
+        if os.path.exists(tff_path):
+            os.unlink(tff_path)
 
     else:
         print("Warning:No internet: Skipping test for generating field files from URLs")
@@ -69,16 +71,26 @@ def test_http_import():
         with MDBTestDB() as tr:
             url = "https://jdrumgoole.s3.eu-west-1.amazonaws.com/2018_Yellow_Taxi_Trip_Data_1000.csv"
 
+            # Generate field file in current directory
+            tff_path = os.path.join(path_dir, "yellow-trip-data.tff")
             FieldFile.generate_field_file(url,
                                           delimiter=";",
-                                          ff_filename="yellow-trip-data.tff")
-            args = tr.args.add_arguments(fieldfile="yellow-trip-data.tff", filenames=[url], delimiter=";", hasheader=True)
+                                          ff_filename=tff_path)
+
+            # Verify field file exists
+            if not os.path.exists(tff_path):
+                raise FileNotFoundError(f"Field file not generated at {tff_path}")
+
+            args = tr.args.add_arguments(fieldfile=tff_path, filenames=[url], delimiter=";", hasheader=True)
             before_doc_count = tr.test_col.count_documents({})
             result = MDBImportCommand(args=args.ns).run()
             after_doc_count = tr.test_col.count_documents({})
             assert 999 == (after_doc_count - before_doc_count)
             assert 999 == result.total_written
-            os.unlink("yellow-trip-data.tff")
+
+            # Clean up
+            if os.path.exists(tff_path):
+                os.unlink(tff_path)
     else:
         print("Warning:No internet: test_http_import() skipped")
 

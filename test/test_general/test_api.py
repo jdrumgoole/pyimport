@@ -200,14 +200,23 @@ class TestPyImportAPI(unittest.TestCase):
             journal=True
         )
 
-        # Ensure clean start - drop collection and verify it's empty
-        if self.collection in self.db.list_collection_names():
-            self.db.drop_collection(self.collection)
+        # Force clean start - always drop and wait for completion
+        # Drop at database level to ensure it's fully gone
+        self.client[self.database].drop_collection(self.collection)
         import time
-        time.sleep(0.2)  # Wait longer for drop to complete
+        time.sleep(0.3)  # Wait for drop to fully propagate
 
-        # Verify collection is actually empty after drop
+        # Recreate collection reference after drop
+        self.col = self.db[self.collection]
+
+        # Verify collection is empty (count should be 0 for non-existent or empty collection)
         count_before = self.col.count_documents({})
+        if count_before != 0:
+            # Force another drop if still has data
+            self.client[self.database].drop_collection(self.collection)
+            time.sleep(0.3)
+            self.col = self.db[self.collection]
+            count_before = self.col.count_documents({})
         self.assertEqual(count_before, 0, f"Expected 0 docs before import, got {count_before}")
 
         # Import data

@@ -20,10 +20,26 @@ def rdb_manager(db_url):
 
 
 @pytest.fixture
-def test_table_name(request):
-    """Generate worker-specific table name for parallel test isolation"""
+def test_table_name(request, rdb_manager):
+    """Generate worker-specific table name for parallel test isolation and ensure cleanup"""
     worker_id = getattr(request.config, 'workerinput', {}).get('workerid', 'master')
-    return f"test_table_{worker_id}"
+    table_name = f"test_table_{worker_id}"
+
+    # Clean up before test (in case previous test failed to clean up)
+    if rdb_manager.is_table(table_name):
+        try:
+            rdb_manager.drop_table(table_name)
+        except Exception:
+            pass  # Ignore errors if table doesn't exist
+
+    yield table_name
+
+    # Clean up after test
+    if rdb_manager.is_table(table_name):
+        try:
+            rdb_manager.drop_table(table_name)
+        except Exception:
+            pass  # Ignore errors if table doesn't exist
 
 
 @pytest.fixture
