@@ -4,12 +4,40 @@ Created on 13 Aug 2017
 @author: jdrumgoole
 """
 import os
+import tempfile
+import shutil
 import pytest
 
 from pyimport.filesplitter import LineCounter, FileSplitter, FileType
 
 # Mark all tests in this file to run in the same group to avoid file conflicts
 pytestmark = pytest.mark.xdist_group(name="filesplitter_sequential")
+
+
+@pytest.fixture(scope="function")
+def temp_work_dir():
+    """Create a temporary directory for split files to prevent interference."""
+    temp_dir = tempfile.mkdtemp(prefix="pyimport_filesplit_")
+    original_dir = os.getcwd()
+
+    # Copy all test data files to temp directory
+    test_files = [
+        "fourlines.txt", "emptyfile.txt", "threelines.txt", "inventory.csv",
+        "AandEData_301.csv", "10k.txt", "ninelines.txt", "tenlines.txt",
+        "yellow_tripdata_2015-01-06-1999.csv"
+    ]
+    for test_file in test_files:
+        if os.path.exists(test_file):
+            shutil.copy(test_file, temp_dir)
+
+    # Change to temp directory
+    os.chdir(temp_dir)
+
+    yield temp_dir
+
+    # Cleanup: change back and remove temp directory
+    os.chdir(original_dir)
+    shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 def test_count_lines():
@@ -63,7 +91,7 @@ def headless_file(filename, new_filename=None) -> str:
                     nf.write(line)
     return new_filename
 
-def test_split_file():
+def test_split_file(temp_work_dir):
     assert _split_helper("fourlines.txt", 0)
     assert _split_helper("fourlines.txt", 3)
     # TODO: Fix this test - header handling logic needs investigation
@@ -93,7 +121,7 @@ def auto_split_helper(filename, lines, split_count, has_header=False):
     assert part_total_count == lines
 
 
-def test_copy_file():
+def test_copy_file(temp_work_dir):
     (rhs, total_lines) = FileSplitter.copy_file("AandEData_301.csv",
                                                  "AandEData_301.csv" + ".1", ignore_header=True)
     assert total_lines == (LineCounter.count_now("AandEData_301.csv") - 1 )
@@ -101,7 +129,7 @@ def test_copy_file():
     os.unlink(rhs)
 
 
-def test_split_file_sizes():
+def test_split_file_sizes(temp_work_dir):
     for i, (part_name, size) in  enumerate(FileSplitter.split_file("fourlines.txt", 1, has_header=False), 1):
         assert part_name == f"fourlines.txt.{i}"
         assert size == 1
@@ -143,7 +171,7 @@ def test_split_file_sizes():
     assert os.path.isfile("fourlines.txt.2") is False
 
 
-def test_split_file_sizes_residue():
+def test_split_file_sizes_residue(temp_work_dir):
     for i, (part_name, size) in  enumerate(FileSplitter.split_file("ninelines.txt", 2, has_header=False), 1):
         if i == 5:
             assert part_name == f"ninelines.txt.{i}"
@@ -153,7 +181,7 @@ def test_split_file_sizes_residue():
             assert size == 2
     assert os.path.isfile(f"ninelines.txt.{6}") is False
 
-def test_split_file_sizes_with_header():
+def test_split_file_sizes_with_header(temp_work_dir):
     for i, (part_name, size) in  enumerate(FileSplitter.split_file("inventory.csv", 1, has_header=True), 1):
         assert part_name == f"inventory.csv.{i}"
         assert size == 1
@@ -168,11 +196,11 @@ def test_split_file_sizes_with_header():
     assert os.path.isfile("inventory.csv.5") is False
 
 
-def test_aande():
+def test_aande(temp_work_dir):
     auto_split_helper("AandEData_301.csv", 300, 3, has_header=True)
     auto_split_helper("fourlines.txt", 4, 0, has_header=False)
 
-def test_auto_split_various_files():
+def test_auto_split_various_files(temp_work_dir):
     auto_split_helper("fourlines.txt", 4, 2, has_header=False)
     auto_split_helper("ninelines.txt", 9, 3, has_header=False)
     auto_split_helper("inventory.csv", 4, 2, has_header=True)

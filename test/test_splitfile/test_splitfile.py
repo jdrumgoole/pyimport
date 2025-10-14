@@ -9,12 +9,40 @@ import sys
 import unittest
 from contextlib import contextmanager
 from io import StringIO
+import tempfile
+import shutil
 
 import pytest
 
 from pyimport.argmgr import ArgMgr
 from pyimport.filesplitter import FileSplitter, split_files
 from pyimport.splitfile import split_file_main
+
+
+@pytest.fixture
+def temp_work_dir(request):
+    """Create a temporary directory for split files with worker-specific naming."""
+    # Get worker ID from pytest-xdist
+    worker_id = getattr(request.config, 'workerinput', {}).get('workerid', 'master')
+
+    # Create temp directory with worker-specific name
+    temp_dir = tempfile.mkdtemp(prefix=f"pyimport_split_{worker_id}_")
+    original_dir = os.getcwd()
+
+    # Copy test data files to temp directory
+    test_files = ["mot_test_set_small.csv", "yellow_tripdata_2015-01-06-200k.csv"]
+    for test_file in test_files:
+        if os.path.exists(test_file):
+            shutil.copy(test_file, temp_dir)
+
+    # Change to temp directory
+    os.chdir(temp_dir)
+
+    yield temp_dir
+
+    # Cleanup: change back and remove temp directory
+    os.chdir(original_dir)
+    shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 def compare_input_output(input_filename, output_filenames, has_header=False):
@@ -45,14 +73,14 @@ def captured_output():
         sys.stdout, sys.stderr = old_out, old_err
 
 
-def test_auto_split():
+def test_auto_split(temp_work_dir):
     input_filename = "mot_test_set_small.csv"
     filenames = split_file_main(["--autosplit", "2", input_filename])
     assert os.path.isfile(filenames[0][0]) is True
     compare_input_output(input_filename, filenames)
 
 
-def test_split_file():
+def test_split_file(temp_work_dir):
     input_filenames = ["mot_test_set_small.csv"]
     args = ArgMgr.default_args(input_args=[]).add_arguments(filenames=input_filenames, hasheader=False, autosplit=2)
     files = split_files(args.ns)
@@ -62,6 +90,7 @@ def test_split_file():
         assert os.path.isfile(i) is True
         os.unlink(i)
 
+@pytest.mark.usefixtures("temp_work_dir")
 class TestSplitFile(unittest.TestCase):
 
     def setUp(self):
