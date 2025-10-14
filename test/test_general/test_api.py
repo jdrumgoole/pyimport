@@ -195,14 +195,20 @@ class TestPyImportAPI(unittest.TestCase):
         api = PyImportAPI(
             database=self.database,
             collection=self.collection,
-            log_level="WARNING"
+            log_level="WARNING",
+            write_concern=1,  # Use write concern 1 to ensure writes complete
+            journal=True
         )
 
-        # Ensure clean start
+        # Ensure clean start - drop collection and verify it's empty
         if self.collection in self.db.list_collection_names():
             self.db.drop_collection(self.collection)
         import time
-        time.sleep(0.1)
+        time.sleep(0.2)  # Wait longer for drop to complete
+
+        # Verify collection is actually empty after drop
+        count_before = self.col.count_documents({})
+        self.assertEqual(count_before, 0, f"Expected 0 docs before import, got {count_before}")
 
         # Import data
         api.import_csv(self.test_csv.name, has_header=True)

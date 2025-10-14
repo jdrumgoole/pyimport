@@ -26,6 +26,13 @@ def test_table_name(request):
     return f"test_table_{worker_id}"
 
 
+@pytest.fixture
+def test_index_name(request):
+    """Generate worker-specific index name for parallel test isolation"""
+    worker_id = getattr(request.config, 'workerinput', {}).get('workerid', 'master')
+    return f"test_index_{worker_id}"
+
+
 def test_sanitize_identifier():
     assert RDBManager.sanitize_identifier('valid_name') == 'valid_name'
     with pytest.raises(ValueError):
@@ -68,22 +75,22 @@ def test_raises_error_if_table_does_not_exist(rdb_manager):
         rdb_manager.drop_table("nonexistent_table")
 
 
-def test_creates_index_successfully(rdb_manager, test_table_name):
+def test_creates_index_successfully(rdb_manager, test_table_name, test_index_name):
     schema = {"id": int, "name": str}
     rdb_manager.create_table(test_table_name, schema)
-    rdb_manager.create_index("test_index", test_table_name, ["id"])
+    rdb_manager.create_index(test_index_name, test_table_name, ["id"])
     inspector = rdb_manager.get_inspector()
     indexes = inspector.get_indexes(test_table_name)
-    assert any(index['name'] == "test_index" for index in indexes)
+    assert any(index['name'] == test_index_name for index in indexes)
     rdb_manager.drop_table(test_table_name)
 
 
-def test_drops_index_successfully(rdb_manager, test_table_name):
+def test_drops_index_successfully(rdb_manager, test_table_name, test_index_name):
     schema = {"id": int, "name": str}
     rdb_manager.create_table(test_table_name, schema)
-    rdb_manager.create_index("test_index", test_table_name, ["id"])
-    rdb_manager.drop_index(test_table_name, "test_index")
+    rdb_manager.create_index(test_index_name, test_table_name, ["id"])
+    rdb_manager.drop_index(test_table_name, test_index_name)
     inspector = rdb_manager.get_inspector()
     indexes = inspector.get_indexes(test_table_name)
-    assert not any(index['name'] == "test_index" for index in indexes)
+    assert not any(index['name'] == test_index_name for index in indexes)
     rdb_manager.drop_table(test_table_name)
