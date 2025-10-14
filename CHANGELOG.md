@@ -5,6 +5,14 @@ All notable changes to pyimport will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.3] - 2025-10-14
+
+### Fixed
+- **CRITICAL: Missing colorama dependency**: Moved colorama from dev dependencies to main dependencies
+  - colorama is imported and used by `pyimport/logger.py` for colored terminal output
+  - v2.0.2 failed on fresh installs with `ModuleNotFoundError: No module named 'colorama'`
+  - Now correctly included in package dependencies
+
 ## [2.0.2] - 2025-10-14
 
 ### Fixed

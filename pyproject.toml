@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyimport"
-version = "2.0.2"  # Also defined in pyimport/version.py - keep in sync
+version = "2.0.3"  # Also defined in pyimport/version.py - keep in sync
 description = "A CSV importer for MongoDB"
 authors = ["Joe Drumgoole"]
 license = "Apache-2.0"
@@ -31,6 +31,8 @@ psycopg2-binary = "^2.9.9"
 psycopg = "^3.2.1"
 # Optional: HTTP file fetching
 requests = "^2.32.2"
+# Terminal color support
+colorama = "^0.4.6"
 
 [tool.poetry.scripts]
 pyimport = "pyimport.pyimport_main:pyimport_main"
@@ -49,7 +51,6 @@ sphinx = "^7.0.0"
 myst-parser = "^3.0.0"
 # Build automation
 invoke = "^2.2.0"
-colorama = "^0.4.6"
 # Development utilities
 python-dotenv = {extras = ["cli"], version = "^1.0.1"}
 pandas = "^2.2.2"
