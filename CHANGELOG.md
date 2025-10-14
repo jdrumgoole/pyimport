@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed test failures like `assert 9 == (4148 - 3130)` caused by cross-worker data pollution
   - Affected files: test_command, test_restart, test_v2_comprehensive_e2e, test_v2_integration, test_fieldfile, test_fileprocessor
   - Tests now properly isolated while maintaining parallel execution across different test files
+- **Tox test execution**: Fixed tox running tests from wrong directory
+  - Tests now run from within their respective test directories using `sh -c 'cd test/XXX && pytest'`
+  - Added `allowlist_externals = sh` to tox.ini to allow shell commands
+  - Fixes `OSError: No such file` errors in test_config tests that expect to find field files in current directory
+  - All tox tests now pass across Python 3.9-3.13
 
 ## [2.0.3] - 2025-10-14
 
