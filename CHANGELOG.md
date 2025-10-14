@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Build System Migration**: Completed migration from Make to Invoke
   - Removed Makefile (all 33 targets successfully converted to invoke tasks)
   - Pytest tasks run from within each test directory (tests expect data files in current directory)
-  - See MAKEFILE_TO_INVOKE_MIGRATION.md for complete migration analysis
 
 ### Fixed
 - **CRITICAL**: tasks.py had incorrect dbop.py path that broke all integration tests
@@ -24,12 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replaced all `make test_all` references with `invoke test-all`
   - Replaced all `make build` references with `invoke build`
   - Replaced all `make publish` references with `invoke publish`
-  - Fixed dbop.py path references from `mdbutils/dbop.py` to `pyimport/dbop.py`
-- **MAKEFILE_TO_INVOKE_MIGRATION.md**: Added comprehensive migration documentation
-  - Complete coverage analysis showing all 33 Makefile targets converted
-  - Command mapping reference for developers
-  - Benefits analysis (better error handling, parallel tests, cross-platform)
-  - Lists 13 enhanced tasks unique to Invoke
+  - Documented correct dbop.py path as `mdbutils/dbop.py`
 
 ### Migration Notes
 - **Action Required**: Replace all `make` commands with `invoke` commands
@@ -37,7 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `make quick_test` → `invoke quick-test`
   - `make build` → `invoke build`
   - `make publish` → `invoke publish`
-  - See full mapping in MAKEFILE_TO_INVOKE_MIGRATION.md
 - Use `invoke --list` to see all available tasks
 
 ## [2.0.5] - 2025-10-14

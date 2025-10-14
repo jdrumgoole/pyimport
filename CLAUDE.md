@@ -89,8 +89,8 @@ cd test/test_general && poetry run pytest -n auto
 poetry run pyimport --genfieldfile <csv-file>
 
 # Database operations (using dbop.py)
-poetry run python pyimport/dbop.py --drop DATABASE.COLLECTION
-poetry run python pyimport/dbop.py --count DATABASE.COLLECTION
+poetry run python mdbutils/dbop.py --drop DATABASE.COLLECTION
+poetry run python mdbutils/dbop.py --count DATABASE.COLLECTION
 ```
 
 ### Migration from Make
@@ -213,7 +213,7 @@ test/                         # Organized by feature
 └── test_general/             # Unit tests
 
 tasks.py                      # Invoke task definitions (replaces Makefile)
-pyimport/dbop.py              # Database operations (drop, count)
+mdbutils/dbop.py              # Database operations (drop, count)
 ```
 
 ### Task Organization (tasks.py)
