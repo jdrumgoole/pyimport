@@ -14,8 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Corrected 13 instances of incorrect path `mdbutils/dbop.py` → `pyimport/dbop.py`
     - Fixed typos `dbopy.py` → `dbop.py`
     - Fixed missing dash `-count` → `--count` in thread_quicktest
-  - Simplified pytest tasks to use auto-discovery instead of explicit directory loops
-  - Eliminated ~85 lines of redundant code
+  - Pytest tasks run from within each test directory (tests expect data files in current directory)
   - See MAKEFILE_TO_INVOKE_MIGRATION.md for complete migration analysis
 
 ### Documentation
