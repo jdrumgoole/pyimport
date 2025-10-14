@@ -21,9 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Python 3.9 compatibility**: Fixed type hint syntax errors in importresult.py and filesplitter.py
   - Added `from __future__ import annotations` to support union type syntax `list[ImportResult]|None` and `str|None`
   - Fixes `TypeError: unsupported operand type(s) for |` on Python 3.9
-- **Tox dependencies**: Added missing test dependencies to tox.ini
+- **Tox dependencies**: Added missing test dependencies and version pins to tox.ini
   - Added `python-dotenv` (required by test_e2e tests)
   - Added `colorama` (runtime dependency for colored terminal output)
+  - Pinned `mimesis==12.1.0` for Python 3.9 compatibility (v17.0.0 uses unsupported type hints)
   - All tox tests now pass across Python 3.9-3.13
 
 ## [2.0.3] - 2025-10-14
