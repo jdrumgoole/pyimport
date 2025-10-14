@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tests now run from within their respective test directories using `sh -c 'cd test/XXX && pytest'`
   - Added `allowlist_externals = sh` to tox.ini to allow shell commands
   - Fixes `OSError: No such file` errors in test_config tests that expect to find field files in current directory
+- **Python 3.9 compatibility**: Fixed type hint syntax error in importresult.py
+  - Added `from __future__ import annotations` to support union type syntax `list[ImportResult]|None`
+  - Fixes `TypeError: unsupported operand type(s) for |` on Python 3.9
+- **Tox dependencies**: Added missing test dependencies to tox.ini
+  - Added `python-dotenv` (required by test_e2e tests)
+  - Added `colorama` (runtime dependency for colored terminal output)
   - All tox tests now pass across Python 3.9-3.13
 
 ## [2.0.3] - 2025-10-14
