@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Modified `audit_db` fixture to use worker-specific database names (TEST_ASYNC_AUDIT_{worker_id})
   - Each pytest-xdist worker now has its own isolated MongoDB database
   - All 166 tests in test_general now pass with parallel execution
+- **PostgreSQL test isolation**: Fixed parallel test contamination in test_db tests
+  - Added worker-specific database names (test_db_{worker_id}) in test_rdbmaker.py
+  - Added worker-specific table names (test_table_{worker_id}) in test_rdbmanager.py
+  - Eliminates "duplicate key" and "already exists" errors in parallel execution
 - **Tox test execution**: Fixed tox running tests from wrong directory
   - Tests now run from within their respective test directories using `sh -c 'cd test/XXX && pytest'`
   - Added `allowlist_externals = sh` to tox.ini to allow shell commands
