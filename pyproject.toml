@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "pyimport"
-version = "2.0.6"  # Also defined in pyimport/version.py - keep in sync
+version = "2.0.8"  # Also defined in pyimport/version.py - keep in sync
 description = "A CSV importer for MongoDB"
 authors = ["Joe Drumgoole"]
 license = "Apache-2.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 # Core MongoDB dependencies
 pymongo = "^4.7.3"
 motor = "^3.4.0"
@@ -33,9 +33,26 @@ psycopg = "^3.2.1"
 requests = "^2.32.2"
 # Terminal color support
 colorama = "^0.4.6"
+# Optional REST API support
+fastapi = {version = "^0.115.0", optional = true}
+uvicorn = {version = "^0.32.0", optional = true}
+# Authentication support for REST API
+passlib = {version = "^1.7.4", optional = true, extras = ["argon2"]}
+python-jose = {version = "^3.3.0", optional = true, extras = ["cryptography"]}
+python-multipart = {version = "^0.0.9", optional = true}
+# Process management for server control
+psutil = {version = "^6.1.0", optional = true}
+
+[tool.poetry.extras]
+rest-api = ["fastapi", "uvicorn", "passlib", "python-jose", "python-multipart", "psutil"]
 
 [tool.poetry.scripts]
 pyimport = "pyimport.pyimport_main:pyimport_main"
+pyimport-api = "pyimport.rest_api:main"
+pyimport-server = "pyimport.start_server:main"
+pyimport-web = "pyimport.open_web:main"
+pyimport-stop = "pyimport.stop_server:main"
+pyimport-close = "pyimport.close_web:main"
 
 [tool.poetry.group.dev.dependencies]
 # Testing
@@ -46,6 +63,9 @@ pytest-cov = "^7.0.0"
 coverage = "^7.5.1"
 tox = "^4.18.0"
 mimesis = "^12.1.0"
+# E2E Testing
+pytest-playwright = "^0.5.0"
+playwright = "^1.45.0"
 # Documentation
 sphinx = "^7.0.0"
 myst-parser = "^3.0.0"
@@ -71,6 +91,7 @@ markers = [
     "fast: marks tests as fast",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
+    "gui: marks tests as GUI/browser tests requiring Playwright",
 ]
 
 [build-system]

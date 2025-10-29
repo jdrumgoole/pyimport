@@ -15,9 +15,11 @@ pytestmark = pytest.mark.xdist_group(name="filesplitter_sequential")
 
 
 @pytest.fixture(scope="function")
-def temp_work_dir():
-    """Create a temporary directory for split files to prevent interference."""
-    temp_dir = tempfile.mkdtemp(prefix="pyimport_filesplit_")
+def temp_work_dir(request):
+    """Create a worker-specific temporary directory for split files to prevent interference."""
+    # Get worker ID for parallel test isolation
+    worker_id = getattr(request.config, 'workerinput', {}).get('workerid', 'master')
+    temp_dir = tempfile.mkdtemp(prefix=f"pyimport_filesplit_{worker_id}_")
     original_dir = os.getcwd()
 
     # Copy all test data files to temp directory
@@ -54,7 +56,7 @@ def _split_helper(filename, split_size, has_header=False):
     original_size = LineCounter.count_now(filename)
 
     try:
-        for part_name, line_count in FileSplitter.split_file(filename=filename, split_size=split_size,has_header=has_header):
+        for part_name, line_count in FileSplitter.split_file(filename=filename, split_size=split_size, has_header=has_header):
             part_count = LineCounter.count_now(part_name)
             # line_count is data lines only (excluding header)
             # part_count is total lines in file (data + header if present)

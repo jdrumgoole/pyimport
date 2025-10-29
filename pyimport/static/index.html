@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyImport REST API - Authentication Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        body.authenticated {
+            background: #f5f5f5;
+            align-items: flex-start;
+            padding: 0;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        body.authenticated .container {
+            max-width: 100%;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            display: none;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .status.success {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            border: 2px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .token-display {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .token-display h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .token-text {
+            padding: 12px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #495057;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .user-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .user-info h4 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .info-value {
+            color: #333;
+        }
+
+        .logout-btn {
+            margin-top: 15px;
+            background: #dc3545;
+        }
+
+        .logout-btn:hover {
+            box-shadow: 0 8px 20px rgba(220, 53, 69, 0.4);
+        }
+
+        .file-upload {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .api-test-btn {
+            margin-top: 10px;
+            background: #28a745;
+        }
+
+        .api-test-btn:hover {
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-input-label:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+
+        .file-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #0c5460;
+            display: none;
+        }
+
+        .browse-btn {
+            margin-top: 10px;
+            background: #6c757d;
+            width: auto;
+            display: inline-block;
+            padding: 10px 20px;
+        }
+
+        .browse-btn:hover {
+            box-shadow: 0 8px 20px rgba(108, 117, 125, 0.4);
+        }
+
+        .import-mode-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            padding: 10px 20px;
+            background: #e9ecef;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #666;
+            font-weight: 500;
+            width: auto;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Top Navigation Bar for Authenticated View */
+        .top-nav {
+            display: none;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 0;
+        }
+
+        body.authenticated .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            padding: 15px 30px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 0;
+            list-style: none;
+        }
+
+        .nav-item {
+            padding: 20px 30px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            background: white;
+            border: none;
+            font-size: 16px;
+        }
+
+        .nav-item:hover {
+            color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 0 30px;
+        }
+
+        .nav-profile {
+            padding: 10px 20px;
+            background: none;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .nav-profile:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .nav-logout {
+            padding: 10px 20px;
+            background: #dc3545;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .nav-logout:hover {
+            background: #c82333;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+
+        /* Main content area for authenticated view */
+        .main-content {
+            display: none;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        body.authenticated .main-content {
+            display: block;
+        }
+
+        body.authenticated .header {
+            display: none;
+        }
+
+        body.authenticated .content {
+            padding: 0;
+        }
+
+        body.authenticated .tabs {
+            display: none;
+        }
+
+        .field-file-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .field-file-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 2fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .field-row input,
+        .field-row select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .field-row label {
+            margin: 0;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .field-header {
+            font-weight: 600;
+            color: #333;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .field-file-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .field-file-actions button {
+            width: auto;
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation Bar (for authenticated view) -->
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <span>PyImport</span>
+        </div>
+        <div class="nav-center">
+            <div class="nav-menu">
+                <button class="nav-item active" onclick="switchToImport()">Import</button>
+            </div>
+        </div>
+        <div class="nav-right">
+            <button class="nav-profile" onclick="switchToProfile()">Profile</button>
+            <button class="nav-logout" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <h1>PyImport REST API</h1>
+            <p>Authentication & Import Testing Interface</p>
+        </div>
+
+        <div class="content">
+            <div class="tabs" id="main-tabs">
+                <button class="tab active" onclick="switchTab('login')">Login</button>
+                <button class="tab" onclick="switchTab('register')">Register</button>
+            </div>
+
+            <!-- Login Tab -->
+            <div id="login" class="tab-content active">
+                <h2 style="margin-bottom: 20px; color: #333;">Login</h2>
+                <form onsubmit="loginUser(event)">
+                    <div class="form-group">
+                        <label for="login-username">Username</label>
+                        <input type="text" id="login-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit">Login</button>
+                </form>
+                <div id="login-status" class="status"></div>
+                <div id="token-display" class="token-display">
+                    <h4>Access Token:</h4>
+                    <div class="token-text" id="token-text"></div>
+                </div>
+            </div>
+
+            <!-- Register Tab -->
+            <div id="register" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #333;">Create Account</h2>
+                <form onsubmit="registerUser(event)">
+                    <div class="form-group">
+                        <label for="reg-username">Username *</label>
+                        <input type="text" id="reg-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Password *</label>
+                        <input type="password" id="reg-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">Email</label>
+                        <input type="email" id="reg-email">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-fullname">Full Name</label>
+                        <input type="text" id="reg-fullname">
+                    </div>
+                    <button type="submit">Register</button>
+                </form>
+                <div id="register-status" class="status"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Main Content Area (for authenticated view) -->
+    <div class="main-content">
+        <div id="import-view">
+            <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h2 style="margin-bottom: 20px; color: #333;">Import CSV File</h2>
+                <p style="margin-bottom: 20px; color: #666;">
+                    Upload a CSV file to import into MongoDB.
+                </p>
+
+                <!-- File Upload -->
+                <div class="form-group">
+                    <label>Select CSV File *</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="file-upload" accept=".csv" onchange="handleFileSelect(event)">
+                        <label for="file-upload" class="file-input-label">
+                            <span id="file-upload-text">Click to select a CSV file</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Selected Filename Display -->
+                <div class="form-group">
+                    <label for="selected-filename">Selected File</label>
+                    <input type="text" id="selected-filename" readonly placeholder="No file selected" style="background-color: #f8f9fa; cursor: not-allowed;">
+                </div>
+
+                <!-- Database and Collection -->
+                <div class="form-group">
+                    <label for="import-database">Database *</label>
+                    <input type="text" id="import-database" placeholder="mydb" required>
+                </div>
+                <div class="form-group">
+                    <label for="import-collection">Collection *</label>
+                    <input type="text" id="import-collection" placeholder="mycol" required>
+                </div>
+
+                <button onclick="generateFieldFile()" class="api-test-btn" id="generate-btn">Generate Field File</button>
+
+                <!-- Field File Editor -->
+                <div id="field-file-section" class="field-file-section">
+                    <h3>Field File Configuration</h3>
+                    <p style="color: #666; margin-bottom: 15px;">Review and edit field types as needed before importing.</p>
+
+                    <div class="field-row field-header">
+                        <span>Field Name</span>
+                        <span>Type</span>
+                        <span>Format (for dates)</span>
+                        <span></span>
+                    </div>
+
+                    <div id="field-list"></div>
+
+                    <div class="field-file-actions">
+                        <button onclick="cancelImport()" style="background: #6c757d;">Cancel</button>
+                        <button onclick="proceedWithImport()" class="api-test-btn">Import with Field File</button>
+                    </div>
+                </div>
+
+                <div id="import-status" class="status"></div>
+            </div>
+        </div>
+
+        <div id="profile-view" style="display: none;">
+            <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h2 style="margin-bottom: 20px; color: #333;">User Profile</h2>
+                <button onclick="getUserInfo()" class="api-test-btn">Load Profile</button>
+                <div id="user-info" class="user-info"></div>
+
+                <!-- Change Password Section -->
+                <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #e0e0e0;">
+                    <h3 style="margin-bottom: 20px; color: #333;">Change Password</h3>
+                    <form onsubmit="changePassword(event)">
+                        <div class="form-group">
+                            <label for="current-password">Current Password *</label>
+                            <input type="password" id="current-password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password">New Password *</label>
+                            <input type="password" id="new-password" required minlength="8">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-password">Confirm New Password *</label>
+                            <input type="password" id="confirm-password" required minlength="8">
+                        </div>
+                        <button type="submit" style="background: #667eea;">Change Password</button>
+                    </form>
+                </div>
+
+                <div id="profile-status" class="status"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let accessToken = localStorage.getItem('access_token');
+
+        function switchTab(tabName) {
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function showStatus(elementId, message, type) {
+            const statusEl = document.getElementById(elementId);
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 5000);
+        }
+
+        async function registerUser(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('reg-username').value;
+            const password = document.getElementById('reg-password').value;
+            const email = document.getElementById('reg-email').value;
+            const fullName = document.getElementById('reg-fullname').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/users/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        email: email || null,
+                        full_name: fullName || null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showStatus('register-status', `✓ User "${username}" registered successfully! You can now login.`, 'success');
+                    event.target.reset();
+                } else {
+                    showStatus('register-status', `✗ Error: ${data.detail}`, 'error');
+                }
+            } catch (error) {
+                showStatus('register-status', `✗ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function loginUser(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    accessToken = data.access_token;
+                    localStorage.setItem('access_token', accessToken);
+
+                    showStatus('login-status', `✓ Login successful! Redirecting...`, 'success');
+
+                    // Show token
+                    document.getElementById('token-text').textContent = accessToken;
+                    document.getElementById('token-display').style.display = 'block';
+
+                    event.target.reset();
+
+                    // Switch to authenticated view
+                    setTimeout(() => {
+                        showAuthenticatedView();
+                    }, 1000);
+                } else {
+                    showStatus('login-status', `✗ Error: ${data.detail}`, 'error');
+                }
+            } catch (error) {
+                showStatus('login-status', `✗ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getUserInfo() {
+            if (!accessToken) {
+                showStatus('profile-status', '✗ Please login first', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/users/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const userInfoEl = document.getElementById('user-info');
+                    userInfoEl.innerHTML = `
+                        <h4>Current User:</h4>
+                        <div class="info-row">
+                            <span class="info-label">Username:</span>
+                            <span class="info-value">${data.username}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Email:</span>
+                            <span class="info-value">${data.email || 'Not set'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Full Name:</span>
+                            <span class="info-value">${data.full_name || 'Not set'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value">${data.disabled ? 'Disabled' : 'Active'}</span>
+                        </div>
+                    `;
+                    userInfoEl.style.display = 'block';
+                    document.getElementById('logout-btn').style.display = 'block';
+                    showStatus('profile-status', '✓ Profile loaded successfully', 'success');
+                } else {
+                    showStatus('profile-status', `✗ Error: ${data.detail}`, 'error');
+                    if (response.status === 401) {
+                        localStorage.removeItem('access_token');
+                        accessToken = null;
+                    }
+                }
+            } catch (error) {
+                showStatus('profile-status', `✗ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function changePassword(event) {
+            event.preventDefault();
+
+            if (!accessToken) {
+                showStatus('profile-status', '✗ Please login first', 'error');
+                return;
+            }
+
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                showStatus('profile-status', '✗ New passwords do not match', 'error');
+                return;
+            }
+
+            // Validate password length
+            if (newPassword.length < 8) {
+                showStatus('profile-status', '✗ Password must be at least 8 characters', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/users/change-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showStatus('profile-status', '✓ Password changed successfully!', 'success');
+                    event.target.reset();
+                } else {
+                    showStatus('profile-status', `✗ Error: ${data.detail}`, 'error');
+                    if (response.status === 401) {
+                        localStorage.removeItem('access_token');
+                        accessToken = null;
+                        showLoginView();
+                    }
+                }
+            } catch (error) {
+                showStatus('profile-status', `✗ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        // Field file data
+        let fieldFileData = null;
+        let uploadedFilePath = null;
+
+        async function generateFieldFile() {
+            if (!accessToken) {
+                showStatus('import-status', '✗ Please login first', 'error');
+                return;
+            }
+
+            if (!selectedFile) {
+                showStatus('import-status', '✗ Please select a CSV file first', 'error');
+                return;
+            }
+
+            const database = document.getElementById('import-database').value;
+            const collection = document.getElementById('import-collection').value;
+
+            if (!database || !collection) {
+                showStatus('import-status', '✗ Please fill in database and collection fields', 'error');
+                return;
+            }
+
+            try {
+                showStatus('import-status', 'ℹ Uploading file and generating field file...', 'info');
+
+                // First, upload the file temporarily
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const uploadResponse = await fetch(`${API_BASE}/upload/temp`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: formData
+                });
+
+                if (!uploadResponse.ok) {
+                    const errorData = await uploadResponse.json();
+                    showStatus('import-status', `✗ Upload error: ${errorData.detail}`, 'error');
+                    return;
+                }
+
+                const uploadData = await uploadResponse.json();
+                uploadedFilePath = uploadData.temp_path;
+
+                // Generate field file from uploaded file
+                const fieldFileResponse = await fetch(`${API_BASE}/fieldfile/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        filename: uploadedFilePath,
+                        has_header: true
+                    })
+                });
+
+                if (!fieldFileResponse.ok) {
+                    const errorData = await fieldFileResponse.json();
+                    showStatus('import-status', `✗ Field file generation error: ${errorData.detail}`, 'error');
+                    return;
+                }
+
+                fieldFileData = await fieldFileResponse.json();
+
+                // Display field file editor
+                displayFieldFileEditor(fieldFileData);
+
+                showStatus('import-status', '✓ Field file generated! Review and edit as needed.', 'success');
+            } catch (error) {
+                showStatus('import-status', `✗ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        function displayFieldFileEditor(fieldFile) {
+            const fieldList = document.getElementById('field-list');
+            fieldList.innerHTML = '';
+
+            // Parse field file to get field definitions
+            // Assuming fieldFile.fields is an array of field names
+            // We'll need to infer types from the field file content
+            if (fieldFile.fields && Array.isArray(fieldFile.fields)) {
+                fieldFile.fields.forEach((fieldName, index) => {
+                    const row = document.createElement('div');
+                    row.className = 'field-row';
+                    row.innerHTML = `
+                        <input type="text" value="${fieldName}" data-index="${index}" data-field="name" readonly style="background-color: #f8f9fa;">
+                        <select data-index="${index}" data-field="type">
+                            <option value="str">String</option>
+                            <option value="int">Integer</option>
+                            <option value="float">Float</option>
+                            <option value="bool">Boolean</option>
+                            <option value="date">Date</option>
+                            <option value="datetime">DateTime</option>
+                            <option value="isodate">ISO Date</option>
+                            <option value="timestamp">Timestamp</option>
+                        </select>
+                        <input type="text" data-index="${index}" data-field="format" placeholder="e.g., %Y-%m-%d">
+                        <span></span>
+                    `;
+                    fieldList.appendChild(row);
+                });
+            }
+
+            // Show the field file section
+            document.getElementById('field-file-section').style.display = 'block';
+            document.getElementById('generate-btn').style.display = 'none';
+        }
+
+        function cancelImport() {
+            // Clean up temp file if exists
+            if (uploadedFilePath) {
+                fetch(`${API_BASE}/upload/temp/cleanup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({ temp_path: uploadedFilePath })
+                }).catch(err => console.error('Cleanup error:', err));
+            }
+
+            // Reset UI
+            document.getElementById('field-file-section').style.display = 'none';
+            document.getElementById('generate-btn').style.display = 'block';
+            fieldFileData = null;
+            uploadedFilePath = null;
+        }
+
+        async function proceedWithImport() {
+            if (!uploadedFilePath) {
+                showStatus('import-status', '✗ No file uploaded', 'error');
+                return;
+            }
+
+            const database = document.getElementById('import-database').value;
+            const collection = document.getElementById('import-collection').value;
+
+            try {
+                showStatus('import-status', 'ℹ Importing file with field file configuration...', 'info');
+
+                // Collect field file edits
+                const fieldRows = document.querySelectorAll('#field-list .field-row');
+                const fields = {};
+
+                fieldRows.forEach(row => {
+                    const nameInput = row.querySelector('[data-field="name"]');
+                    const typeSelect = row.querySelector('[data-field="type"]');
+                    const formatInput = row.querySelector('[data-field="format"]');
+
+                    const fieldName = nameInput.value;
+                    const fieldType = typeSelect.value;
+                    const fieldFormat = formatInput.value;
+
+                    fields[fieldName] = {
+                        type: fieldType,
+                        format: fieldFormat || null
+                    };
+                });
+
+                // Import with custom field file
+                const response = await fetch(`${API_BASE}/import/with-fieldfile`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        temp_path: uploadedFilePath,
+                        database: database,
+                        collection: collection,
+                        fields: fields,
+                        has_header: true
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showStatus('import-status',
+                        `✓ Import successful! Imported ${data.total_written} records in ${data.elapsed_time}`,
+                        'success');
+
+                    // Reset form
+                    selectedFile = null;
+                    uploadedFilePath = null;
+                    fieldFileData = null;
+                    document.getElementById('file-upload').value = '';
+                    document.getElementById('file-upload-text').textContent = 'Click to select a CSV file';
+                    document.getElementById('selected-filename').value = '';
+                    document.getElementById('field-file-section').style.display = 'none';
+                    document.getElementById('generate-btn').style.display = 'block';
+                } else {
+                    showStatus('import-status', `✗ Import error: ${data.detail}`, 'error');
+                    if (response.status === 401) {
+                        localStorage.removeItem('access_token');
+                        accessToken = null;
+                        showLoginView();
+                    }
+                }
+            } catch (error) {
+                showStatus('import-status', `✗ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('access_token');
+            accessToken = null;
+            document.getElementById('user-info').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'none';
+            document.getElementById('token-display').style.display = 'none';
+
+            // Switch back to login view
+            showLoginView();
+        }
+
+        // Navigation functions
+        function switchToImport() {
+            document.getElementById('import-view').style.display = 'block';
+            document.getElementById('profile-view').style.display = 'none';
+
+            // Update active state
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function switchToProfile() {
+            document.getElementById('import-view').style.display = 'none';
+            document.getElementById('profile-view').style.display = 'block';
+
+            // Update active state on nav items (Import button)
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+
+        // Show authenticated view
+        function showAuthenticatedView() {
+            // Add authenticated class to body
+            document.body.classList.add('authenticated');
+
+            // Show import view by default
+            document.getElementById('import-view').style.display = 'block';
+            document.getElementById('profile-view').style.display = 'none';
+        }
+
+        // Show login view
+        function showLoginView() {
+            // Remove authenticated class from body
+            document.body.classList.remove('authenticated');
+
+            // Show login tab
+            document.getElementById('main-tabs').style.display = 'flex';
+            document.getElementById('login').classList.add('active');
+            document.getElementById('register').classList.remove('active');
+        }
+
+        // File upload handling
+        let selectedFile = null;
+
+        // File selection handler
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                const fileSize = (file.size / 1024).toFixed(2);
+                const displayText = `${file.name} (${fileSize} KB)`;
+
+                // Update the upload button text
+                document.getElementById('file-upload-text').textContent = file.name;
+
+                // Update the readonly filename field
+                document.getElementById('selected-filename').value = displayText;
+            }
+        }
+
+        // Check if user is already logged in on page load
+        if (accessToken) {
+            document.getElementById('token-text').textContent = accessToken;
+            document.getElementById('token-display').style.display = 'block';
+            showAuthenticatedView();
+        }
+    </script>
+</body>
+</html>

@@ -100,6 +100,19 @@ def to_timestamp_utc(v, fmt=None) -> datetime:
     return datetime.fromtimestamp(int(v), tz=timezone.utc)
 
 
+def to_bool(v: str, fmt=None) -> bool:
+    """Convert string to boolean. Accepts various boolean representations."""
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, str):
+        v_lower = v.lower().strip()
+        if v_lower in ('true', '1', 'yes', 'y', 't'):
+            return True
+        elif v_lower in ('false', '0', 'no', 'n', 'f'):
+            return False
+    raise ValueError(f"Cannot convert '{v}' to boolean")
+
+
 def guess_type(s: str) -> [str, str]:
     """
     Try and convert a string s to an object. Start with float, then try int
@@ -144,6 +157,7 @@ converter = {
     "int": to_int,
     "float": to_float,
     "str": to_str,
+    "bool": to_bool,
     "datetime": to_datetime,
     "date": to_datetime,
     "isodate": iso_to_datetime,

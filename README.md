@@ -1,7 +1,7 @@
 # PyImport - A Powerful CSV Importer for MongoDB
 
 [![Documentation Status](https://readthedocs.org/projects/pyimport/badge/?version=latest)](https://pyimport.readthedocs.io/en/latest/?badge=latest)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 **PyImport** is a Python command-line tool for importing CSV data into MongoDB with automatic type detection, parallel processing, and graceful handling of "dirty" data.
@@ -35,7 +35,7 @@ Unlike MongoDB's native `mongoimport`, PyImport focuses on handling real-world m
 
 ## Requirements
 
-- **Python**: 3.9 or higher
+- **Python**: 3.10 or higher
 - **MongoDB**: 4.0 or higher
 
 ## Installation
@@ -628,6 +628,7 @@ invoke quick-test
 **2.0.1** (Current) - Python 3.9 Support & Reliability Improvements
 - **Python 3.9 Support**: Extended compatibility to Python 3.9+
   - All 329 tests pass on Python 3.9, 3.10, 3.11, 3.12, and 3.13
+  - **Note**: Python 3.10+ required as of v2.0.7 (Python 3.9 reached EOL Oct 2025)
 - **Improved Write Reliability**: Changed default write concern from 0 to 1 with journaling enabled
   - Better data durability and eliminates race conditions
 

@@ -265,7 +265,8 @@ def run_pytest(c):
         'test/test_formats',
         'test/test_db',
     ]
-    pguri = os.environ.get('PGURI', '')
+    # Use local PostgreSQL if PGURI not set
+    pguri = os.environ.get('PGURI', 'postgresql://localhost:5432/postgres')
     for test_dir in test_dirs:
         print(f"Running pytest in {test_dir}...")
         with c.cd(ROOT / test_dir):
@@ -308,7 +309,8 @@ def run_pytest_parallel(c):
         'test/test_formats',
         'test/test_db',
     ]
-    pguri = os.environ.get('PGURI', '')
+    # Use local PostgreSQL if PGURI not set
+    pguri = os.environ.get('PGURI', 'postgresql://localhost:5432/postgres')
     for test_dir in test_dirs:
         print(f"Running pytest (parallel) in {test_dir}...")
         with c.cd(ROOT / test_dir):
@@ -326,7 +328,8 @@ def quick_pytest(c):
     ]
 
     print("Running essential pytest tests (parallel)...")
-    pguri = os.environ.get('PGURI', '')
+    # Use local PostgreSQL if PGURI not set
+    pguri = os.environ.get('PGURI', 'postgresql://localhost:5432/postgres')
     for test_dir in essential_dirs:
         print(f"Running pytest (parallel) in {test_dir}...")
         with c.cd(ROOT / test_dir):
@@ -367,6 +370,71 @@ def test_timing(c):
         c.run('poetry run pytest --durations=20')
 
 
+# GUI tests with Playwright
+@task
+def test_gui(c):
+    """Run GUI tests with Playwright"""
+    print("Running GUI tests...")
+    with c.cd(ROOT):
+        c.run('poetry run pytest test/test_gui -v -m gui')
+
+
+@task
+def test_gui_auth(c):
+    """Run GUI authentication tests only"""
+    print("Running GUI authentication tests...")
+    with c.cd(ROOT):
+        c.run('poetry run pytest test/test_gui/test_authentication.py -v')
+
+
+@task
+def test_gui_import(c):
+    """Run GUI import tests only"""
+    print("Running GUI import tests...")
+    with c.cd(ROOT):
+        c.run('poetry run pytest test/test_gui/test_import.py -v')
+
+
+@task
+def test_gui_fieldfile(c):
+    """Run GUI field file tests only"""
+    print("Running GUI field file tests...")
+    with c.cd(ROOT):
+        c.run('poetry run pytest test/test_gui/test_field_file.py -v')
+
+
+@task
+def test_gui_progress(c):
+    """Run GUI progress monitoring tests only"""
+    print("Running GUI progress monitoring tests...")
+    with c.cd(ROOT):
+        c.run('poetry run pytest test/test_gui/test_progress.py -v')
+
+
+@task
+def test_gui_headed(c):
+    """Run GUI tests in headed mode (visible browser)"""
+    print("Running GUI tests in headed mode...")
+    with c.cd(ROOT):
+        c.run('poetry run pytest test/test_gui -v -m gui --headed')
+
+
+@task
+def test_gui_install(c):
+    """Install Playwright browsers for GUI testing"""
+    print("Installing Playwright browsers...")
+    with c.cd(ROOT):
+        c.run('poetry run playwright install')
+
+
+@task
+def test_gui_install_chromium(c):
+    """Install only Chromium browser for GUI testing"""
+    print("Installing Chromium browser...")
+    with c.cd(ROOT):
+        c.run('poetry run playwright install chromium')
+
+
 @task
 def clean(c):
     """Clean build artifacts"""
@@ -387,7 +455,7 @@ def build(c):
     print("\n2. Running integration tests...")
     test_all_scripts(c)
 
-    print("\n3. Running tox tests across Python 3.9-3.13...")
+    print("\n3. Running tox tests across Python 3.10-3.13...")
     tox_run(c)
 
     print("\n4. Building package with poetry...")
@@ -558,14 +626,14 @@ def tox_run(c, env=None):
     """Run tox tests across Python versions
 
     Args:
-        env: Optional specific environment to test (e.g., py39, py310, py311, py312, py313)
+        env: Optional specific environment to test (e.g., py310, py311, py312, py313)
     """
     with c.cd(ROOT):
         if env:
             print(f"Running tox for {env}...")
             c.run(f'poetry run tox -e {env}')
         else:
-            print("Running tox for all environments (py39, py310, py311, py312, py313)...")
+            print("Running tox for all environments (py310, py311, py312, py313)...")
             c.run('poetry run tox')
 
 
@@ -573,7 +641,6 @@ def tox_run(c, env=None):
 def check_python_versions(c):
     """Check availability of Python versions required for tox"""
     required_versions = {
-        'py39': 'python3.9',
         'py310': 'python3.10',
         'py311': 'python3.11',
         'py312': 'python3.12',
@@ -601,7 +668,7 @@ def check_python_versions(c):
     else:
         print("⚠️  Some Python versions are missing.")
         print("   See PYENV_SETUP.md for installation instructions.")
-        print("   Run: pyenv install 3.9.23 3.10.18 3.11.9 3.12.11 3.13.5")
+        print("   Run: pyenv install 3.10.18 3.11.9 3.12.11 3.13.5")
 
 
 @task
