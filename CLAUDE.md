@@ -66,7 +66,7 @@ invoke docs-serve              # Build and serve docs on localhost:8000
 
 # Environment info
 invoke testenv                 # Show environment variables
-invoke pguri                   # Show PostgreSQL URI
+invoke pgconfig                # Show PostgreSQL configuration
 invoke root                    # Show project root path
 ```
 
@@ -76,7 +76,7 @@ invoke root                    # Show project root path
 # Run specific test suites directly
 cd test/test_command && poetry run pytest
 cd test/test_e2e && poetry run pytest
-cd test/test_db && PGURI=${PGURI} poetry run pytest
+cd test/test_db && poetry run pytest
 
 # Parallel testing with pytest-xdist
 cd test/test_general && poetry run pytest -n auto
@@ -252,9 +252,30 @@ The project uses Invoke for task automation with the following categories:
 ## Environment Variables
 
 - `AUDITHOST`: MongoDB connection string for audit collection
-- `PGURI`: PostgreSQL connection string (for PostgreSQL import mode)
 
-Create a `.env` file in the project root for local development.
+### PostgreSQL Configuration
+
+PyImport uses standard PostgreSQL environment variables for configuration:
+
+```bash
+PGHOST=localhost        # PostgreSQL host (default: localhost)
+PGPORT=5432            # PostgreSQL port (default: 5432)
+PGDATABASE=postgres    # Database name (default: postgres)
+PGUSER=myuser          # Username (default: current OS user)
+```
+
+**Credentials**: Always store PostgreSQL passwords in `~/.pgpass` file:
+```
+hostname:port:database:username:password
+```
+Example: `localhost:5432:postgres:myuser:mypassword`
+
+The `.pgpass` file must have permissions set to 0600:
+```bash
+chmod 600 ~/.pgpass
+```
+
+PostgreSQL will automatically use `.pgpass` for authentication, so passwords should never be in environment variables or connection strings.
 
 ## Common Patterns
 

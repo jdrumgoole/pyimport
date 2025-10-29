@@ -29,19 +29,19 @@ pyimport --genfieldfile people.csv
 This creates `people.tff` with inferred types:
 
 ```toml
-[field.name]
+[name]
 type = "str"
 
-[field.age]
+[age]
 type = "int"
 
-[field.city]
+[city]
 type = "str"
 
-[field.salary]
+[salary]
 type = "int"
 
-[field.join_date]
+[join_date]
 type = "date"
 format = "%Y-%m-%d"
 ```
@@ -113,13 +113,13 @@ EOF
 
 # Create field file manually
 cat > data.tff <<EOF
-[field.name]
+[name]
 type = "str"
 
-[field.age]
+[age]
 type = "int"
 
-[field.city]
+[city]
 type = "str"
 EOF
 
@@ -230,7 +230,7 @@ Bob,2021-03-22
 
 Field file:
 ```toml
-[field.join_date]
+[join_date]
 type = "isodate"
 ```
 
@@ -248,7 +248,7 @@ Bob,03/22/2021
 
 Auto-detected field file:
 ```toml
-[field.join_date]
+[join_date]
 type = "date"
 format = "%m/%d/%Y"
 ```
@@ -265,7 +265,7 @@ Bob,1678902345
 
 Field file:
 ```toml
-[field.event_time]
+[event_time]
 type = "timestamp"
 ```
 
@@ -389,7 +389,7 @@ If dates aren't converting properly:
 2. Use ISO format (YYYY-MM-DD) when possible
 3. Specify format explicitly:
    ```toml
-   [field.date]
+   [date]
    type = "date"
    format = "%d/%m/%Y"  # DD/MM/YYYY
    ```

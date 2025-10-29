@@ -11,10 +11,17 @@ class PostgresURI:
 
     @classmethod
     def get_pguri(cls, default=None) -> "PostgresURI":
-        uri = os.getenv('PGURI', default)
-        if uri is None:
-            raise ValueError("No PostgreSQL URI found in the environment variable PGURI")
-        return PostgresURI(uri)
+        # Use standard PostgreSQL environment variables
+        # Credentials will be automatically picked up from ~/.pgpass
+        host = os.getenv('PGHOST', 'localhost')
+        port = os.getenv('PGPORT', '5432')
+        database = os.getenv('PGDATABASE', 'postgres')
+        user = os.getenv('PGUSER', os.getenv('USER', 'postgres'))
+
+        # Build URI without password - psycopg2 will use .pgpass automatically
+        uri = f"postgresql://{user}@{host}:{port}/{database}"
+
+        return PostgresURI(uri or default)
 
     @property
     def uri(self):

@@ -44,10 +44,17 @@ def pythonpath(c):
 
 
 @task
-def pguri(c):
-    """Show PostgreSQL URI"""
-    pguri = os.environ.get('PGURI', 'Not set')
-    print(f"PGURI={pguri}")
+def pgconfig(c):
+    """Show PostgreSQL configuration from environment variables"""
+    pghost = os.environ.get('PGHOST', 'Not set')
+    pgport = os.environ.get('PGPORT', 'Not set')
+    pgdatabase = os.environ.get('PGDATABASE', 'Not set')
+    pguser = os.environ.get('PGUSER', 'Not set')
+    print(f"PGHOST={pghost}")
+    print(f"PGPORT={pgport}")
+    print(f"PGDATABASE={pgdatabase}")
+    print(f"PGUSER={pguser}")
+    print("Credentials should be in ~/.pgpass")
 
 
 @task
@@ -265,12 +272,12 @@ def run_pytest(c):
         'test/test_formats',
         'test/test_db',
     ]
-    # Use local PostgreSQL if PGURI not set
-    pguri = os.environ.get('PGURI', 'postgresql://localhost:5432/postgres')
+    # PostgreSQL config loaded from .env file (PGHOST, PGPORT, PGDATABASE, PGUSER)
+    # Credentials should be in ~/.pgpass
     for test_dir in test_dirs:
         print(f"Running pytest in {test_dir}...")
         with c.cd(ROOT / test_dir):
-            c.run(f'PGURI={pguri} poetry run pytest', warn=True)
+            c.run('poetry run pytest', warn=True)
 
 
 @task
@@ -309,12 +316,12 @@ def run_pytest_parallel(c):
         'test/test_formats',
         'test/test_db',
     ]
-    # Use local PostgreSQL if PGURI not set
-    pguri = os.environ.get('PGURI', 'postgresql://localhost:5432/postgres')
+    # PostgreSQL config loaded from .env file (PGHOST, PGPORT, PGDATABASE, PGUSER)
+    # Credentials should be in ~/.pgpass
     for test_dir in test_dirs:
         print(f"Running pytest (parallel) in {test_dir}...")
         with c.cd(ROOT / test_dir):
-            c.run(f'PGURI={pguri} poetry run pytest -n auto', warn=True)
+            c.run('poetry run pytest -n auto', warn=True)
 
 
 @task
@@ -328,12 +335,12 @@ def quick_pytest(c):
     ]
 
     print("Running essential pytest tests (parallel)...")
-    # Use local PostgreSQL if PGURI not set
-    pguri = os.environ.get('PGURI', 'postgresql://localhost:5432/postgres')
+    # PostgreSQL config loaded from .env file (PGHOST, PGPORT, PGDATABASE, PGUSER)
+    # Credentials should be in ~/.pgpass
     for test_dir in essential_dirs:
         print(f"Running pytest (parallel) in {test_dir}...")
         with c.cd(ROOT / test_dir):
-            c.run(f'PGURI={pguri} poetry run pytest -n auto -q', warn=True)
+            c.run('poetry run pytest -n auto -q', warn=True)
 
 
 @task

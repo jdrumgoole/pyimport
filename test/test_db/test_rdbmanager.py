@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 
 import pytest
 from sqlalchemy.exc import ProgrammingError
@@ -7,6 +8,14 @@ from sqlalchemy import Integer, Float, String, DateTime
 from pyimport.db.postgresuri import PostgresURI
 
 from pyimport.db.rdbmanager import RDBManager, RDBManagerError
+
+# Skip all tests in this module if PostgreSQL is not configured
+# Requires PGHOST environment variable (PGPORT, PGDATABASE, PGUSER optional - have defaults)
+# Credentials should be in ~/.pgpass file
+pytestmark = pytest.mark.skipif(
+    not os.getenv('PGHOST'),
+    reason="PostgreSQL tests require PGHOST environment variable and credentials in ~/.pgpass"
+)
 
 
 @pytest.fixture

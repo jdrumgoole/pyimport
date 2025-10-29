@@ -145,8 +145,15 @@ mongosh --eval "db.version()"
 ### PostgreSQL (Optional, for PostgreSQL import tests)
 
 ```bash
-# Set PGURI in .env file
-echo 'PGURI=postgresql://user:pass@localhost:5432/dbname' >> .env
+# Use standard PostgreSQL environment variables in .env file
+echo 'PGHOST=localhost' >> .env
+echo 'PGPORT=5432' >> .env
+echo 'PGDATABASE=postgres' >> .env
+echo 'PGUSER=jdrumgoole' >> .env
+
+# Store credentials in ~/.pgpass for security
+echo 'localhost:5432:postgres:jdrumgoole:yourpassword' >> ~/.pgpass
+chmod 600 ~/.pgpass
 ```
 
 ### Read the Docs (Optional, for documentation triggers)

@@ -401,13 +401,13 @@ Date parsing can be a bottleneck. Optimize with these techniques:
 
 **1. Use ISO dates when possible:**
 ```toml
-[field.date]
+[date]
 type = "isodate"  # 100x faster than generic parsing
 ```
 
 **2. Always specify format:**
 ```toml
-[field.date]
+[date]
 type = "date"
 format = "%Y-%m-%d"  # Much faster than format-less parsing
 ```
@@ -415,11 +415,11 @@ format = "%Y-%m-%d"  # Much faster than format-less parsing
 **3. Avoid generic date parsing:**
 ```toml
 # Slow (uses dateutil.parser)
-[field.date]
+[date]
 type = "date"
 
 # Fast (uses strptime)
-[field.date]
+[date]
 type = "date"
 format = "%m/%d/%Y"
 ```
@@ -436,18 +436,18 @@ format = "%m/%d/%Y"
 Different columns can have different date formats:
 
 ```toml
-[field.birth_date]
+[birth_date]
 type = "date"
 format = "%m/%d/%Y"  # US format
 
-[field.hire_date]
+[hire_date]
 type = "isodate"  # ISO format
 
-[field.last_login]
+[last_login]
 type = "datetime"
 format = "%Y-%m-%d %H:%M:%S"
 
-[field.created_timestamp]
+[created_timestamp]
 type = "timestamp"  # Unix timestamp
 ```
 
@@ -457,13 +457,13 @@ Create template field files for common schemas:
 
 ```bash
 # templates/person.tff
-[field.name]
+[name]
 type = "str"
 
-[field.age]
+[age]
 type = "int"
 
-[field.email]
+[email]
 type = "str"
 
 # Use with multiple files
@@ -598,11 +598,11 @@ replication:
 **Solutions:**
 1. Check field file for date formats:
    ```bash
-   pyimport --fieldinfo data.tff
+   cat data.tff
    ```
 2. Add format specifications:
    ```toml
-   [field.date]
+   [date]
    type = "date"
    format = "%Y-%m-%d"  # Add this!
    ```
@@ -654,8 +654,8 @@ replication:
 # 1. Import with debug logging
 pyimport --loglevel DEBUG --limit 100 data.csv 2>&1 | grep -i "error\|warn"
 
-# 2. Check field file
-pyimport --fieldinfo data.tff
+# 2. Check field file for type definitions
+cat data.tff
 
 # 3. Inspect specific rows
 pyimport --limit 10 --verbose data.csv

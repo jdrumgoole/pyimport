@@ -67,13 +67,27 @@ def test_skip_remote_lines_skip():
             break
 
 
-@pytest.mark.asyncio
-async def test_async_remote_line_reader():
+def test_async_remote_line_reader():
+    """Test async remote line reader, handling both fresh and existing event loops."""
+    import asyncio
 
-    i: int = 0
-    async with AsyncRemoteLineReader(remote_url, skip_lines=1) as reader:
-        async for i, line in aenumerate(reader):
-            assert line == remote_expected_lines[i + 1]
-            if i == 3:
-                break
+    async def run_test():
+        i: int = 0
+        async with AsyncRemoteLineReader(remote_url, skip_lines=1) as reader:
+            async for i, line in aenumerate(reader):
+                assert line == remote_expected_lines[i + 1]
+                if i == 3:
+                    break
+
+    # Try to get existing event loop, or create new one
+    try:
+        loop = asyncio.get_running_loop()
+        # If there's a running loop, schedule the test as a task
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(asyncio.run, run_test())
+            future.result()
+    except RuntimeError:
+        # No running loop, safe to use asyncio.run()
+        asyncio.run(run_test())
 

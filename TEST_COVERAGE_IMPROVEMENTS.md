@@ -140,9 +140,10 @@ Several existing tests are failing due to:
    - Tests look for data files in current directory
    - Solution: Update tests to use absolute paths or proper test fixtures
 
-2. **Missing PostgreSQL Configuration**: PostgreSQL tests require `PGURI` environment variable
+2. **Missing PostgreSQL Configuration**: PostgreSQL tests require `PGHOST` environment variable
    - 14 errors in test_db/test_rdbmaker.py and test_db/test_rdbmanager.py
-   - Solution: Mock PostgreSQL connection or provide test database
+   - Solution: Set PostgreSQL environment variables (PGHOST, PGPORT, PGDATABASE, PGUSER) in .env file and configure credentials in ~/.pgpass
+   - Note: Tests now skip gracefully when PGHOST is not set
 
 3. **Test Data File Locations**: Some tests expect files in wrong locations
    - FileNotFoundError in multiple test suites

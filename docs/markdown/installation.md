@@ -108,11 +108,19 @@ PyImport also supports importing to PostgreSQL (experimental):
 pip install pyimport[postgres]
 ```
 
-Set the PostgreSQL connection:
+Set the PostgreSQL connection using standard PostgreSQL environment variables:
 
 ```bash
-export PGURI="postgresql://user:pass@localhost:5432/dbname"
-pyimport --pguri "$PGURI" --pgtable mytable data.csv
+export PGHOST=localhost
+export PGPORT=5432
+export PGDATABASE=dbname
+export PGUSER=user
+
+# Store password in ~/.pgpass for security
+echo "localhost:5432:dbname:user:password" >> ~/.pgpass
+chmod 600 ~/.pgpass
+
+pyimport --pgtable mytable data.csv
 ```
 
 ### Development Dependencies
@@ -159,14 +167,22 @@ PyImport respects these environment variables:
 
 - `MDB_URI`: MongoDB connection string (overrides `--mdburi`)
 - `AUDIT_HOST`: MongoDB URI for audit records (overrides `--audithost`)
-- `PGURI`: PostgreSQL connection string (overrides `--pguri`)
+- `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`: Standard PostgreSQL environment variables
 
 Set them in your shell or `.env` file:
 
 ```bash
 export MDB_URI="mongodb://localhost:27017"
 export AUDIT_HOST="mongodb://localhost:27017"
+
+# PostgreSQL
+export PGHOST=localhost
+export PGPORT=5432
+export PGDATABASE=postgres
+export PGUSER=myuser
 ```
+
+**Security Note:** Always store PostgreSQL passwords in `~/.pgpass` (not in environment variables).
 
 ## Quick Start
 

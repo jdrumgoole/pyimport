@@ -144,16 +144,31 @@ pyimport --fsync --writeconcern 1 data.csv
 
 ### `--pguri URI`
 
-PostgreSQL connection URI.
+PostgreSQL connection URI (optional - uses environment variables if not specified).
 
-**Default:** `postgresql://localhost:5432/postgres`
+**Default:** Constructed from standard PostgreSQL environment variables or defaults to `postgresql://localhost:5432/postgres`
 
-**Environment variable:** `PGURI`
+**Environment variables:**
+- `PGHOST` - PostgreSQL host (default: localhost)
+- `PGPORT` - PostgreSQL port (default: 5432)
+- `PGDATABASE` - Database name (default: postgres)
+- `PGUSER` - Username (default: current OS user)
+
+**Example:**
 
 ```bash
-export PGURI="postgresql://user:pass@localhost:5432/mydb"
-pyimport --pguri "$PGURI" --pgtable mytable data.csv
+export PGHOST=localhost
+export PGPORT=5432
+export PGDATABASE=mydb
+export PGUSER=myuser
+
+# Credentials in ~/.pgpass file:
+# localhost:5432:mydb:myuser:password
+
+pyimport --pgtable mytable data.csv
 ```
+
+**Security:** Always store credentials in `~/.pgpass` file (format: `host:port:db:user:pass`) - PostgreSQL will automatically use this file for authentication.
 
 ### `--pgtable TABLE`
 

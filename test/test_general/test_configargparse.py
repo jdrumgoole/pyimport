@@ -42,7 +42,7 @@ def test_configargparse_env(monkeypatch):
     monkeypatch.setenv("MDB_URI", "localhost2")
     assert os.getenv("MDB_URI") == "localhost2"
     try:
-        args = parse_args_and_cfg_files(make_parser())
+        args = parse_args_and_cfg_files(make_parser(), input_args=[])
         assert args.mdburi == "localhost2"
     except Exception as e:
         pytest.fail(f"Exception: {e}")

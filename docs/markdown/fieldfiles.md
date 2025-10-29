@@ -26,7 +26,7 @@ This analyzes your CSV and creates `data.tff` with detected types.
 Field files use TOML syntax. Each field has its own section:
 
 ```toml
-[field.column_name]
+[column_name]
 type = "type_name"
 format = "format_string"  # Optional, for dates
 ```
@@ -42,17 +42,17 @@ Bob,25,65000.00,false
 
 Field file (`data.tff`):
 ```toml
-[field.name]
+[name]
 type = "str"
 
-[field.age]
+[age]
 type = "int"
 
-[field.salary]
+[salary]
 type = "float"
 
-[field.active]
-type = "str"  # MongoDB doesn't have native bool from CSV
+[active]
+type = "bool"  # Now supported in v2.0.8+
 ```
 
 ## Supported Types
@@ -62,7 +62,7 @@ type = "str"  # MongoDB doesn't have native bool from CSV
 Text data. No conversion applied.
 
 ```toml
-[field.name]
+[name]
 type = "str"
 ```
 
@@ -79,7 +79,7 @@ Result: `{"name": "Alice"}`
 Whole numbers. Handles conversion from float strings.
 
 ```toml
-[field.age]
+[age]
 type = "int"
 ```
 
@@ -96,7 +96,7 @@ Result: `{"age": 30}`
 Decimal numbers.
 
 ```toml
-[field.salary]
+[salary]
 type = "float"
 ```
 
@@ -108,13 +108,40 @@ salary
 
 Result: `{"salary": 75000.50}`
 
+### Boolean (`bool`)
+
+**New in v2.0.8!** - Boolean/logical values.
+
+```toml
+[is_active]
+type = "bool"
+```
+
+```csv
+is_active
+true
+false
+yes
+no
+1
+0
+```
+
+Result: `{"is_active": true}` or `{"is_active": false}`
+
+**Accepted values (case-insensitive):**
+- `true`, `t`, `yes`, `y`, `1` → `true`
+- `false`, `f`, `no`, `n`, `0` → `false`
+
+**Note:** Prior to v2.0.8, boolean values had to be stored as strings.
+
 ### Date (`date`)
 
 Date values without time component.
 
 **Without format (slow):**
 ```toml
-[field.birth_date]
+[birth_date]
 type = "date"
 ```
 
@@ -122,7 +149,7 @@ Uses `dateutil.parser` - flexible but slow (~10-100x slower).
 
 **With format (fast):**
 ```toml
-[field.birth_date]
+[birth_date]
 type = "date"
 format = "%Y-%m-%d"
 ```
@@ -143,13 +170,13 @@ Date with time component.
 
 **Without format:**
 ```toml
-[field.created_at]
+[created_at]
 type = "datetime"
 ```
 
 **With format:**
 ```toml
-[field.created_at]
+[created_at]
 type = "datetime"
 format = "%Y-%m-%d %H:%M:%S"
 ```
@@ -167,7 +194,7 @@ Result: `{"created_at": ISODate("2024-01-15T14:30:00Z")}`
 **Fastest date parsing** - specifically for ISO 8601 format (YYYY-MM-DD).
 
 ```toml
-[field.date]
+[date]
 type = "isodate"
 ```
 
@@ -184,7 +211,7 @@ date
 Unix timestamp (seconds since epoch).
 
 ```toml
-[field.event_time]
+[event_time]
 type = "timestamp"
 ```
 
@@ -220,31 +247,31 @@ Format strings use Python's `strptime` syntax:
 
 ```toml
 # US date: 01/15/2024
-[field.date]
+[date]
 type = "date"
 format = "%m/%d/%Y"
 
 # European date: 15/01/2024
-[field.date]
+[date]
 type = "date"
 format = "%d/%m/%Y"
 
 # ISO date: 2024-01-15
-[field.date]
+[date]
 type = "isodate"  # No format needed!
 
 # Date with time: 2024-01-15 14:30:00
-[field.datetime]
+[datetime]
 type = "datetime"
 format = "%Y-%m-%d %H:%M:%S"
 
 # 12-hour time: 01/15/2024 02:30 PM
-[field.datetime]
+[datetime]
 type = "datetime"
 format = "%m/%d/%Y %I:%M %p"
 
 # Long format: January 15, 2024
-[field.date]
+[date]
 type = "date"
 format = "%B %d, %Y"
 ```
@@ -272,10 +299,10 @@ Example with pipe delimiter:
 delimiter = "|"
 has_header = true
 
-[field.name]
+[name]
 type = "str"
 
-[field.age]
+[age]
 type = "int"
 ```
 
@@ -286,14 +313,14 @@ type = "int"
 You can have different date formats for different columns:
 
 ```toml
-[field.birth_date]
+[birth_date]
 type = "date"
 format = "%m/%d/%Y"  # US format
 
-[field.hire_date]
+[hire_date]
 type = "isodate"  # ISO format (fastest)
 
-[field.last_login]
+[last_login]
 type = "datetime"
 format = "%Y-%m-%d %H:%M:%S"
 ```
@@ -308,7 +335,7 @@ pyimport --genfieldfile data.csv
 
 Result:
 ```toml
-[field.date_column]
+[date_column]
 type = "date"
 format = "%Y-%m-%d"  # Automatically detected!
 ```
@@ -326,13 +353,13 @@ Charlie,35,NULL
 
 With this field file:
 ```toml
-[field.name]
+[name]
 type = "str"
 
-[field.age]
+[age]
 type = "int"
 
-[field.city]
+[city]
 type = "str"
 ```
 
@@ -355,7 +382,7 @@ age
 ```
 
 ```toml
-[field.age]
+[age]
 type = "int"
 ```
 
@@ -426,19 +453,19 @@ Bob,25,65000,2021-03-22,false
 delimiter = ","
 has_header = true
 
-[field.name]
+[name]
 type = "str"
 
-[field.age]
+[age]
 type = "int"
 
-[field.salary]
+[salary]
 type = "int"
 
-[field.join_date]
+[join_date]
 type = "isodate"
 
-[field.is_active]
+[is_active]
 type = "str"
 ```
 
@@ -482,7 +509,7 @@ Your CSV has inconsistent column counts.
 
 **Solution:** Check field file has correct type:
 ```toml
-[field.price]
+[price]
 type = "float"  # Not "str"
 ```
 
@@ -515,22 +542,22 @@ pyimport --fieldfile path/to/fields.tff data.csv
 delimiter = ","
 has_header = true
 
-[field.transaction_id]
+[transaction_id]
 type = "str"
 
-[field.date]
+[date]
 type = "isodate"
 
-[field.amount]
+[amount]
 type = "float"
 
-[field.quantity]
+[quantity]
 type = "int"
 
-[field.symbol]
+[symbol]
 type = "str"
 
-[field.timestamp]
+[timestamp]
 type = "datetime"
 format = "%Y-%m-%d %H:%M:%S"
 ```
@@ -542,16 +569,16 @@ format = "%Y-%m-%d %H:%M:%S"
 delimiter = "|"
 has_header = false
 
-[field.timestamp]
+[timestamp]
 type = "timestamp"
 
-[field.level]
+[level]
 type = "str"
 
-[field.message]
+[message]
 type = "str"
 
-[field.user_id]
+[user_id]
 type = "int"
 ```
 
@@ -562,30 +589,30 @@ type = "int"
 delimiter = ","
 has_header = true
 
-[field.VendorID]
+[VendorID]
 type = "int"
 
-[field.tpep_pickup_datetime]
+[tpep_pickup_datetime]
 type = "datetime"
 format = "%Y-%m-%d %H:%M:%S"
 
-[field.tpep_dropoff_datetime]
+[tpep_dropoff_datetime]
 type = "datetime"
 format = "%Y-%m-%d %H:%M:%S"
 
-[field.passenger_count]
+[passenger_count]
 type = "int"
 
-[field.trip_distance]
+[trip_distance]
 type = "float"
 
-[field.fare_amount]
+[fare_amount]
 type = "float"
 
-[field.tip_amount]
+[tip_amount]
 type = "float"
 
-[field.total_amount]
+[total_amount]
 type = "float"
 ```
 
